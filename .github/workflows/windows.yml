@@ -1,0 +1,38 @@
+name: Windows
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  CMake-Windows:
+    runs-on: windows-2022
+
+    env:
+      CMAKE_BUILD_DIR: build
+      VCPKG_ROOT: ${{github.workspace}}/vcpkg
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Fetch Vcpkg commits
+        working-directory: vcpkg
+        run: git fetch --depth=10
+      - name: Install local vcpkg
+        working-directory: vcpkg
+        run: ./bootstrap-vcpkg.sh
+      # Install latest CMake.
+      - uses: lukka/get-cmake@latest
+      - name: CMake configure
+        run: |
+          cmake -S . -B ${{env.CMAKE_BUILD_DIR}} -DCMAKE_BUILD_TYPE=RelWithDebInfo
+      - name: CMake build
+        run: |
+          cmake --build ${{env.CMAKE_BUILD_DIR}} --config Release
