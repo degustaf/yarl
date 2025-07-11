@@ -2,3 +2,11 @@ vcpkg_installed
 build
 emscripten
 .cache
+
+# Jekyll files for the tutorial site.
+docs/_site
+docs/.sass-cache
+docs/.jekyll-cache
+docs/.jekyll-metadata
+docs/vendor
+docs/Gemfile.lock

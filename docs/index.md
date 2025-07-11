@@ -1,7 +1,6 @@
-#Yet Another Roguelike Tutorial
-## Written in C++ using (libtcod)[https://github.com/libtcod/libtcod] and (flecs)[https://github.com/SanderMertens/flecs]
+## Written in C++ using [libtcod](https://github.com/libtcod/libtcod) and [flecs](https://github.com/SanderMertens/flecs)
 
-- (Part 0 - Setting Up)[part00.md]
+- [Part 0 - Setting Up](part00.md)
 - Part 1 - Drawing the ‘@’ symbol and moving it around
 - Part 2 - The generic Entity, the render functions, and the map
 - Part 3 - Generating a dungeon
