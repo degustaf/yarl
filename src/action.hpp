@@ -3,16 +3,20 @@
 #include <SDL3/SDL.h>
 
 #include <array>
+#include <flecs.h>
+
+#include "actor.hpp"
+#include "game_map.hpp"
 
 struct Action {
-  virtual SDL_AppResult perform(int &x, int &y) const = 0;
+  virtual SDL_AppResult perform(flecs::entity e) const = 0;
   virtual ~Action() = default;
 };
 
 struct ExitAction : Action {
   virtual ~ExitAction() override = default;
-  virtual SDL_AppResult perform([[maybe_unused]] int &x,
-                                [[maybe_unused]] int &y) const override {
+  virtual SDL_AppResult
+  perform([[maybe_unused]] flecs::entity e) const override {
     return SDL_APP_SUCCESS;
   }
 };
@@ -23,9 +27,11 @@ struct MoveAction : Action {
   MoveAction(int x, int y) : dxy({x, y}){};
   virtual ~MoveAction() override = default;
 
-  virtual SDL_AppResult perform(int &x, int &y) const override {
-    x += dxy[0];
-    y += dxy[1];
+  virtual SDL_AppResult perform(flecs::entity e) const override {
+    auto &pos = e.get_mut<Position>();
+    if (e.world().get<GameMap>()[pos + dxy].walkable) {
+      pos.move(dxy);
+    }
     return SDL_APP_CONTINUE;
   }
 };

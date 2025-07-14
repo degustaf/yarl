@@ -5,17 +5,20 @@
 #include <flecs.h>
 #include <libtcod.hpp>
 
+#include "actor.hpp"
+#include "engine.hpp"
+#include "game_map.hpp"
 #include "input_handler.hpp"
-
-int player_x = 0;
-int player_y = 0;
 
 EventHandler eventHandler;
 
 SDL_AppResult SDL_AppInit(void **data, [[maybe_unused]] int argc,
                           [[maybe_unused]] char **argv) {
-  int width = 100;
+  int width = 80;
   int height = 50;
+
+  int map_width = 80;
+  int map_height = 45;
 
   // Configure the context.
   auto params = TCOD_ContextParams{};
@@ -34,31 +37,32 @@ SDL_AppResult SDL_AppInit(void **data, [[maybe_unused]] int argc,
   *data = ecs;
   ecs->set<tcod::Context>(tcod::Context(params));
   ecs->set<tcod::Console>(ecs->get_mut<tcod::Context>().new_console());
+  ecs->set<Engine>(Engine());
+  ecs->emplace<GameMap>(GameMap(map_width, map_height));
 
-  player_x = width / 2;
-  player_y = height / 2;
+  ecs->entity("player")
+      .set<Position>({width / 2, height / 2})
+      .set<Renderable>({'@', {255, 255, 255}});
+
+  ecs->entity("npc")
+      .set<Position>({width / 2 - 5, height / 2})
+      .set<Renderable>({'@', {255, 255, 0}});
 
   return SDL_APP_CONTINUE;
 }
 
 SDL_AppResult SDL_AppIterate(void *appstate) {
   auto ecs = *static_cast<flecs::world *>(appstate);
-  auto &context = ecs.get_mut<tcod::Context>();
-  auto &console = ecs.get_mut<tcod::Console>();
-
-  console.at(player_x, player_y) = {'@', tcod::ColorRGB{255, 255, 255},
-                                    tcod::ColorRGB{0, 0, 0}};
-
-  context.present(console);
-  console.clear();
-
+  ecs.get<Engine>().render(ecs);
   return SDL_APP_CONTINUE;
 }
 
-SDL_AppResult SDL_AppEvent([[maybe_unused]] void *appstate, SDL_Event *event) {
+SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
   auto action = eventHandler.dispatch(event);
   if (action) {
-    return action->perform(player_x, player_y);
+    auto ecs = *static_cast<flecs::world *>(appstate);
+    auto player = ecs.entity("player");
+    return action->perform(player);
   } else {
     return SDL_APP_CONTINUE;
   }
