@@ -1,5 +1,3 @@
-#include <SDL3/SDL_init.h>
-#include <libtcod/color.hpp>
 #define SDL_MAIN_USE_CALLBACKS
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
@@ -7,10 +5,12 @@
 #include <flecs.h>
 #include <libtcod.hpp>
 
-#include "action.hpp"
+#include "input_handler.hpp"
 
 int player_x = 0;
 int player_y = 0;
+
+EventHandler eventHandler;
 
 SDL_AppResult SDL_AppInit(void **data, [[maybe_unused]] int argc,
                           [[maybe_unused]] char **argv) {
@@ -43,38 +43,29 @@ SDL_AppResult SDL_AppInit(void **data, [[maybe_unused]] int argc,
 
 SDL_AppResult SDL_AppIterate(void *appstate) {
   auto ecs = *static_cast<flecs::world *>(appstate);
-  auto context = ecs.try_get_mut<tcod::Context>();
-  auto console = ecs.try_get_mut<tcod::Console>();
-  console->clear();
+  auto &context = ecs.get_mut<tcod::Context>();
+  auto &console = ecs.get_mut<tcod::Console>();
 
-  console->at(player_x, player_y) = {'@', tcod::ColorRGB{255, 255, 255},
-                                     tcod::ColorRGB{0, 0, 0}};
+  console.at(player_x, player_y) = {'@', tcod::ColorRGB{255, 255, 255},
+                                    tcod::ColorRGB{0, 0, 0}};
 
-  context->present(*console);
+  context.present(console);
+  console.clear();
 
   return SDL_APP_CONTINUE;
 }
 
 SDL_AppResult SDL_AppEvent([[maybe_unused]] void *appstate, SDL_Event *event) {
-  auto action = Action::get(event);
-  switch (action.type) {
-  case ActionType::ESCAPE:
-  case ActionType::QUIT:
-    return SDL_APP_SUCCESS;
-    break;
-  case ActionType::MOVE:
-    player_x += action.xy[0];
-    player_y += action.xy[1];
-    break;
-
-  case ActionType::NONE:
-    // This intentionally does nothing.
-    break;
+  auto action = eventHandler.dispatch(event);
+  if (action) {
+    return action->perform(player_x, player_y);
+  } else {
+    return SDL_APP_CONTINUE;
   }
-  return SDL_APP_CONTINUE;
 }
 
 void SDL_AppQuit(void *data, SDL_AppResult) {
   auto ecs = static_cast<flecs::world *>(data);
+  ecs->release();
   delete ecs;
 }

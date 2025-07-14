@@ -4,17 +4,25 @@
 
 #include <array>
 
-enum struct ActionType {
-  QUIT,
-  MOVE,
-  ESCAPE,
-
-  NONE
+struct Action {
+  virtual SDL_AppResult perform(int &x, int &y) const = 0;
 };
 
-struct Action {
-  ActionType type;
-  std::array<int, 2> xy;
+struct ExitAction : Action {
+  virtual SDL_AppResult perform([[maybe_unused]] int &x,
+                                [[maybe_unused]] int &y) const override {
+    return SDL_APP_SUCCESS;
+  }
+};
 
-  static Action get(const SDL_Event *);
+struct MoveAction : Action {
+  std::array<int, 2> dxy;
+
+  MoveAction(int x, int y) : dxy({x, y}){};
+
+  virtual SDL_AppResult perform(int &x, int &y) const override {
+    x += dxy[0];
+    y += dxy[1];
+    return SDL_APP_CONTINUE;
+  }
 };
