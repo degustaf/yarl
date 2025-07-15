@@ -9,6 +9,7 @@
 #include "engine.hpp"
 #include "game_map.hpp"
 #include "input_handler.hpp"
+#include "room_accretion.hpp"
 
 EventHandler eventHandler;
 
@@ -38,7 +39,7 @@ SDL_AppResult SDL_AppInit(void **data, [[maybe_unused]] int argc,
   ecs->set<tcod::Context>(tcod::Context(params));
   ecs->set<tcod::Console>(ecs->get_mut<tcod::Context>().new_console());
   ecs->set<Engine>(Engine());
-  ecs->emplace<GameMap>(GameMap(map_width, map_height));
+  ecs->emplace<GameMap>(generateDungeon(map_width, map_height));
 
   ecs->entity("player")
       .set<Position>({width / 2, height / 2})
