@@ -39,11 +39,11 @@ SDL_AppResult SDL_AppInit(void **data, [[maybe_unused]] int argc,
   ecs->set<tcod::Context>(tcod::Context(params));
   ecs->set<tcod::Console>(ecs->get_mut<tcod::Context>().new_console());
   ecs->set<Engine>(Engine());
-  ecs->emplace<GameMap>(generateDungeon(map_width, map_height));
 
-  ecs->entity("player")
-      .set<Position>({width / 2, height / 2})
-      .set<Renderable>({'@', {255, 255, 255}});
+  auto player = ecs->entity("player")
+                    .set<Position>({width / 2, height / 2})
+                    .set<Renderable>({'@', {255, 255, 255}});
+  ecs->emplace<GameMap>(generateDungeon(map_width, map_height, player));
 
   ecs->entity("npc")
       .set<Position>({width / 2 - 5, height / 2})
