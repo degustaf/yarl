@@ -44,6 +44,7 @@ SDL_AppResult SDL_AppInit(void **data, [[maybe_unused]] int argc,
                     .set<Position>({width / 2, height / 2})
                     .set<Renderable>({'@', {255, 255, 255}});
   ecs->emplace<GameMap>(generateDungeon(map_width, map_height, player));
+  ecs->get_mut<GameMap>().update_fov(player);
 
   ecs->entity("npc")
       .set<Position>({width / 2 - 5, height / 2})
@@ -63,7 +64,9 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
   if (action) {
     auto ecs = *static_cast<flecs::world *>(appstate);
     auto player = ecs.entity("player");
-    return action->perform(player);
+    auto ret = action->perform(player);
+    ecs.get_mut<GameMap>().update_fov(player);
+    return ret;
   } else {
     return SDL_APP_CONTINUE;
   }

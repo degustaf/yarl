@@ -18,6 +18,8 @@ struct RectangularRoom {
     for (auto y = y1 + 1; y < y2; y++) {
       for (auto x = x1 + 1; x < x2; x++) {
         map[{x, y}] = tile::floor_tile;
+        map.setProperties(x, y, tile::floor_tile.transparent,
+                          tile::floor_tile.walkable);
       }
     }
   }
@@ -45,9 +47,13 @@ static void tunnel_between(GameMap &map, const std::array<int, 2> &start,
 
   for (const auto &xy : tcod::BresenhamLine(start, center)) {
     map[xy] = tile::floor_tile;
+    map.setProperties(xy[0], xy[1], tile::floor_tile.transparent,
+                      tile::floor_tile.walkable);
   }
   for (const auto &xy : tcod::BresenhamLine(center, end)) {
     map[xy] = tile::floor_tile;
+    map.setProperties(xy[0], xy[1], tile::floor_tile.transparent,
+                      tile::floor_tile.walkable);
   }
 }
 
