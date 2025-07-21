@@ -1,6 +1,8 @@
 #include "game_map.hpp"
 
 #include "actor.hpp"
+#include <cstddef>
+#include <libtcod/console.h>
 
 bool GameMap::inBounds(int x, int y) const {
   return 0 <= x && x < width && 0 <= y && y < height;
@@ -10,21 +12,36 @@ bool GameMap::inBounds(std::array<int, 2> xy) const {
   return inBounds(xy[0], xy[1]);
 }
 
-tile &GameMap::operator[](std::array<int, 2> xy) {
-  return tiles[(size_t)(xy[1] * width + xy[0])];
+void GameMap::carveOut(int x, int y) {
+  walls[(size_t)(y * width + x)] = false;
+  setProperties(x, y, true, true);
 }
 
-const tile &GameMap::operator[](std::array<int, 2> xy) const {
-  return tiles[(size_t)(xy[1] * width + xy[0])];
-}
+static const auto floor_light =
+    TCOD_ConsoleTile{' ', {255, 255, 255, 255}, {200, 180, 50, 255}};
+static const auto floor_dark =
+    TCOD_ConsoleTile{' ', {255, 255, 255, 255}, {50, 50, 150, 255}};
+
+static const auto wall_light =
+    TCOD_ConsoleTile{' ', {255, 255, 255, 255}, {130, 110, 50, 255}};
+static const auto wall_dark =
+    TCOD_ConsoleTile{' ', {255, 255, 255, 255}, {0, 0, 100, 255}};
+
+static const auto shroud =
+    TCOD_ConsoleTile{' ', {255, 255, 255, 255}, {0, 0, 0, 255}};
 
 void GameMap::render(tcod::Console &console) const {
   for (auto y = 0; y < height; y++) {
     for (auto x = 0; x < width; x++) {
-      console.at(x, y) = isInFov(x, y) ? tiles[(size_t)(y * width + x)].light
-                         : explored[(size_t)(y * width + x)]
-                             ? tiles[(size_t)(y * width + x)].dark
-                             : tile::shroud;
+      if (isInFov(x, y)) {
+        console.at(x, y) =
+            walls[(size_t)(y * width + x)] ? wall_light : floor_light;
+      } else if (explored[(size_t)(y * width + x)]) {
+        console.at(x, y) =
+            walls[(size_t)(y * width + x)] ? wall_dark : floor_dark;
+      } else {
+        console.at(x, y) = shroud;
+      }
     }
   }
 }

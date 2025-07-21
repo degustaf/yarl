@@ -1,9 +1,10 @@
 #include "room_accretion.hpp"
-#include "actor.hpp"
 
 #include <libtcod.hpp>
 
 #include <array>
+
+#include "actor.hpp"
 
 struct RectangularRoom {
   RectangularRoom(int x, int y, int width, int height)
@@ -17,9 +18,7 @@ struct RectangularRoom {
   void carveOut(GameMap &map) const {
     for (auto y = y1 + 1; y < y2; y++) {
       for (auto x = x1 + 1; x < x2; x++) {
-        map[{x, y}] = tile::floor_tile;
-        map.setProperties(x, y, tile::floor_tile.transparent,
-                          tile::floor_tile.walkable);
+        map.carveOut(x, y);
       }
     }
   }
@@ -46,14 +45,10 @@ static void tunnel_between(GameMap &map, const std::array<int, 2> &start,
   }();
 
   for (const auto &xy : tcod::BresenhamLine(start, center)) {
-    map[xy] = tile::floor_tile;
-    map.setProperties(xy[0], xy[1], tile::floor_tile.transparent,
-                      tile::floor_tile.walkable);
+    map.carveOut(xy[0], xy[1]);
   }
   for (const auto &xy : tcod::BresenhamLine(center, end)) {
-    map[xy] = tile::floor_tile;
-    map.setProperties(xy[0], xy[1], tile::floor_tile.transparent,
-                      tile::floor_tile.walkable);
+    map.carveOut(xy[0], xy[1]);
   }
 }
 

@@ -29,7 +29,7 @@ struct MoveAction : Action {
 
   virtual SDL_AppResult perform(flecs::entity e) const override {
     auto &pos = e.get_mut<Position>();
-    if (e.world().get<GameMap>()[pos + dxy].walkable) {
+    if (e.world().get<GameMap>().isWalkable(pos + dxy)) {
       pos.move(dxy);
     }
     return SDL_APP_CONTINUE;
