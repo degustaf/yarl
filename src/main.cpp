@@ -40,15 +40,15 @@ SDL_AppResult SDL_AppInit(void **data, [[maybe_unused]] int argc,
   ecs->set<tcod::Console>(ecs->get_mut<tcod::Context>().new_console());
   ecs->set<Engine>(Engine());
 
+  auto currentMap = ecs->component<CurrentMap>().add(flecs::Exclusive);
+
   auto player = ecs->entity("player")
                     .set<Position>({width / 2, height / 2})
                     .set<Renderable>({'@', {255, 255, 255}});
-  ecs->emplace<GameMap>(generateDungeon(map_width, map_height, player));
-  ecs->get_mut<GameMap>().update_fov(player);
-
-  ecs->entity("npc")
-      .set<Position>({width / 2 - 5, height / 2})
-      .set<Renderable>({'@', {255, 255, 0}});
+  auto map = ecs->entity().emplace<GameMap>(
+      generateDungeon(map_width, map_height, player));
+  ecs->add(currentMap, map);
+  map.get_mut<GameMap>().update_fov(player);
 
   return SDL_APP_CONTINUE;
 }
@@ -65,7 +65,7 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
     auto ecs = *static_cast<flecs::world *>(appstate);
     auto player = ecs.entity("player");
     auto ret = action->perform(player);
-    ecs.get_mut<GameMap>().update_fov(player);
+    ecs.target<CurrentMap>().get_mut<GameMap>().update_fov(player);
     return ret;
   } else {
     return SDL_APP_CONTINUE;

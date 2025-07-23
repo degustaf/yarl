@@ -8,7 +8,7 @@
 void Engine::render(flecs::world ecs) const {
   auto &console = ecs.get_mut<tcod::Console>();
 
-  auto &map = ecs.get_mut<GameMap>();
+  auto &map = ecs.target<CurrentMap>().get_mut<GameMap>();
   map.render(console);
 
   auto q = ecs.query<const Position, const Renderable>();

@@ -5,6 +5,8 @@
 
 #include <vector>
 
+struct CurrentMap {};
+
 struct GameMap : TCODMap {
   GameMap(int width, int height)
       : TCODMap(width, height), width(width), height(height),
