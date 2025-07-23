@@ -8,17 +8,21 @@
 void Engine::render(flecs::world ecs) const {
   auto &console = ecs.get_mut<tcod::Console>();
 
-  auto &map = ecs.target<CurrentMap>().get_mut<GameMap>();
-  map.render(console);
+  auto map = ecs.target<CurrentMap>();
+  auto &gMap = map.get_mut<GameMap>();
+  gMap.render(console);
 
-  auto q = ecs.query<const Position, const Renderable>();
+  auto q = ecs.query_builder<const Position, const Renderable>().with(
+      flecs::ChildOf, map);
+
   q.each([&](auto p, auto r) {
-    if (map.isInFov(p.x, p.y)) {
-      auto &tile = console.at(p);
-      tile.ch = r.ch;
-      tile.fg = r.color;
+    if (gMap.isInFov(p.x, p.y)) {
+      r.render(console, p);
     }
   });
+
+  auto player = ecs.lookup("player");
+  player.get<Renderable>().render(console, player.get<Position>());
 
   ecs.get_mut<tcod::Context>().present(console);
   console.clear();

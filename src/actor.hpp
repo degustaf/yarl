@@ -13,6 +13,9 @@ struct Position {
   Position operator+(std::array<int, 2> dxy) const {
     return {x + dxy[0], y + dxy[1]};
   };
+  bool operator==(const Position &rhs) const {
+    return x == rhs.x && y == rhs.y;
+  };
 
   void move(std::array<int, 2> dxy) {
     x += dxy[0];
@@ -26,4 +29,6 @@ struct Position {
 struct Renderable {
   int32_t ch;
   tcod::ColorRGB color;
+
+  void render(tcod::Console &console, const Position &pos) const;
 };

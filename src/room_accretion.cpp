@@ -55,8 +55,34 @@ static void tunnel_between(GameMap &map, const std::array<int, 2> &start,
 static const auto ROOM_MAX_SIZE = 10;
 static const auto ROOM_MIN_SIZE = 6;
 static const auto MAX_ROOMS = 30;
+static const auto MAX_MONSTERS_PER_ROOMS = 2;
 
-GameMap generateDungeon(int width, int height, flecs::entity player) {
+static void place_entities(flecs::entity map, const RectangularRoom &r,
+                           TCODRandom &rng) {
+  const auto monster_count = rng.getInt(0, MAX_MONSTERS_PER_ROOMS);
+
+  for (auto i = 0; i < monster_count; i++) {
+    auto x = rng.getInt(r.x1 + 1, r.x2 - 1);
+    auto y = rng.getInt(r.y1 + 1, r.y2 - 1);
+    auto pos = Position(x, y);
+
+    auto q = map.world()
+                 .query_builder<const Position>()
+                 .with(flecs::ChildOf, map)
+                 .build();
+    auto e = q.find([&](const auto &p) { return p == pos; });
+    if (e == e.null()) {
+      if (rng.getFloat(0.0f, 0.1f) < 0.8) {
+        // TODO place Orc
+      } else {
+        // TODO place Troll
+      }
+    }
+  }
+}
+
+GameMap generateDungeon(flecs::entity map, int width, int height,
+                        flecs::entity player) {
   auto dungeon = GameMap(width, height);
 
   auto rooms = std::array<RectangularRoom, MAX_ROOMS>();
@@ -86,7 +112,9 @@ GameMap generateDungeon(int width, int height, flecs::entity player) {
       player.get_mut<Position>() = new_room.center();
     } else {
       tunnel_between(dungeon, rooms[roomCount - 1].center(), new_room.center());
+      place_entities(map, new_room, rng);
     }
+
     rooms[roomCount] = new_room;
     roomCount++;
   }

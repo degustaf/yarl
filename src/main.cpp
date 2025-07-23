@@ -45,8 +45,8 @@ SDL_AppResult SDL_AppInit(void **data, [[maybe_unused]] int argc,
   auto player = ecs->entity("player")
                     .set<Position>({width / 2, height / 2})
                     .set<Renderable>({'@', {255, 255, 255}});
-  auto map = ecs->entity().emplace<GameMap>(
-      generateDungeon(map_width, map_height, player));
+  auto map = ecs->entity();
+  map.emplace<GameMap>(generateDungeon(map, map_width, map_height, player));
   ecs->add(currentMap, map);
   map.get_mut<GameMap>().update_fov(player);
 
