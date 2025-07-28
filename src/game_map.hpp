@@ -5,6 +5,8 @@
 
 #include <vector>
 
+#include "actor.hpp"
+
 struct CurrentMap {};
 
 struct GameMap : TCODMap {
@@ -25,6 +27,9 @@ struct GameMap : TCODMap {
 
   void render(tcod::Console &console) const;
   void update_fov(flecs::entity player);
+
+  static flecs::entity get_blocking_entity(flecs::entity map,
+                                           const Position &pos);
 
 private:
   int width;

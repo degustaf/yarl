@@ -3,6 +3,7 @@
 #include <libtcod.hpp>
 
 #include <array>
+#include <cassert>
 
 #include "actor.hpp"
 
@@ -66,16 +67,19 @@ static void place_entities(flecs::entity map, const RectangularRoom &r,
     auto y = rng.getInt(r.y1 + 1, r.y2 - 1);
     auto pos = Position(x, y);
 
-    auto q = map.world()
-                 .query_builder<const Position>()
-                 .with(flecs::ChildOf, map)
-                 .build();
+    auto ecs = map.world();
+    auto q =
+        ecs.query_builder<const Position>().with(flecs::ChildOf, map).build();
     auto e = q.find([&](const auto &p) { return p == pos; });
     if (e == e.null()) {
-      if (rng.getFloat(0.0f, 0.1f) < 0.8) {
-        // TODO place Orc
+      if (rng.getFloat(0.0f, 1.0f) < 0.8) {
+        auto orc = ecs.lookup("module::orc");
+        assert(orc);
+        ecs.entity().is_a(orc).set<Position>(pos).add(flecs::ChildOf, map);
       } else {
-        // TODO place Troll
+        auto troll = ecs.lookup("module::troll");
+        assert(troll);
+        ecs.entity().is_a(troll).set<Position>(pos).add(flecs::ChildOf, map);
       }
     }
   }

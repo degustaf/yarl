@@ -4,6 +4,7 @@
 
 #include <array>
 #include <cstdint>
+#include <string>
 
 struct Position {
   Position() : x(0), y(0){};
@@ -32,3 +33,9 @@ struct Renderable {
 
   void render(tcod::Console &console, const Position &pos) const;
 };
+
+struct Named {
+  std::string name;
+};
+
+struct BlocksMovement {};

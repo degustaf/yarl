@@ -9,6 +9,7 @@
 #include "engine.hpp"
 #include "game_map.hpp"
 #include "input_handler.hpp"
+#include "module.hpp"
 #include "room_accretion.hpp"
 
 EventHandler eventHandler;
@@ -36,18 +37,18 @@ SDL_AppResult SDL_AppInit(void **data, [[maybe_unused]] int argc,
 
   auto *ecs = new flecs::world();
   *data = ecs;
+  ecs->import <module>();
   ecs->set<tcod::Context>(tcod::Context(params));
   ecs->set<tcod::Console>(ecs->get_mut<tcod::Context>().new_console());
   ecs->set<Engine>(Engine());
-
-  auto currentMap = ecs->component<CurrentMap>().add(flecs::Exclusive);
 
   auto player = ecs->entity("player")
                     .set<Position>({width / 2, height / 2})
                     .set<Renderable>({'@', {255, 255, 255}});
   auto map = ecs->entity();
   map.emplace<GameMap>(generateDungeon(map, map_width, map_height, player));
-  ecs->add(currentMap, map);
+
+  ecs->add<CurrentMap>(map);
   map.get_mut<GameMap>().update_fov(player);
 
   return SDL_APP_CONTINUE;
@@ -65,6 +66,7 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
     auto ecs = *static_cast<flecs::world *>(appstate);
     auto player = ecs.entity("player");
     auto ret = action->perform(player);
+    ecs.get<Engine>().handle_enemy_turns(ecs);
     ecs.target<CurrentMap>().get_mut<GameMap>().update_fov(player);
     return ret;
   } else {

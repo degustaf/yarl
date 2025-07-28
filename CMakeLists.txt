@@ -39,6 +39,8 @@ if (MSVC)
     target_compile_options(${PROJECT_NAME} PRIVATE /utf-8)
 endif()
 
+add_compile_definitions(FLECS_CPP_NO_AUTO_REGISTRATION)
+
 find_package(SDL3 CONFIG REQUIRED)
 find_package(libtcod CONFIG REQUIRED)
 find_package(flecs)

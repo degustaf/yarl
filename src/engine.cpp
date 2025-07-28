@@ -2,6 +2,8 @@
 
 #include <libtcod.hpp>
 
+#include <iostream>
+
 #include "actor.hpp"
 #include "game_map.hpp"
 
@@ -26,4 +28,15 @@ void Engine::render(flecs::world ecs) const {
 
   ecs.get_mut<tcod::Context>().present(console);
   console.clear();
+}
+
+void Engine::handle_enemy_turns(flecs::world ecs) const {
+  auto map = ecs.target<CurrentMap>();
+
+  auto q = ecs.query_builder<const Named>().with(flecs::ChildOf, map);
+
+  q.each([](auto name) {
+    std::cout << "The " << name.name
+              << " wonders when it will get to take a real turn.\n";
+  });
 }

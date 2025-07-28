@@ -8,13 +8,13 @@ std::unique_ptr<Action> EventHandler::dispatch(SDL_Event *event) const {
   case SDL_EVENT_KEY_DOWN:
     switch (event->key.scancode) {
     case SDL_SCANCODE_UP:
-      return std::make_unique<MoveAction>(0, -1);
+      return std::make_unique<BumpAction>(0, -1);
     case SDL_SCANCODE_DOWN:
-      return std::make_unique<MoveAction>(0, 1);
+      return std::make_unique<BumpAction>(0, 1);
     case SDL_SCANCODE_LEFT:
-      return std::make_unique<MoveAction>(-1, 0);
+      return std::make_unique<BumpAction>(-1, 0);
     case SDL_SCANCODE_RIGHT:
-      return std::make_unique<MoveAction>(1, 0);
+      return std::make_unique<BumpAction>(1, 0);
 
     case SDL_SCANCODE_ESCAPE:
       return std::make_unique<ExitAction>();

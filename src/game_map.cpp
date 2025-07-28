@@ -56,3 +56,13 @@ void GameMap::update_fov(flecs::entity player) {
     }
   }
 }
+
+flecs::entity GameMap::get_blocking_entity(flecs::entity map,
+                                           const Position &pos) {
+  auto q = map.world()
+               .query_builder<const Position>()
+               .with(flecs::ChildOf, map)
+               .with<BlocksMovement>()
+               .build();
+  return q.find([&](const auto &p) { return p == pos; });
+}
