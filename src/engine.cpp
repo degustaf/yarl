@@ -2,11 +2,10 @@
 
 #include <libtcod.hpp>
 
-#include <optional>
-
 #include "actor.hpp"
 #include "ai.hpp"
 #include "game_map.hpp"
+#include "render_functions.hpp"
 
 void Engine::render(flecs::world ecs) const {
   auto &console = ecs.get_mut<tcod::Console>();
@@ -32,8 +31,7 @@ void Engine::render(flecs::world ecs) const {
   player.get<Renderable>().render(console, player.get<Position>());
 
   auto fighter = player.get<Fighter>();
-  auto msg = tcod::stringf("HP: %d/%d", fighter.hp(), fighter.max_hp);
-  tcod::print(console, {1, 47}, msg, std::nullopt, std::nullopt);
+  renderBar(console, fighter.hp(), fighter.max_hp, 20);
 
   ecs.get_mut<tcod::Context>().present(console);
   console.clear();

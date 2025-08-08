@@ -17,17 +17,17 @@ void GameMap::carveOut(int x, int y) {
   setProperties(x, y, true, true);
 }
 
-static const auto floor_light =
+static constexpr auto floor_light =
     TCOD_ConsoleTile{' ', {255, 255, 255, 255}, {200, 180, 50, 255}};
-static const auto floor_dark =
+static constexpr auto floor_dark =
     TCOD_ConsoleTile{' ', {255, 255, 255, 255}, {50, 50, 150, 255}};
 
-static const auto wall_light =
+static constexpr auto wall_light =
     TCOD_ConsoleTile{' ', {255, 255, 255, 255}, {130, 110, 50, 255}};
-static const auto wall_dark =
+static constexpr auto wall_dark =
     TCOD_ConsoleTile{' ', {255, 255, 255, 255}, {0, 0, 100, 255}};
 
-static const auto shroud =
+static constexpr auto shroud =
     TCOD_ConsoleTile{' ', {255, 255, 255, 255}, {0, 0, 0, 255}};
 
 void GameMap::render(tcod::Console &console) const {
