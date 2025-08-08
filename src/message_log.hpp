@@ -1,0 +1,26 @@
+#pragma once
+
+#include <string>
+#include <vector>
+
+#include <libtcod.hpp>
+
+#include "color.hpp"
+
+struct Message {
+  const std::string plain_text;
+  const tcod::ColorRGB fg;
+  int count = 1;
+
+  std::string fullText(void) const;
+};
+
+struct MessageLog {
+  void addMessage(const std::string &text, tcod::ColorRGB fg = color::white,
+                  bool stack = true);
+  void render(tcod::Console &console, int x, int y, int width,
+              int height) const;
+
+private:
+  std::vector<Message> messages;
+};

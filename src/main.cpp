@@ -17,7 +17,7 @@ SDL_AppResult SDL_AppInit(void **data, [[maybe_unused]] int argc,
   int height = 50;
 
   int map_width = 80;
-  int map_height = 45;
+  int map_height = 43;
 
   // Configure the context.
   auto params = TCOD_ContextParams{};
@@ -49,6 +49,10 @@ SDL_AppResult SDL_AppInit(void **data, [[maybe_unused]] int argc,
 
   ecs->add<CurrentMap>(map);
   map.get_mut<GameMap>().update_fov(player);
+
+  ecs->get_mut<Engine>().messageLog.addMessage(
+      "Hello and welcome, adventurer, to yet another dungeon!",
+      color::welcomeText);
 
   return SDL_APP_CONTINUE;
 }

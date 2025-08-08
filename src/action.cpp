@@ -1,6 +1,12 @@
 #include "action.hpp"
 
-#include <iostream>
+#include <libtcod.hpp>
+#include <libtcod/console_types.hpp>
+
+#include "actor.hpp"
+#include "color.hpp"
+#include "engine.hpp"
+#include "game_map.hpp"
 
 SDL_AppResult MoveAction::perform(flecs::entity e) const {
   auto &pos = e.get_mut<Position>();
@@ -16,19 +22,28 @@ SDL_AppResult MoveAction::perform(flecs::entity e) const {
 
 SDL_AppResult MeleeAction::perform(flecs::entity e) const {
   auto &pos = e.get_mut<Position>();
-  auto mapEntity = e.world().target<CurrentMap>();
+  auto ecs = e.world();
+  auto mapEntity = ecs.target<CurrentMap>();
   auto target = GameMap::get_blocking_entity(mapEntity, pos + dxy);
+
+  auto attack_color =
+      (e == ecs.lookup("player")) ? color::playerAtk : color::EnemyAtk;
 
   if (target != target.null()) {
     const auto &attacker = e.get<Fighter>();
     auto &defender = target.get_mut<Fighter>();
     auto damage = attacker.power - defender.defense;
-    std::cout << e.get<Named>().name << " attacks " << target.get<Named>().name;
     if (damage > 0) {
-      std::cout << " for " << damage << " hit points\n";
+      auto msg = tcod::stringf("%s attacks %s for %d hit points",
+                               e.get<Named>().name.c_str(),
+                               target.get<Named>().name.c_str(), damage);
+      ecs.get_mut<Engine>().messageLog.addMessage(msg, attack_color);
       defender.set_hp(defender.hp() - damage, target);
     } else {
-      std::cout << " but does no damge\n";
+      auto msg = tcod::stringf("%s attacks %s but does no damage",
+                               e.get<Named>().name.c_str(),
+                               target.get<Named>().name.c_str());
+      ecs.get_mut<Engine>().messageLog.addMessage(msg, attack_color);
     }
   }
 

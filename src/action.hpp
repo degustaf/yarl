@@ -5,9 +5,6 @@
 
 #include <array>
 
-#include "actor.hpp"
-#include "game_map.hpp"
-
 struct Action {
   virtual SDL_AppResult perform(flecs::entity e) const = 0;
   virtual ~Action() = default;

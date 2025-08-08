@@ -1,10 +1,9 @@
 #include "actor.hpp"
 
-#include <iostream>
-
 #include "ai.hpp"
 #include "engine.hpp"
 #include "input_handler.hpp"
+#include <libtcod/console_printing.hpp>
 
 const std::vector<RenderOrder> allRenderOrders = {Corpse, Item, Actor};
 
@@ -27,11 +26,13 @@ void Fighter::die(flecs::entity self) {
 
   auto &name = self.get_mut<Named>();
   auto player = ecs.lookup("player");
+  auto &engine = ecs.get_mut<Engine>();
   if (self == player) {
-    std::cout << "You died!\n";
-    ecs.get_mut<Engine>().eventHandler.dispatch = GameOverDispatch;
+    engine.messageLog.addMessage("You died!", color::playerDie);
+    engine.eventHandler.dispatch = GameOverDispatch;
   } else {
-    std::cout << name.name << " is dead!\n";
+    auto msg = tcod::stringf("%s is dead!", name.name.c_str());
+    engine.messageLog.addMessage(msg, color::EnemyDie);
   }
   name.name = "remains of " + name.name;
 }

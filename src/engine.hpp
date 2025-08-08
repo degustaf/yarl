@@ -3,11 +3,13 @@
 #include <flecs.h>
 
 #include "input_handler.hpp"
+#include "message_log.hpp"
 
 struct Engine {
   EventHandler eventHandler;
+  MessageLog messageLog;
 
-  Engine() : eventHandler(){};
+  Engine() = default;
   Engine(const Engine &) = delete;
   Engine &operator=(const Engine &) = delete;
   Engine(Engine &&) = default;

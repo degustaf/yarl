@@ -14,6 +14,8 @@ void Engine::render(flecs::world ecs) const {
   auto &gMap = map.get_mut<GameMap>();
   gMap.render(console);
 
+  messageLog.render(console, 21, 45, 40, 5);
+
   auto q = ecs.query_builder<const Position, const Renderable>()
                .with(flecs::ChildOf, map)
                .order_by<const Renderable>([](auto, auto r1, auto, auto r2) {
