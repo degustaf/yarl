@@ -1,16 +1,20 @@
 #pragma once
 
+#include "flecs.h"
 #include <libtcod.hpp>
 
+#include <algorithm>
 #include <array>
 #include <cstdint>
 #include <string>
+#include <vector>
 
 struct Position {
   Position() : x(0), y(0){};
   Position(int x, int y) : x(x), y(y){};
   Position(std::array<int, 2> xy) : x(xy[0]), y(xy[1]){};
   operator std::array<int, 2>() const { return {x, y}; };
+  operator std::array<size_t, 2>() const { return {(size_t)x, (size_t)y}; };
   Position operator+(std::array<int, 2> dxy) const {
     return {x + dxy[0], y + dxy[1]};
   };
@@ -27,9 +31,17 @@ struct Position {
   int y;
 };
 
+enum RenderOrder {
+  Corpse,
+  Item,
+  Actor,
+};
+extern const std::vector<RenderOrder> allRenderOrders;
+
 struct Renderable {
   int32_t ch;
   tcod::ColorRGB color;
+  RenderOrder layer;
 
   void render(tcod::Console &console, const Position &pos) const;
 };
@@ -39,3 +51,24 @@ struct Named {
 };
 
 struct BlocksMovement {};
+
+struct Fighter {
+  Fighter() : Fighter(0, 0, 0){};
+  Fighter(int hp, int defense, int power)
+      : max_hp(hp), _hp(hp), defense(defense), power(power){};
+
+  int hp(void) const { return _hp; }
+  void set_hp(int value, flecs::entity self) {
+    _hp = std::clamp(value, 0, max_hp);
+    if (_hp == 0) {
+      die(self);
+    }
+  };
+
+  void die(flecs::entity self);
+
+  const int max_hp;
+  int _hp;
+  const int defense;
+  const int power;
+};

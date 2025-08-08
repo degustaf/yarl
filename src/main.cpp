@@ -8,11 +8,8 @@
 #include "actor.hpp"
 #include "engine.hpp"
 #include "game_map.hpp"
-#include "input_handler.hpp"
 #include "module.hpp"
 #include "room_accretion.hpp"
-
-EventHandler eventHandler;
 
 SDL_AppResult SDL_AppInit(void **data, [[maybe_unused]] int argc,
                           [[maybe_unused]] char **argv) {
@@ -44,7 +41,9 @@ SDL_AppResult SDL_AppInit(void **data, [[maybe_unused]] int argc,
 
   auto player = ecs->entity("player")
                     .set<Position>({width / 2, height / 2})
-                    .set<Renderable>({'@', {255, 255, 255}});
+                    .set<Renderable>({'@', {255, 255, 255}, Actor})
+                    .set<Named>({"Player"})
+                    .emplace<Fighter>(30, 2, 5);
   auto map = ecs->entity();
   map.emplace<GameMap>(generateDungeon(map, map_width, map_height, player));
 
@@ -61,21 +60,22 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 }
 
 SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
-  auto action = eventHandler.dispatch(event);
+  auto ecs = *static_cast<flecs::world *>(appstate);
+  auto &engine = ecs.get<Engine>();
+  auto action = engine.eventHandler.dispatch(event);
   if (action) {
-    auto ecs = *static_cast<flecs::world *>(appstate);
     auto player = ecs.entity("player");
     auto ret = action->perform(player);
-    ecs.get<Engine>().handle_enemy_turns(ecs);
     ecs.target<CurrentMap>().get_mut<GameMap>().update_fov(player);
+    ecs.get<Engine>().handle_enemy_turns(ecs);
     return ret;
   } else {
     return SDL_APP_CONTINUE;
   }
 }
 
-void SDL_AppQuit(void *data, SDL_AppResult) {
-  auto ecs = static_cast<flecs::world *>(data);
-  ecs->release();
-  delete ecs;
+void SDL_AppQuit(void * /*data*/, SDL_AppResult) {
+  // auto ecs = static_cast<flecs::world *>(data);
+  // ecs->release();
+  // delete ecs;
 }

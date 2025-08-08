@@ -2,9 +2,10 @@
 
 #include <libtcod.hpp>
 
-#include <iostream>
+#include <optional>
 
 #include "actor.hpp"
+#include "ai.hpp"
 #include "game_map.hpp"
 
 void Engine::render(flecs::world ecs) const {
@@ -14,8 +15,12 @@ void Engine::render(flecs::world ecs) const {
   auto &gMap = map.get_mut<GameMap>();
   gMap.render(console);
 
-  auto q = ecs.query_builder<const Position, const Renderable>().with(
-      flecs::ChildOf, map);
+  auto q = ecs.query_builder<const Position, const Renderable>()
+               .with(flecs::ChildOf, map)
+               .order_by<const Renderable>([](auto, auto r1, auto, auto r2) {
+                 return (int)(r1->layer - r2->layer);
+               })
+               .build();
 
   q.each([&](auto p, auto r) {
     if (gMap.isInFov(p.x, p.y)) {
@@ -26,6 +31,10 @@ void Engine::render(flecs::world ecs) const {
   auto player = ecs.lookup("player");
   player.get<Renderable>().render(console, player.get<Position>());
 
+  auto fighter = player.get<Fighter>();
+  auto msg = tcod::stringf("HP: %d/%d", fighter.hp(), fighter.max_hp);
+  tcod::print(console, {1, 47}, msg, std::nullopt, std::nullopt);
+
   ecs.get_mut<tcod::Context>().present(console);
   console.clear();
 }
@@ -33,10 +42,19 @@ void Engine::render(flecs::world ecs) const {
 void Engine::handle_enemy_turns(flecs::world ecs) const {
   auto map = ecs.target<CurrentMap>();
 
-  auto q = ecs.query_builder<const Named>().with(flecs::ChildOf, map);
+  auto q = ecs.query_builder<Ai>().with(flecs::ChildOf, map).build();
 
-  q.each([](auto name) {
-    std::cout << "The " << name.name
-              << " wonders when it will get to take a real turn.\n";
+  q.run([](flecs::iter &it) {
+    while (it.next()) {
+      for (auto i : it) {
+        auto e = it.entity(i);
+        auto ai_id = it.id(0);
+        auto ai_type = static_cast<Ai *>(e.try_get_mut(ai_id));
+        auto action = ai_type->act(e);
+        if (action) {
+          action->perform(e);
+        }
+      }
+    }
   });
 }

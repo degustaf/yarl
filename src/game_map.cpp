@@ -59,6 +59,10 @@ void GameMap::update_fov(flecs::entity player) {
 
 flecs::entity GameMap::get_blocking_entity(flecs::entity map,
                                            const Position &pos) {
+  auto player = map.world().lookup("player");
+  if (player.get<Position>() == pos) {
+    return player;
+  }
   auto q = map.world()
                .query_builder<const Position>()
                .with(flecs::ChildOf, map)

@@ -2,11 +2,12 @@
 
 #include <flecs.h>
 
-struct Engine {
-  int unused; // We need this struct to have size > 0 in order to store it
-              // in flecs::world.
+#include "input_handler.hpp"
 
-  Engine() : unused(0){};
+struct Engine {
+  EventHandler eventHandler;
+
+  Engine() : eventHandler(){};
   Engine(const Engine &) = delete;
   Engine &operator=(const Engine &) = delete;
   Engine(Engine &&) = default;
