@@ -15,6 +15,5 @@ struct Engine {
   Engine(Engine &&) = default;
   Engine &operator=(Engine &&) = default;
 
-  void render(flecs::world ecs) const;
   void handle_enemy_turns(flecs::world ecs) const;
 };

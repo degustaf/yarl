@@ -59,13 +59,14 @@ SDL_AppResult SDL_AppInit(void **data, [[maybe_unused]] int argc,
 
 SDL_AppResult SDL_AppIterate(void *appstate) {
   auto ecs = *static_cast<flecs::world *>(appstate);
-  ecs.get<Engine>().render(ecs);
+  ecs.get<Engine>().eventHandler.on_render(ecs);
   return SDL_APP_CONTINUE;
 }
 
 SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
   auto ecs = *static_cast<flecs::world *>(appstate);
-  auto &engine = ecs.get<Engine>();
+  auto &engine = ecs.get_mut<Engine>();
+  ecs.get_mut<tcod::Context>().convert_event_coordinates(*event);
   auto action = engine.eventHandler.dispatch(event);
   if (action) {
     auto player = ecs.entity("player");
