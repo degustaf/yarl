@@ -29,7 +29,7 @@ void Fighter::die(flecs::entity self) {
   auto &engine = ecs.get_mut<Engine>();
   if (self == player) {
     engine.messageLog.addMessage("You died!", color::playerDie);
-    engine.eventHandler.keyDown = EventHandler::GameOverKeyDown;
+    engine.eventHandler.keyDown = &EventHandler::GameOverKeyDown;
   } else {
     auto msg = tcod::stringf("%s is dead!", name.name.c_str());
     engine.messageLog.addMessage(msg, color::EnemyDie);

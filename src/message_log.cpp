@@ -20,6 +20,17 @@ void MessageLog::addMessage(const std::string &text, tcod::ColorRGB fg,
   }
 }
 
+void MessageLog::render(tcod::Console &console, int x, int y, int width,
+                        int height) const {
+  render(console, x, y, width, height, messages.rbegin());
+}
+
+void MessageLog::render(tcod::Console &console, int x, int y, int width,
+                        int height, size_t offset) const {
+  render(console, x, y, width, height,
+         std::reverse_iterator(messages.begin() + offset + 1));
+}
+
 struct substringIndices {
   std::string::size_type pos;
   std::string::size_type count;
@@ -41,10 +52,11 @@ static std::vector<substringIndices> wrap(const std::string &str,
   return ret;
 }
 
-void MessageLog::render(tcod::Console &console, int x, int y, int width,
-                        int height) const {
+void MessageLog::render(
+    tcod::Console &console, int x, int y, int width, int height,
+    std::vector<Message>::const_reverse_iterator rbegin) const {
   auto y_offset = height - 1;
-  for (auto it = messages.rbegin(); it != messages.rend(); it++) {
+  for (auto it = rbegin; it != messages.rend(); it++) {
     assert(width >= 0);
     const auto &str = it->fullText();
     auto lines = wrap(str, (std::string::size_type)width);

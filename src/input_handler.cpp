@@ -1,18 +1,23 @@
 #include "input_handler.hpp"
 
+#include <algorithm>
+#include <libtcod/console.hpp>
+#include <optional>
+
 #include <libtcod.hpp>
 
 #include "engine.hpp"
 #include "game_map.hpp"
 #include "render_functions.hpp"
 
-std::unique_ptr<Action> EventHandler::dispatch(SDL_Event *event) {
+std::unique_ptr<Action> EventHandler::dispatch(SDL_Event *event,
+                                               Engine &engine) {
   switch (event->type) {
   case SDL_EVENT_QUIT:
     return std::make_unique<ExitAction>();
 
   case SDL_EVENT_KEY_DOWN:
-    return keyDown(&event->key);
+    return (this->*keyDown)(&event->key, engine);
 
   case SDL_EVENT_MOUSE_MOTION:
     mouse_loc[0] = (int)event->motion.x;
@@ -24,7 +29,8 @@ std::unique_ptr<Action> EventHandler::dispatch(SDL_Event *event) {
   }
 }
 
-std::unique_ptr<Action> EventHandler::MainGameKeyDown(SDL_KeyboardEvent *key) {
+std::unique_ptr<Action> EventHandler::MainGameKeyDown(SDL_KeyboardEvent *key,
+                                                      Engine &engine) {
   switch (key->scancode) {
   case SDL_SCANCODE_UP:
   case SDL_SCANCODE_KP_8:
@@ -64,6 +70,13 @@ std::unique_ptr<Action> EventHandler::MainGameKeyDown(SDL_KeyboardEvent *key) {
   case SDL_SCANCODE_CLEAR:
     return std::make_unique<WaitAction>();
 
+  case SDL_SCANCODE_V:
+    keyDown = &EventHandler::HistoryKeyDown;
+    on_render = &EventHandler::HistoryOnRender;
+    log_length = engine.messageLog.size();
+    cursor = log_length - 1;
+    return nullptr;
+
   case SDL_SCANCODE_ESCAPE:
     return std::make_unique<ExitAction>();
 
@@ -72,12 +85,50 @@ std::unique_ptr<Action> EventHandler::MainGameKeyDown(SDL_KeyboardEvent *key) {
   }
 }
 
-std::unique_ptr<Action> EventHandler::GameOverKeyDown(SDL_KeyboardEvent *key) {
+std::unique_ptr<Action> EventHandler::GameOverKeyDown(SDL_KeyboardEvent *key,
+                                                      Engine &) {
   switch (key->scancode) {
   case SDL_SCANCODE_ESCAPE:
     return std::make_unique<ExitAction>();
 
   default:
+    return nullptr;
+  }
+}
+
+std::unique_ptr<Action> EventHandler::HistoryKeyDown(SDL_KeyboardEvent *key,
+                                                     Engine &) {
+  switch (key->scancode) {
+  case SDL_SCANCODE_UP:
+    if (cursor == 0) {
+      cursor = log_length - 1;
+    } else {
+      cursor--;
+    }
+    return nullptr;
+  case SDL_SCANCODE_DOWN:
+    if (cursor == log_length - 1) {
+      cursor = 0;
+    } else {
+      cursor++;
+    }
+    return nullptr;
+  case SDL_SCANCODE_PAGEUP:
+    cursor = cursor < 10 ? 0 : cursor - 10;
+    return nullptr;
+  case SDL_SCANCODE_PAGEDOWN:
+    cursor = std::min(cursor + 10, log_length - 1);
+    return nullptr;
+  case SDL_SCANCODE_HOME:
+    cursor = 0;
+    return nullptr;
+  case SDL_SCANCODE_END:
+    cursor = log_length - 1;
+    return nullptr;
+
+  default:
+    keyDown = &EventHandler::MainGameKeyDown;
+    on_render = &EventHandler::MainGameOnRender;
     return nullptr;
   }
 }
@@ -110,9 +161,25 @@ void EventHandler::MainGameOnRender(flecs::world ecs) {
 
   auto fighter = player.get<Fighter>();
   renderBar(console, fighter.hp(), fighter.max_hp, 20);
-  renderNamesAtMouseLocation(console, {21, 44}, engine.eventHandler.mouse_loc,
-                             map);
+  renderNamesAtMouseLocation(console, {21, 44}, mouse_loc, map);
+}
 
-  ecs.get_mut<tcod::Context>().present(console);
-  console.clear();
+static constexpr auto DECORATION = std::array<int, 9>{
+    0x250c, 0x2500, 0x2510, 0x2502, 0, 0x2502, 0x2514, 0x2500, 0x2518};
+
+void EventHandler::HistoryOnRender(flecs::world ecs) {
+  MainGameOnRender(ecs);
+  auto &console = ecs.get_mut<tcod::Console>();
+  auto logConsole =
+      tcod::Console(console.get_width() - 6, console.get_height() - 6);
+  tcod::draw_frame(logConsole,
+                   {0, 0, logConsole.get_width(), logConsole.get_height()},
+                   DECORATION, std::nullopt, std::nullopt);
+  tcod::print_rect(logConsole, {0, 0, logConsole.get_width(), 1},
+                   "┤Message history├", std::nullopt, std::nullopt,
+                   TCOD_CENTER);
+  ecs.get<Engine>().messageLog.render(logConsole, 1, 1,
+                                      logConsole.get_width() - 2,
+                                      logConsole.get_height() - 2, cursor);
+  tcod::blit(console, logConsole, {3, 3});
 }

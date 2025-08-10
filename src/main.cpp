@@ -59,7 +59,11 @@ SDL_AppResult SDL_AppInit(void **data, [[maybe_unused]] int argc,
 
 SDL_AppResult SDL_AppIterate(void *appstate) {
   auto ecs = *static_cast<flecs::world *>(appstate);
-  ecs.get<Engine>().eventHandler.on_render(ecs);
+  auto &console = ecs.get_mut<tcod::Console>();
+  console.clear();
+  auto eventHandler = ecs.get<Engine>().eventHandler;
+  (eventHandler.*(eventHandler.on_render))(ecs);
+  ecs.get_mut<tcod::Context>().present(console);
   return SDL_APP_CONTINUE;
 }
 
@@ -67,12 +71,12 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
   auto ecs = *static_cast<flecs::world *>(appstate);
   auto &engine = ecs.get_mut<Engine>();
   ecs.get_mut<tcod::Context>().convert_event_coordinates(*event);
-  auto action = engine.eventHandler.dispatch(event);
+  auto action = engine.eventHandler.dispatch(event, engine);
   if (action) {
     auto player = ecs.entity("player");
     auto ret = action->perform(player);
     ecs.target<CurrentMap>().get_mut<GameMap>().update_fov(player);
-    ecs.get<Engine>().handle_enemy_turns(ecs);
+    engine.handle_enemy_turns(ecs);
     return ret;
   } else {
     return SDL_APP_CONTINUE;
