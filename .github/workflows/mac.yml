@@ -24,7 +24,7 @@ jobs:
           submodules: true
       - name: Fetch Vcpkg commits
         working-directory: vcpkg
-        run: git fetch --depth=30
+        run: git fetch --unshallow
       - name: Install local vcpkg
         working-directory: vcpkg
         run: ./bootstrap-vcpkg.sh
