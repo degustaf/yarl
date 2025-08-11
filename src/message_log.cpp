@@ -1,6 +1,8 @@
 #include "message_log.hpp"
 
 #include <cassert>
+#include <cstddef>
+#include <iterator>
 #include <optional>
 #include <vector>
 
@@ -28,7 +30,7 @@ void MessageLog::render(tcod::Console &console, int x, int y, int width,
 void MessageLog::render(tcod::Console &console, int x, int y, int width,
                         int height, size_t offset) const {
   render(console, x, y, width, height,
-         std::reverse_iterator(messages.begin() + offset + 1));
+         std::reverse_iterator(messages.begin() + (std::ptrdiff_t)offset + 1));
 }
 
 struct substringIndices {
