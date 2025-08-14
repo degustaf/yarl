@@ -56,20 +56,23 @@ static void tunnel_between(GameMap &map, const std::array<int, 2> &start,
 static const auto ROOM_MAX_SIZE = 10;
 static const auto ROOM_MIN_SIZE = 6;
 static const auto MAX_ROOMS = 30;
-static const auto MAX_MONSTERS_PER_ROOMS = 2;
+static const auto MAX_MONSTERS_PER_ROOM = 2;
+static const auto MAX_ITEMS_PER_ROOM = 2;
 
 static void place_entities(flecs::entity map, const RectangularRoom &r,
                            TCODRandom &rng) {
-  const auto monster_count = rng.getInt(0, MAX_MONSTERS_PER_ROOMS);
+  const auto monster_count = rng.getInt(0, MAX_MONSTERS_PER_ROOM);
+  const auto item_count = rng.getInt(0, MAX_ITEMS_PER_ROOM);
+
+  auto ecs = map.world();
+  auto q =
+      ecs.query_builder<const Position>().with(flecs::ChildOf, map).build();
 
   for (auto i = 0; i < monster_count; i++) {
     auto x = rng.getInt(r.x1 + 1, r.x2 - 1);
     auto y = rng.getInt(r.y1 + 1, r.y2 - 1);
     auto pos = Position(x, y);
 
-    auto ecs = map.world();
-    auto q =
-        ecs.query_builder<const Position>().with(flecs::ChildOf, map).build();
     auto e = q.find([&](const auto &p) { return p == pos; });
     if (e == e.null()) {
       if (rng.getFloat(0.0f, 1.0f) < 0.8) {
@@ -81,6 +84,19 @@ static void place_entities(flecs::entity map, const RectangularRoom &r,
         assert(troll);
         ecs.entity().is_a(troll).set<Position>(pos).add(flecs::ChildOf, map);
       }
+    }
+  }
+
+  for (auto i = 0; i < item_count; i++) {
+    auto x = rng.getInt(r.x1 + 1, r.x2 - 1);
+    auto y = rng.getInt(r.y1 + 1, r.y2 - 1);
+    auto pos = Position(x, y);
+
+    auto e = q.find([&](const auto &p) { return p == pos; });
+    if (e == e.null()) {
+      auto potion = ecs.lookup("module::healthPotion");
+      assert(potion);
+      ecs.entity().is_a(potion).set<Position>(pos).add(flecs::ChildOf, map);
     }
   }
 }

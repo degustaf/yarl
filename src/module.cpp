@@ -4,6 +4,7 @@
 
 #include "actor.hpp"
 #include "ai.hpp"
+#include "consumable.hpp"
 #include "engine.hpp"
 #include "game_map.hpp"
 
@@ -25,6 +26,8 @@ module::module(flecs::world ecs) {
   ecs.component<Ai>();
   ecs.component<HostileAi>().is_a<Ai>();
 
+  ecs.component<HealingConsumable>();
+
   // engine.hpp
   ecs.component<Engine>();
 
@@ -45,4 +48,9 @@ module::module(flecs::world ecs) {
       .add<BlocksMovement>()
       .set<HostileAi>({})
       .emplace<Fighter>(16, 1, 4);
+
+  ecs.prefab("healthPotion")
+      .set<Renderable>({'!', {127, 0, 255}, Item})
+      .set<Named>({"Health Potion"})
+      .set<HealingConsumable>({4});
 }

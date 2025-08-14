@@ -5,6 +5,7 @@
 #include <flecs.h>
 #include <libtcod.hpp>
 
+#include "action.hpp"
 #include "actor.hpp"
 #include "engine.hpp"
 #include "game_map.hpp"
@@ -75,8 +76,13 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
   if (action) {
     auto player = ecs.entity("player");
     auto ret = action->perform(player);
-    ecs.target<CurrentMap>().get_mut<GameMap>().update_fov(player);
-    engine.handle_enemy_turns(ecs);
+    if (ret.msg.size() > 0) {
+      engine.messageLog.addMessage(ret.msg, ret.fg);
+    }
+    if (ret) {
+      ecs.target<CurrentMap>().get_mut<GameMap>().update_fov(player);
+      engine.handle_enemy_turns(ecs);
+    }
     return ret;
   } else {
     return SDL_APP_CONTINUE;

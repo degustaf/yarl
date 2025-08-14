@@ -1,11 +1,34 @@
 #include "actor.hpp"
 
+#include <algorithm>
+
 #include "ai.hpp"
 #include "engine.hpp"
 #include "input_handler.hpp"
-#include <libtcod/console_printing.hpp>
 
 const std::vector<RenderOrder> allRenderOrders = {Corpse, Item, Actor};
+
+void Fighter::set_hp(int value, flecs::entity self) {
+  _hp = std::clamp(value, 0, max_hp);
+  if (_hp == 0) {
+    die(self);
+  }
+}
+
+int Fighter::heal(int amount, flecs::entity self) {
+  if (_hp == max_hp) {
+    return 0;
+  }
+  auto amountRecovered = -_hp;
+  set_hp(_hp + amount, self);
+  amountRecovered += _hp;
+
+  return amountRecovered;
+}
+
+void Fighter::take_damage(int amount, flecs::entity self) {
+  set_hp(_hp - amount, self);
+}
 
 void Fighter::die(flecs::entity self) {
   auto &render = self.get_mut<Renderable>();

@@ -1,9 +1,8 @@
 #pragma once
 
-#include "flecs.h"
+#include <flecs.h>
 #include <libtcod.hpp>
 
-#include <algorithm>
 #include <array>
 #include <cstdint>
 #include <string>
@@ -58,13 +57,9 @@ struct Fighter {
       : max_hp(hp), _hp(hp), defense(defense), power(power){};
 
   int hp(void) const { return _hp; }
-  void set_hp(int value, flecs::entity self) {
-    _hp = std::clamp(value, 0, max_hp);
-    if (_hp == 0) {
-      die(self);
-    }
-  };
-
+  void set_hp(int value, flecs::entity self);
+  int heal(int amount, flecs::entity self);
+  void take_damage(int amount, flecs::entity self);
   void die(flecs::entity self);
 
   const int max_hp;
