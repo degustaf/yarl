@@ -7,6 +7,7 @@
 #include "color.hpp"
 #include "consumable.hpp"
 #include "game_map.hpp"
+#include "inventory.hpp"
 
 ActionResult MoveAction::perform(flecs::entity e) const {
   auto &pos = e.get_mut<Position>();
@@ -66,4 +67,25 @@ ActionResult ItemAction::perform(flecs::entity e) const {
     return item.get_mut<HealingConsumable>().activate(item, e);
   }
   assert(false);
+}
+
+ActionResult PickupAction::perform(flecs::entity e) const {
+  auto &inventory = e.get<Inventory>();
+  if (!inventory.hasRoom(e)) {
+    return {ActionResultType::Failure, "Your inventory is full.",
+            color::impossible};
+  }
+
+  auto &pos = e.get<Position>();
+  auto q = e.world().query<const Position>();
+  auto item = q.find(
+      [&](flecs::entity item, auto &p) { return e != item && p == pos; });
+  if (item) {
+    item.add<ContainedBy>(e).remove<Position>();
+    auto msg =
+        tcod::stringf("You picked up the %s!", item.get<Named>().name.c_str());
+    return {ActionResultType::Success, msg};
+  }
+  return {ActionResultType::Failure, "There is nothing here to pick up.",
+          color::impossible};
 }

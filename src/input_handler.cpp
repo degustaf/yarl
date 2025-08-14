@@ -1,11 +1,12 @@
 #include "input_handler.hpp"
 
 #include <algorithm>
-#include <libtcod/console.hpp>
+#include <memory>
 #include <optional>
 
 #include <libtcod.hpp>
 
+#include "action.hpp"
 #include "engine.hpp"
 #include "game_map.hpp"
 #include "render_functions.hpp"
@@ -69,6 +70,8 @@ std::unique_ptr<Action> EventHandler::MainGameKeyDown(SDL_KeyboardEvent *key,
   case SDL_SCANCODE_KP_5:
   case SDL_SCANCODE_CLEAR:
     return std::make_unique<WaitAction>();
+  case SDL_SCANCODE_G:
+    return std::make_unique<PickupAction>();
 
   case SDL_SCANCODE_V:
     keyDown = &EventHandler::HistoryKeyDown;

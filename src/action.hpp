@@ -101,3 +101,8 @@ struct ItemAction : Action {
   virtual ActionResult perform(flecs::entity e) const override;
   virtual ~ItemAction() = default;
 };
+
+struct PickupAction : Action {
+  virtual ActionResult perform(flecs::entity e) const override;
+  virtual ~PickupAction() = default;
+};

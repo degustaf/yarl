@@ -7,6 +7,7 @@
 #include "consumable.hpp"
 #include "engine.hpp"
 #include "game_map.hpp"
+#include "inventory.hpp"
 
 module::module(flecs::world ecs) {
   ecs.module<module>("module");
@@ -34,6 +35,10 @@ module::module(flecs::world ecs) {
   // game_map.hpp
   ecs.component<CurrentMap>().add(flecs::Exclusive);
   ecs.component<GameMap>();
+
+  // inventory.hpp
+  ecs.component<Inventory>();
+  ecs.component<ContainedBy>().add(flecs::Exclusive);
 
   ecs.prefab("orc")
       .set<Renderable>({'o', {63, 127, 63}, Actor})
