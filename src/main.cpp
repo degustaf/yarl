@@ -5,7 +5,6 @@
 #include <flecs.h>
 #include <libtcod.hpp>
 
-#include "action.hpp"
 #include "actor.hpp"
 #include "engine.hpp"
 #include "game_map.hpp"
@@ -43,7 +42,7 @@ SDL_AppResult SDL_AppInit(void **data, [[maybe_unused]] int argc,
 
   auto player = ecs->entity("player")
                     .set<Position>({width / 2, height / 2})
-                    .set<Renderable>({'@', {255, 255, 255}, Actor})
+                    .set<Renderable>({'@', {255, 255, 255}, RenderOrder::Actor})
                     .set<Named>({"Player"})
                     .emplace<Fighter>(30, 2, 5)
                     .set<Inventory>({26});
@@ -65,30 +64,16 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
   auto &console = ecs.get_mut<tcod::Console>();
   console.clear();
   auto eventHandler = ecs.get<Engine>().eventHandler;
-  (eventHandler.*(eventHandler.on_render))(ecs);
+  (eventHandler.*(eventHandler.on_render))(ecs, console);
   ecs.get_mut<tcod::Context>().present(console);
   return SDL_APP_CONTINUE;
 }
 
 SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
   auto ecs = *static_cast<flecs::world *>(appstate);
-  auto &engine = ecs.get_mut<Engine>();
+  auto &eh = ecs.get_mut<Engine>().eventHandler;
   ecs.get_mut<tcod::Context>().convert_event_coordinates(*event);
-  auto action = engine.eventHandler.dispatch(event, engine);
-  if (action) {
-    auto player = ecs.entity("player");
-    auto ret = action->perform(player);
-    if (ret.msg.size() > 0) {
-      engine.messageLog.addMessage(ret.msg, ret.fg);
-    }
-    if (ret) {
-      ecs.target<CurrentMap>().get_mut<GameMap>().update_fov(player);
-      engine.handle_enemy_turns(ecs);
-    }
-    return ret;
-  } else {
-    return SDL_APP_CONTINUE;
-  }
+  return (eh.*(eh.handle_action))(ecs, eh.dispatch(event, ecs));
 }
 
 void SDL_AppQuit(void * /*data*/, SDL_AppResult) {

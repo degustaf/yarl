@@ -30,7 +30,7 @@ struct Position {
   int y;
 };
 
-enum RenderOrder {
+enum class RenderOrder {
   Corpse,
   Item,
   Actor,

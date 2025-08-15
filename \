@@ -1,46 +1,16 @@
 #include "input_handler.hpp"
 
+#include <SDL3/SDL_scancode.h>
 #include <algorithm>
-#include <libtcod/console_types.hpp>
+#include <memory>
 #include <optional>
 
 #include <libtcod.hpp>
 
 #include "action.hpp"
-#include "color.hpp"
 #include "engine.hpp"
 #include "game_map.hpp"
-#include "inventory.hpp"
 #include "render_functions.hpp"
-
-static inline void restoreMainGame(EventHandler &e) {
-  e.keyDown = &EventHandler::MainGameKeyDown;
-  e.click = &EventHandler::AskUserClick;
-  e.on_render = &EventHandler::MainGameOnRender;
-  e.handle_action = &EventHandler::MainGameHandleAction;
-}
-
-static inline void makeHistoryHandler(EventHandler &e, flecs::world ecs) {
-  e.keyDown = &EventHandler::HistoryKeyDown;
-  e.on_render = &EventHandler::HistoryOnRender;
-  e.log_length = ecs.get<Engine>().messageLog.size();
-  e.cursor = e.log_length - 1;
-}
-
-template <char const *TITLE,
-          std::unique_ptr<Action> (EventHandler::*f)(flecs::entity)>
-static inline void makeInventoryHandler(EventHandler &e, flecs::world ecs) {
-  e.keyDown = &EventHandler::InventoryKeyDown;
-  e.click = &EventHandler::AskUserClick;
-  e.on_render = &EventHandler::InventoryOnRender;
-  e.handle_action = &EventHandler::AskUserHandleAction;
-  e.item_selected = f;
-  e.title = TITLE;
-  e.q = ecs.query_builder<const Named>()
-            .with<ContainedBy>(ecs.lookup("player"))
-            .with<Item>()
-            .build();
-}
 
 std::unique_ptr<Action> EventHandler::dispatch(SDL_Event *event,
                                                flecs::world ecs) {
@@ -49,7 +19,7 @@ std::unique_ptr<Action> EventHandler::dispatch(SDL_Event *event,
     return std::make_unique<ExitAction>();
 
   case SDL_EVENT_KEY_DOWN:
-    return (this->*keyDown)(&event->key, ecs);
+    return (this->*keyDown)(&event->key, engine);
 
   case SDL_EVENT_MOUSE_MOTION:
     mouse_loc[0] = (int)event->motion.x;
@@ -64,8 +34,15 @@ std::unique_ptr<Action> EventHandler::dispatch(SDL_Event *event,
   }
 }
 
+void EventHandler::restoreMainGame() {
+  keyDown = &EventHandler::MainGameKeyDown;
+  click = &EventHandler::AskUserClick;
+  on_render = &EventHandler::MainGameOnRender;
+  handle_action = &EventHandler::MainGameHandleAction;
+}
+
 std::unique_ptr<Action> EventHandler::MainGameKeyDown(SDL_KeyboardEvent *key,
-                                                      flecs::world ecs) {
+                                                      Engine &engine) {
   switch (key->scancode) {
   case SDL_SCANCODE_UP:
   case SDL_SCANCODE_KP_8:
@@ -106,18 +83,12 @@ std::unique_ptr<Action> EventHandler::MainGameKeyDown(SDL_KeyboardEvent *key,
     return std::make_unique<WaitAction>();
   case SDL_SCANCODE_G:
     return std::make_unique<PickupAction>();
-  case SDL_SCANCODE_D:
-    static constexpr char DROP_TITLE[] = "┤Select an item to drop├";
-    makeInventoryHandler<DROP_TITLE, &EventHandler::DropItemSelected>(*this,
-                                                                      ecs);
-    return nullptr;
-  case SDL_SCANCODE_I:
-    static constexpr char USE_TITLE[] = "┤Select an item to use├";
-    makeInventoryHandler<USE_TITLE, &EventHandler::UseItemSelected>(*this, ecs);
-    return nullptr;
 
   case SDL_SCANCODE_V:
-    makeHistoryHandler(*this, ecs);
+    keyDown = &EventHandler::HistoryKeyDown;
+    on_render = &EventHandler::HistoryOnRender;
+    log_length = engine.messageLog.size();
+    cursor = log_length - 1;
     return nullptr;
 
   case SDL_SCANCODE_ESCAPE:
@@ -129,7 +100,7 @@ std::unique_ptr<Action> EventHandler::MainGameKeyDown(SDL_KeyboardEvent *key,
 }
 
 std::unique_ptr<Action> EventHandler::GameOverKeyDown(SDL_KeyboardEvent *key,
-                                                      flecs::world) {
+                                                      Engine &) {
   switch (key->scancode) {
   case SDL_SCANCODE_ESCAPE:
     return std::make_unique<ExitAction>();
@@ -140,7 +111,7 @@ std::unique_ptr<Action> EventHandler::GameOverKeyDown(SDL_KeyboardEvent *key,
 }
 
 std::unique_ptr<Action> EventHandler::HistoryKeyDown(SDL_KeyboardEvent *key,
-                                                     flecs::world) {
+                                                     Engine &) {
   switch (key->scancode) {
   case SDL_SCANCODE_UP:
     if (cursor == 0) {
@@ -170,13 +141,13 @@ std::unique_ptr<Action> EventHandler::HistoryKeyDown(SDL_KeyboardEvent *key,
     return nullptr;
 
   default:
-    restoreMainGame(*this);
+    restoreMainGame();
     return nullptr;
   }
 }
 
 std::unique_ptr<Action> EventHandler::AskUserKeyDown(SDL_KeyboardEvent *key,
-                                                     flecs::world) {
+                                                     Engine &) {
   switch (key->scancode) {
   case SDL_SCANCODE_LSHIFT:
   case SDL_SCANCODE_RSHIFT:
@@ -186,18 +157,9 @@ std::unique_ptr<Action> EventHandler::AskUserKeyDown(SDL_KeyboardEvent *key,
   case SDL_SCANCODE_RALT:
     return nullptr;
   default:
-    restoreMainGame(*this);
+    restoreMainGame();
     return nullptr;
   }
-}
-
-std::unique_ptr<Action> EventHandler::InventoryKeyDown(SDL_KeyboardEvent *key,
-                                                       flecs::world ecs) {
-  auto idx = key->scancode - SDL_SCANCODE_A;
-  if (0 <= idx && idx < q.count()) {
-    return (this->*item_selected)(q.page(idx, 1).first());
-  }
-  return AskUserKeyDown(key, ecs);
 }
 
 std::unique_ptr<Action> EventHandler::MainGameClick(SDL_MouseButtonEvent *) {
@@ -205,11 +167,13 @@ std::unique_ptr<Action> EventHandler::MainGameClick(SDL_MouseButtonEvent *) {
 }
 
 std::unique_ptr<Action> EventHandler::AskUserClick(SDL_MouseButtonEvent *) {
-  restoreMainGame(*this);
+  restoreMainGame();
   return nullptr;
 }
 
-void EventHandler::MainGameOnRender(flecs::world ecs, tcod::Console &console) {
+void EventHandler::MainGameOnRender(flecs::world ecs) {
+  auto &console = ecs.get_mut<tcod::Console>();
+
   auto map = ecs.target<CurrentMap>();
   auto &gMap = map.get_mut<GameMap>();
   gMap.render(console);
@@ -217,13 +181,12 @@ void EventHandler::MainGameOnRender(flecs::world ecs, tcod::Console &console) {
   const auto &engine = ecs.get<Engine>();
   engine.messageLog.render(console, 21, 45, 40, 5);
 
-  auto q =
-      ecs.query_builder<const Position, const Renderable>()
-          .with(flecs::ChildOf, map)
-          .order_by<const Renderable>([](auto, auto r1, auto, auto r2) {
-            return static_cast<int>(r1->layer) - static_cast<int>(r2->layer);
-          })
-          .build();
+  auto q = ecs.query_builder<const Position, const Renderable>()
+               .with(flecs::ChildOf, map)
+               .order_by<const Renderable>([](auto, auto r1, auto, auto r2) {
+                 return (int)(r1->layer - r2->layer);
+               })
+               .build();
 
   q.each([&](auto p, auto r) {
     if (gMap.isInFov(p.x, p.y)) {
@@ -242,8 +205,9 @@ void EventHandler::MainGameOnRender(flecs::world ecs, tcod::Console &console) {
 static constexpr auto DECORATION = std::array<int, 9>{
     0x250c, 0x2500, 0x2510, 0x2502, 0, 0x2502, 0x2514, 0x2500, 0x2518};
 
-void EventHandler::HistoryOnRender(flecs::world ecs, tcod::Console &console) {
-  MainGameOnRender(ecs, console);
+void EventHandler::HistoryOnRender(flecs::world ecs) {
+  MainGameOnRender(ecs);
+  auto &console = ecs.get_mut<tcod::Console>();
   auto logConsole =
       tcod::Console(console.get_width() - 6, console.get_height() - 6);
   tcod::draw_frame(logConsole,
@@ -256,28 +220,6 @@ void EventHandler::HistoryOnRender(flecs::world ecs, tcod::Console &console) {
                                       logConsole.get_width() - 2,
                                       logConsole.get_height() - 2, cursor);
   tcod::blit(console, logConsole, {3, 3});
-}
-
-void EventHandler::InventoryOnRender(flecs::world ecs, tcod::Console &console) {
-  MainGameOnRender(ecs, console);
-  auto count = q.count();
-  auto &player = ecs.lookup("player").get<Position>();
-  auto x = player.x <= 30 ? 40 : 0;
-
-  tcod::draw_frame(console, {x, 0, (int)title.size(), std::max(count + 2, 3)},
-                   DECORATION, color::white, color::black);
-  tcod::print_rect(console, {x, 0, (int)title.size(), 1}, title, std::nullopt,
-                   std::nullopt, TCOD_CENTER);
-  if (count > 0) {
-    auto idx = 0;
-    q.each([&](const auto &name) {
-      auto msg = tcod::stringf("(%c) %s", 'a' + idx, name.name.c_str());
-      tcod::print(console, {x + 1, idx + 1}, msg, std::nullopt, std::nullopt);
-      idx++;
-    });
-  } else {
-    tcod::print(console, {x + 1, 1}, "(Empty)", std::nullopt, std::nullopt);
-  }
 }
 
 ActionResult
@@ -303,15 +245,7 @@ ActionResult EventHandler::AskUserHandleAction(flecs::world ecs,
                                                std::unique_ptr<Action> action) {
   auto ret = MainGameHandleAction(ecs, std::move(action));
   if (ret) {
-    restoreMainGame(*this);
+    restoreMainGame();
   }
   return ret;
-}
-
-std::unique_ptr<Action> EventHandler::DropItemSelected(flecs::entity item) {
-  return std::make_unique<DropItemAction>(item);
-}
-
-std::unique_ptr<Action> EventHandler::UseItemSelected(flecs::entity item) {
-  return std::make_unique<ItemAction>(item);
 }

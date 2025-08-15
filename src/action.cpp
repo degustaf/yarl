@@ -77,7 +77,7 @@ ActionResult PickupAction::perform(flecs::entity e) const {
   }
 
   auto &pos = e.get<Position>();
-  auto q = e.world().query<const Position>();
+  auto q = e.world().query_builder<const Position>().with<Item>().build();
   auto item = q.find(
       [&](flecs::entity item, auto &p) { return e != item && p == pos; });
   if (item) {
@@ -88,4 +88,13 @@ ActionResult PickupAction::perform(flecs::entity e) const {
   }
   return {ActionResultType::Failure, "There is nothing here to pick up.",
           color::impossible};
+}
+
+ActionResult DropItemAction::perform(flecs::entity e) const {
+  auto msg =
+      tcod::stringf("You dropped the %s.", item.get<Named>().name.c_str());
+  item.remove<ContainedBy>(e)
+      .add(flecs::ChildOf, e.world().target<CurrentMap>())
+      .set<Position>(e.get<Position>());
+  return {ActionResultType::Success, msg};
 }

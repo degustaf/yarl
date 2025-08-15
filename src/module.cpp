@@ -39,23 +39,25 @@ module::module(flecs::world ecs) {
   // inventory.hpp
   ecs.component<Inventory>();
   ecs.component<ContainedBy>().add(flecs::Exclusive);
+  ecs.component<Item>();
 
   ecs.prefab("orc")
-      .set<Renderable>({'o', {63, 127, 63}, Actor})
+      .set<Renderable>({'o', {63, 127, 63}, RenderOrder::Actor})
       .set<Named>({"Orc"})
       .add<BlocksMovement>()
       .set<HostileAi>({})
       .emplace<Fighter>(10, 0, 3);
 
   ecs.prefab("troll")
-      .set<Renderable>({'T', {0, 127, 0}, Actor})
+      .set<Renderable>({'T', {0, 127, 0}, RenderOrder::Actor})
       .set<Named>({"Troll"})
       .add<BlocksMovement>()
       .set<HostileAi>({})
       .emplace<Fighter>(16, 1, 4);
 
   ecs.prefab("healthPotion")
-      .set<Renderable>({'!', {127, 0, 255}, Item})
+      .set<Renderable>({'!', {127, 0, 255}, RenderOrder::Item})
       .set<Named>({"Health Potion"})
+      .add<Item>()
       .set<HealingConsumable>({4});
 }

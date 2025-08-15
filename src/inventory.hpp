@@ -9,5 +9,6 @@ struct Inventory {
 };
 
 struct ContainedBy {};
+struct Item {};
 
 void drop(flecs::entity item, flecs::entity wearer);

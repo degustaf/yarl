@@ -12,6 +12,7 @@ ActionResult HealingConsumable::activate(flecs::entity item,
   if (amount_recovered > 0) {
     auto msg = tcod::stringf("You consume the %s, and recover %d HP!",
                              item.get<Named>().name.c_str(), amount_recovered);
+    item.destruct();
     return {ActionResultType::Success, msg, color::healthRecovered};
   } else {
     return {ActionResultType::Failure, "Your health is already full.",
