@@ -1,7 +1,6 @@
 #include "input_handler.hpp"
 
 #include <algorithm>
-#include <libtcod/console_types.hpp>
 #include <optional>
 
 #include <libtcod.hpp>
@@ -15,7 +14,7 @@
 
 static inline void restoreMainGame(EventHandler &e) {
   e.keyDown = &EventHandler::MainGameKeyDown;
-  e.click = &EventHandler::AskUserClick;
+  e.click = &EventHandler::MainGameClick;
   e.on_render = &EventHandler::MainGameOnRender;
   e.handle_action = &EventHandler::MainGameHandleAction;
 }
@@ -42,6 +41,17 @@ static inline void makeInventoryHandler(EventHandler &e, flecs::world ecs) {
             .build();
 }
 
+static void makeLookHandler(EventHandler &e, flecs::world ecs) {
+  e.keyDown = &EventHandler::SelectKeyDown;
+  e.click = &EventHandler::SelectClick;
+  e.on_render = &EventHandler::SelectOnRender;
+  e.handle_action = &EventHandler::AskUserHandleAction;
+  e.loc_selected = &EventHandler::LookSelectedLoc;
+
+  auto player = ecs.lookup("player");
+  e.mouse_loc = player.get<Position>();
+}
+
 std::unique_ptr<Action> EventHandler::dispatch(SDL_Event *event,
                                                flecs::world ecs) {
   switch (event->type) {
@@ -57,7 +67,7 @@ std::unique_ptr<Action> EventHandler::dispatch(SDL_Event *event,
     return nullptr;
 
   case SDL_EVENT_MOUSE_BUTTON_DOWN:
-    return (this->*click)(&event->button);
+    return (this->*click)(&event->button, ecs);
 
   default:
     return nullptr;
@@ -115,9 +125,11 @@ std::unique_ptr<Action> EventHandler::MainGameKeyDown(SDL_KeyboardEvent *key,
     static constexpr char USE_TITLE[] = "┤Select an item to use├";
     makeInventoryHandler<USE_TITLE, &EventHandler::UseItemSelected>(*this, ecs);
     return nullptr;
-
   case SDL_SCANCODE_V:
     makeHistoryHandler(*this, ecs);
+    return nullptr;
+  case SDL_SCANCODE_SLASH:
+    makeLookHandler(*this, ecs);
     return nullptr;
 
   case SDL_SCANCODE_ESCAPE:
@@ -200,13 +212,109 @@ std::unique_ptr<Action> EventHandler::InventoryKeyDown(SDL_KeyboardEvent *key,
   return AskUserKeyDown(key, ecs);
 }
 
-std::unique_ptr<Action> EventHandler::MainGameClick(SDL_MouseButtonEvent *) {
+std::unique_ptr<Action> EventHandler::SelectKeyDown(SDL_KeyboardEvent *key,
+                                                    flecs::world ecs) {
+  auto dxy = std::array<int, 2>{0, 0};
+
+  switch (key->scancode) {
+  case SDL_SCANCODE_LSHIFT:
+  case SDL_SCANCODE_RSHIFT:
+  case SDL_SCANCODE_LCTRL:
+  case SDL_SCANCODE_RCTRL:
+  case SDL_SCANCODE_LALT:
+  case SDL_SCANCODE_RALT:
+    return nullptr;
+
+  case SDL_SCANCODE_RETURN:
+  case SDL_SCANCODE_RETURN2:
+  case SDL_SCANCODE_KP_ENTER:
+    return (this->*loc_selected)(mouse_loc);
+
+  case SDL_SCANCODE_UP:
+  case SDL_SCANCODE_KP_8:
+  case SDL_SCANCODE_K:
+    dxy = {0, -1};
+    break;
+  case SDL_SCANCODE_DOWN:
+  case SDL_SCANCODE_KP_2:
+  case SDL_SCANCODE_J:
+    dxy = {0, 1};
+    break;
+  case SDL_SCANCODE_LEFT:
+  case SDL_SCANCODE_KP_4:
+  case SDL_SCANCODE_H:
+    dxy = {-1, 0};
+    break;
+  case SDL_SCANCODE_RIGHT:
+  case SDL_SCANCODE_KP_6:
+  case SDL_SCANCODE_L:
+    dxy = {1, 0};
+    break;
+  case SDL_SCANCODE_HOME:
+  case SDL_SCANCODE_KP_7:
+  case SDL_SCANCODE_Y:
+    dxy = {-1, -1};
+    break;
+  case SDL_SCANCODE_END:
+  case SDL_SCANCODE_KP_1:
+  case SDL_SCANCODE_B:
+    dxy = {-1, 1};
+    break;
+  case SDL_SCANCODE_PAGEUP:
+  case SDL_SCANCODE_KP_9:
+  case SDL_SCANCODE_U:
+    dxy = {1, -1};
+    break;
+  case SDL_SCANCODE_PAGEDOWN:
+  case SDL_SCANCODE_KP_3:
+  case SDL_SCANCODE_N:
+    dxy = {1, 1};
+    break;
+
+  default:
+    restoreMainGame(*this);
+    return nullptr;
+  }
+
+  auto modifier = 1;
+  if (key->mod & SDL_KMOD_SHIFT) {
+    modifier *= 5;
+  }
+  if (key->mod & SDL_KMOD_CTRL) {
+    modifier *= 10;
+  }
+  if (key->mod & SDL_KMOD_ALT) {
+    modifier *= 20;
+  }
+
+  auto &map = ecs.target<CurrentMap>().get<GameMap>();
+  mouse_loc[0] =
+      std::clamp(mouse_loc[0] + dxy[0] * modifier, 0, map.getWidth());
+  mouse_loc[1] =
+      std::clamp(mouse_loc[1] + dxy[1] * modifier, 0, map.getHeight());
   return nullptr;
 }
 
-std::unique_ptr<Action> EventHandler::AskUserClick(SDL_MouseButtonEvent *) {
+std::unique_ptr<Action> EventHandler::MainGameClick(SDL_MouseButtonEvent *,
+                                                    flecs::world) {
+  return nullptr;
+}
+
+std::unique_ptr<Action> EventHandler::AskUserClick(SDL_MouseButtonEvent *,
+                                                   flecs::world) {
   restoreMainGame(*this);
   return nullptr;
+}
+
+std::unique_ptr<Action> EventHandler::SelectClick(SDL_MouseButtonEvent *button,
+                                                  flecs::world ecs) {
+  auto &map = ecs.target<CurrentMap>().get<GameMap>();
+  if (map.inBounds((int)button->x, (int)button->y)) {
+    if (button->button == SDL_BUTTON_LEFT) {
+      return (this->*loc_selected)({(int)button->x, (int)button->y});
+    }
+  }
+  return AskUserClick(button, ecs);
 }
 
 void EventHandler::MainGameOnRender(flecs::world ecs, tcod::Console &console) {
@@ -280,6 +388,13 @@ void EventHandler::InventoryOnRender(flecs::world ecs, tcod::Console &console) {
   }
 }
 
+void EventHandler::SelectOnRender(flecs::world ecs, tcod::Console &console) {
+  MainGameOnRender(ecs, console);
+  auto &tile = console.at(mouse_loc);
+  tile.bg = color::white;
+  tile.fg = color::black;
+}
+
 ActionResult
 EventHandler::MainGameHandleAction(flecs::world ecs,
                                    std::unique_ptr<Action> action) {
@@ -314,4 +429,9 @@ std::unique_ptr<Action> EventHandler::DropItemSelected(flecs::entity item) {
 
 std::unique_ptr<Action> EventHandler::UseItemSelected(flecs::entity item) {
   return std::make_unique<ItemAction>(item);
+}
+
+std::unique_ptr<Action> EventHandler::LookSelectedLoc(std::array<int, 2>) {
+  restoreMainGame(*this);
+  return nullptr;
 }
