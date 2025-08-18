@@ -21,6 +21,12 @@ struct Position {
     return x == rhs.x && y == rhs.y;
   };
 
+  int distanceSquared(const Position &other) const {
+    auto dx = x - other.x;
+    auto dy = y - other.y;
+    return dx * dx + dy * dy;
+  };
+
   void move(std::array<int, 2> dxy) {
     x += dxy[0];
     y += dxy[1];

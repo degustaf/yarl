@@ -94,9 +94,15 @@ static void place_entities(flecs::entity map, const RectangularRoom &r,
 
     auto e = q.find([&](const auto &p) { return p == pos; });
     if (e == e.null()) {
-      auto potion = ecs.lookup("module::healthPotion");
-      assert(potion);
-      ecs.entity().is_a(potion).set<Position>(pos).add(flecs::ChildOf, map);
+      if (rng.getFloat(0.0f, 1.0f) < 0.7) {
+        auto potion = ecs.lookup("module::healthPotion");
+        assert(potion);
+        ecs.entity().is_a(potion).set<Position>(pos).add(flecs::ChildOf, map);
+      } else {
+        auto scroll = ecs.lookup("module::lightningScroll");
+        assert(scroll);
+        ecs.entity().is_a(scroll).set<Position>(pos).add(flecs::ChildOf, map);
+      }
     }
   }
 }

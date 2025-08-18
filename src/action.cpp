@@ -29,7 +29,7 @@ ActionResult MeleeAction::perform(flecs::entity e) const {
   auto target = GameMap::get_blocking_entity(mapEntity, pos + dxy);
 
   auto attack_color =
-      (e == ecs.lookup("player")) ? color::playerAtk : color::EnemyAtk;
+      (e == ecs.lookup("player")) ? color::playerAtk : color::enemyAtk;
 
   if (target != target.null()) {
     const auto &attacker = e.get<Fighter>();
@@ -65,6 +65,8 @@ ActionResult BumpAction::perform(flecs::entity e) const {
 ActionResult ItemAction::perform(flecs::entity e) const {
   if (item.has<HealingConsumable>()) {
     return item.get_mut<HealingConsumable>().activate(item, e);
+  } else if (item.has<LightningDamageConsumable>()) {
+    return item.get_mut<LightningDamageConsumable>().activate(item, e);
   }
   assert(false);
 }

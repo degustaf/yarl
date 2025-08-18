@@ -56,7 +56,7 @@ void Fighter::die(flecs::entity self) {
     engine.eventHandler.keyDown = &EventHandler::GameOverKeyDown;
   } else {
     auto msg = tcod::stringf("%s is dead!", name.name.c_str());
-    engine.messageLog.addMessage(msg, color::EnemyDie);
+    engine.messageLog.addMessage(msg, color::enemyDie);
   }
   name.name = "remains of " + name.name;
 }

@@ -27,7 +27,9 @@ module::module(flecs::world ecs) {
   ecs.component<Ai>();
   ecs.component<HostileAi>().is_a<Ai>();
 
+  // consumable.hpp
   ecs.component<HealingConsumable>();
+  ecs.component<LightningDamageConsumable>();
 
   // engine.hpp
   ecs.component<Engine>();
@@ -60,4 +62,10 @@ module::module(flecs::world ecs) {
       .set<Named>({"Health Potion"})
       .add<Item>()
       .set<HealingConsumable>({4});
+
+  ecs.prefab("lightningScroll")
+      .set<Renderable>({'~', {255, 255, 0}, RenderOrder::Item})
+      .set<Named>({"Lightning Scroll"})
+      .add<Item>()
+      .set<LightningDamageConsumable>({20, 5});
 }

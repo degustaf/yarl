@@ -9,3 +9,10 @@ struct HealingConsumable {
 
   ActionResult activate(flecs::entity item, flecs::entity target);
 };
+
+struct LightningDamageConsumable {
+  int damage;
+  int maximumRange;
+
+  ActionResult activate(flecs::entity item, flecs::entity consumer);
+};

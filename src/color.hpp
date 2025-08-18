@@ -5,12 +5,15 @@
 namespace color {
 constexpr auto white = tcod::ColorRGB{0xFF, 0xFF, 0xFF};
 constexpr auto black = tcod::ColorRGB{0, 0, 0};
+constexpr auto red = tcod::ColorRGB{0xFF, 0, 0};
 
 constexpr auto playerAtk = tcod::ColorRGB{0xE0, 0xE0, 0xE0};
-constexpr auto EnemyAtk = tcod::ColorRGB{0xFF, 0x30, 0x30};
+constexpr auto enemyAtk = tcod::ColorRGB{0xFF, 0x30, 0x30};
+constexpr auto needsTarget = tcod::ColorRGB{0x3F, 0xFF, 0xFF};
+constexpr auto statusEffectApplied = tcod::ColorRGB{0x3F, 0xFF, 0x3F};
 
 constexpr auto playerDie = tcod::ColorRGB{0xFF, 0x30, 0x30};
-constexpr auto EnemyDie = tcod::ColorRGB{0xFF, 0xA0, 0x30};
+constexpr auto enemyDie = tcod::ColorRGB{0xFF, 0xA0, 0x30};
 
 constexpr auto invalid = tcod::ColorRGB{0xFF, 0xFF, 0};
 constexpr auto impossible = tcod::ColorRGB{0x80, 0x80, 0x80};
