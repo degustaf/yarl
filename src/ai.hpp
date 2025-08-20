@@ -24,3 +24,11 @@ struct HostileAi : Ai {
 
   std::vector<std::array<size_t, 2>> path;
 };
+
+struct ConfusedAi : Ai {
+  ConfusedAi(int turns_remaining) : turns_remaining(turns_remaining){};
+  virtual std::unique_ptr<Action> act(flecs::entity self) override;
+  virtual ~ConfusedAi() = default;
+
+  int turns_remaining;
+};

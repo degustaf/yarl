@@ -2,10 +2,12 @@
 
 #include <algorithm>
 #include <cstdlib>
+#include <libtcod/console_printing.hpp>
 #include <memory>
 
 #include "action.hpp"
 #include "actor.hpp"
+#include "defines.hpp"
 #include "game_map.hpp"
 #include "pathfinding.hpp"
 
@@ -57,4 +59,29 @@ std::unique_ptr<Action> HostileAi::act(flecs::entity self) {
   }
 
   return nullptr;
+}
+
+std::unique_ptr<Action> ConfusedAi::act(flecs::entity self) {
+  if (turns_remaining <= 0) {
+    self.remove<ConfusedAi>();
+
+    auto ecs = self.world();
+    auto ai = ecs.lookup("module::Ai");
+    auto q = ecs.query_builder().with(flecs::IsA, ai).build();
+    q.each([self](auto ai) {
+      if (self.has(ai) && !self.enabled(ai)) {
+        self.enable(ai);
+      }
+    });
+
+    auto msg = tcod::stringf("The %s is no longer confused.",
+                             self.get<Named>().name.c_str());
+    return std::make_unique<MessageAction>(msg);
+  }
+
+  auto rng = TCODRandom::getInstance();
+  auto idx = rng->getInt(0, nDirs);
+  auto dxy = directions[idx];
+  turns_remaining--;
+  return std::make_unique<BumpAction>(dxy[0], dxy[1]);
 }

@@ -113,3 +113,20 @@ struct DropItemAction : ItemAction {
   virtual ActionResult perform(flecs::entity e) const override;
   virtual ~DropItemAction() = default;
 };
+
+struct TargetedItemAction : ItemAction {
+  TargetedItemAction(flecs::entity item, std::array<int, 2> xy)
+      : ItemAction(item), target(xy){};
+  std::array<int, 2> target;
+
+  virtual ActionResult perform(flecs::entity e) const override;
+  virtual ~TargetedItemAction() = default;
+};
+
+struct MessageAction : Action {
+  MessageAction(std::string msg) : msg(msg){};
+  std::string msg;
+
+  virtual ActionResult perform(flecs::entity e) const override;
+  virtual ~MessageAction() = default;
+};

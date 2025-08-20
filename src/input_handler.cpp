@@ -48,8 +48,7 @@ static void makeLookHandler(EventHandler &e, flecs::world ecs) {
   e.handle_action = &EventHandler::AskUserHandleAction;
   e.loc_selected = &EventHandler::LookSelectedLoc;
 
-  auto player = ecs.lookup("player");
-  e.mouse_loc = player.get<Position>();
+  e.mouse_loc = ecs.lookup("player").get<Position>();
 }
 
 std::unique_ptr<Action> EventHandler::dispatch(SDL_Event *event,
@@ -434,4 +433,10 @@ std::unique_ptr<Action> EventHandler::UseItemSelected(flecs::entity item) {
 std::unique_ptr<Action> EventHandler::LookSelectedLoc(std::array<int, 2>) {
   restoreMainGame(*this);
   return nullptr;
+}
+
+std::unique_ptr<Action>
+EventHandler::SingleTargetSelectedLoc(std::array<int, 2> xy) {
+  restoreMainGame(*this);
+  return callback(xy);
 }

@@ -64,9 +64,11 @@ ActionResult BumpAction::perform(flecs::entity e) const {
 
 ActionResult ItemAction::perform(flecs::entity e) const {
   if (item.has<HealingConsumable>()) {
-    return item.get_mut<HealingConsumable>().activate(item, e);
+    return item.get<HealingConsumable>().activate(item, e);
   } else if (item.has<LightningDamageConsumable>()) {
-    return item.get_mut<LightningDamageConsumable>().activate(item, e);
+    return item.get<LightningDamageConsumable>().activate(item, e);
+  } else if (item.has<ConfusionConsumable>()) {
+    return item.get<ConfusionConsumable>().activate(item);
   }
   assert(false);
 }
@@ -98,5 +100,16 @@ ActionResult DropItemAction::perform(flecs::entity e) const {
   item.remove<ContainedBy>(e)
       .add(flecs::ChildOf, e.world().target<CurrentMap>())
       .set<Position>(e.get<Position>());
+  return {ActionResultType::Success, msg};
+}
+
+ActionResult TargetedItemAction::perform(flecs::entity e) const {
+  if (item.has<ConfusionConsumable>()) {
+    return item.get<ConfusionConsumable>().selected(item, e, target);
+  }
+  assert(false);
+}
+
+ActionResult MessageAction::perform(flecs::entity) const {
   return {ActionResultType::Success, msg};
 }

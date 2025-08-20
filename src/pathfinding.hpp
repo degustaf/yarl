@@ -7,15 +7,14 @@
 #include <queue>
 #include <vector>
 
+#include "defines.hpp"
+
 namespace pathfinding {
 
 using Index = std::array<size_t, 2>;
 inline bool operator==(const Index &lhs, const Index &rhs) {
   return lhs[0] == rhs[0] && lhs[1] == rhs[1];
 }
-
-constexpr int directions[8][2] = {{1, 1},  {1, 0},  {1, -1}, {0, 1},
-                                  {0, -1}, {-1, 1}, {-1, 0}, {-1, -1}};
 
 template <typename T> class map {
 public:

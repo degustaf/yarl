@@ -1,5 +1,6 @@
 #include "module.hpp"
 
+#include <flecs/addons/cpp/c_types.hpp>
 #include <libtcod.hpp>
 
 #include "actor.hpp"
@@ -25,11 +26,13 @@ module::module(flecs::world ecs) {
 
   // ai.hpp
   ecs.component<Ai>();
-  ecs.component<HostileAi>().is_a<Ai>();
+  ecs.component<HostileAi>().is_a<Ai>().add(flecs::CanToggle);
+  ecs.component<ConfusedAi>().is_a<Ai>().add(flecs::CanToggle);
 
   // consumable.hpp
   ecs.component<HealingConsumable>();
   ecs.component<LightningDamageConsumable>();
+  ecs.component<ConfusionConsumable>();
 
   // engine.hpp
   ecs.component<Engine>();
@@ -68,4 +71,10 @@ module::module(flecs::world ecs) {
       .set<Named>({"Lightning Scroll"})
       .add<Item>()
       .set<LightningDamageConsumable>({20, 5});
+
+  ecs.prefab("confusionScroll")
+      .set<Renderable>({'~', {207, 63, 255}, RenderOrder::Item})
+      .set<Named>({"Confusion Scroll"})
+      .add<Item>()
+      .set<ConfusionConsumable>({10});
 }

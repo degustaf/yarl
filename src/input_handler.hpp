@@ -4,6 +4,7 @@
 #include <flecs.h>
 
 #include <array>
+#include <functional>
 #include <memory>
 #include <string>
 
@@ -18,6 +19,16 @@ struct EventHandler {
         handle_action(&EventHandler::MainGameHandleAction),
         item_selected(nullptr){};
   std::unique_ptr<Action> dispatch(SDL_Event *event, flecs::world ecs);
+  template <typename F> void makeTargetSelector(F f, flecs::world ecs) {
+    keyDown = &EventHandler::SelectKeyDown;
+    click = &EventHandler::SelectClick;
+    on_render = &EventHandler::SelectOnRender;
+    handle_action = &EventHandler::AskUserHandleAction;
+    loc_selected = &EventHandler::SingleTargetSelectedLoc;
+
+    mouse_loc = ecs.lookup("player").get<Position>();
+    callback = f;
+  }
 
   std::unique_ptr<Action> (EventHandler::*keyDown)(SDL_KeyboardEvent *event,
                                                    flecs::world ecs);
@@ -34,6 +45,7 @@ struct EventHandler {
   size_t log_length = 0;
   size_t cursor = 0;
   flecs::query<const Named> q;
+  std::function<std::unique_ptr<Action>(std::array<int, 2>)> callback;
 
   std::unique_ptr<Action> MainGameKeyDown(SDL_KeyboardEvent *key,
                                           flecs::world ecs);
@@ -62,4 +74,5 @@ struct EventHandler {
   std::unique_ptr<Action> UseItemSelected(flecs::entity item);
 
   std::unique_ptr<Action> LookSelectedLoc(std::array<int, 2>);
+  std::unique_ptr<Action> SingleTargetSelectedLoc(std::array<int, 2>);
 };
