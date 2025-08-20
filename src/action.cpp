@@ -69,6 +69,8 @@ ActionResult ItemAction::perform(flecs::entity e) const {
     return item.get<LightningDamageConsumable>().activate(item, e);
   } else if (item.has<ConfusionConsumable>()) {
     return item.get<ConfusionConsumable>().activate(item);
+  } else if (item.has<FireballDamageConsumable>()) {
+    return item.get<FireballDamageConsumable>().activate(item);
   }
   assert(false);
 }
@@ -106,6 +108,8 @@ ActionResult DropItemAction::perform(flecs::entity e) const {
 ActionResult TargetedItemAction::perform(flecs::entity e) const {
   if (item.has<ConfusionConsumable>()) {
     return item.get<ConfusionConsumable>().selected(item, e, target);
+  } else if (item.has<FireballDamageConsumable>()) {
+    return item.get<FireballDamageConsumable>().selected(item, target);
   }
   assert(false);
 }

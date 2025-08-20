@@ -99,6 +99,10 @@ static void place_entities(flecs::entity map, const RectangularRoom &r,
         auto potion = ecs.lookup("module::healthPotion");
         assert(potion);
         ecs.entity().is_a(potion).set<Position>(pos).add(flecs::ChildOf, map);
+      } else if (item_chance < 0.8) {
+        auto scroll = ecs.lookup("module::fireballScroll");
+        assert(scroll);
+        ecs.entity().is_a(scroll).set<Position>(pos).add(flecs::ChildOf, map);
       } else if (item_chance < 0.9) {
         auto scroll = ecs.lookup("module::confusionScroll");
         assert(scroll);

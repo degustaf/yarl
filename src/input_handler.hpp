@@ -19,6 +19,7 @@ struct EventHandler {
         handle_action(&EventHandler::MainGameHandleAction),
         item_selected(nullptr){};
   std::unique_ptr<Action> dispatch(SDL_Event *event, flecs::world ecs);
+
   template <typename F> void makeTargetSelector(F f, flecs::world ecs) {
     keyDown = &EventHandler::SelectKeyDown;
     click = &EventHandler::SelectClick;
@@ -28,6 +29,18 @@ struct EventHandler {
 
     mouse_loc = ecs.lookup("player").get<Position>();
     callback = f;
+  }
+  template <typename F>
+  void makeAreaTargetSelector(F f, int r, flecs::world ecs) {
+    keyDown = &EventHandler::SelectKeyDown;
+    click = &EventHandler::SelectClick;
+    on_render = &EventHandler::AreaTargetOnRender;
+    handle_action = &EventHandler::AskUserHandleAction;
+    loc_selected = &EventHandler::SingleTargetSelectedLoc;
+
+    mouse_loc = ecs.lookup("player").get<Position>();
+    callback = f;
+    radius = r;
   }
 
   std::unique_ptr<Action> (EventHandler::*keyDown)(SDL_KeyboardEvent *event,
@@ -44,6 +57,7 @@ struct EventHandler {
   std::string title = "";
   size_t log_length = 0;
   size_t cursor = 0;
+  int radius = 0;
   flecs::query<const Named> q;
   std::function<std::unique_ptr<Action>(std::array<int, 2>)> callback;
 
@@ -64,6 +78,7 @@ struct EventHandler {
   void HistoryOnRender(flecs::world ecs, tcod::Console &console);
   void InventoryOnRender(flecs::world ecs, tcod::Console &console);
   void SelectOnRender(flecs::world ecs, tcod::Console &console);
+  void AreaTargetOnRender(flecs::world ecs, tcod::Console &console);
 
   ActionResult MainGameHandleAction(flecs::world ecs,
                                     std::unique_ptr<Action> action);

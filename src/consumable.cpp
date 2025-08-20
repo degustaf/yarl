@@ -87,7 +87,7 @@ ActionResult ConfusionConsumable::selected(flecs::entity item,
             color::impossible};
   }
 
-  auto target_entity = ecs.query_builder<Position>()
+  auto target_entity = ecs.query_builder<const Position>()
                            .with(flecs::ChildOf, map)
                            .with<Ai>()
                            .build()
@@ -120,4 +120,55 @@ ActionResult ConfusionConsumable::selected(flecs::entity item,
 
   item.destruct();
   return {ActionResultType::Success, msg, color::statusEffectApplied};
+}
+
+ActionResult FireballDamageConsumable::activate(flecs::entity item) const {
+  auto ecs = item.world();
+  auto &eventHandler = ecs.get_mut<Engine>().eventHandler;
+  eventHandler.makeAreaTargetSelector(
+      [item](auto xy) {
+        return std::make_unique<TargetedItemAction>(item, xy);
+      },
+      radius, ecs);
+
+  return {ActionResultType::Failure, "Select a target location.",
+          color::needsTarget};
+}
+
+ActionResult
+FireballDamageConsumable::selected(flecs::entity item,
+                                   std::array<int, 2> target) const {
+  auto ecs = item.world();
+  auto map = ecs.target<CurrentMap>();
+  auto &gameMap = map.get<GameMap>();
+  if (!gameMap.isInFov(target[0], target[1])) {
+    return {ActionResultType::Failure,
+            "You cannot target an area that you cannot see.",
+            color::impossible};
+  }
+
+  auto q = ecs.query_builder<const Position, Fighter, const Named>()
+               .with(flecs::ChildOf, map)
+               .build();
+  auto targets_hit = false;
+  auto &engine = ecs.get_mut<Engine>();
+  ecs.defer_begin();
+  q.each([&](auto e, const Position &p, Fighter &f, const Named &name) {
+    if (p.distanceSquared(target) <= radius * radius) {
+      targets_hit = true;
+      auto msg = tcod::stringf(
+          "The %s is engulfed in a fiery explosion, taking %d damage!",
+          name.name.c_str(), damage);
+      engine.messageLog.addMessage(msg, color::enemyDie);
+      f.take_damage(damage, e);
+    }
+  });
+  ecs.defer_end();
+
+  if (targets_hit) {
+    item.destruct();
+    return {ActionResultType::Success, ""};
+  } else {
+    return {ActionResultType::Failure, "There are no targets in the radius."};
+  }
 }

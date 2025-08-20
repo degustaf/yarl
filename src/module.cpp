@@ -33,6 +33,7 @@ module::module(flecs::world ecs) {
   ecs.component<HealingConsumable>();
   ecs.component<LightningDamageConsumable>();
   ecs.component<ConfusionConsumable>();
+  ecs.component<FireballDamageConsumable>();
 
   // engine.hpp
   ecs.component<Engine>();
@@ -77,4 +78,10 @@ module::module(flecs::world ecs) {
       .set<Named>({"Confusion Scroll"})
       .add<Item>()
       .set<ConfusionConsumable>({10});
+
+  ecs.prefab("fireballScroll")
+      .set<Renderable>({'~', {255, 0, 0}, RenderOrder::Item})
+      .set<Named>({"Fireball Scroll"})
+      .add<Item>()
+      .set<FireballDamageConsumable>({12, 3});
 }

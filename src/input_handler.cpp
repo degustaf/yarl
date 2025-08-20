@@ -1,6 +1,7 @@
 #include "input_handler.hpp"
 
 #include <algorithm>
+#include <libtcod/console_drawing.h>
 #include <optional>
 
 #include <libtcod.hpp>
@@ -392,6 +393,15 @@ void EventHandler::SelectOnRender(flecs::world ecs, tcod::Console &console) {
   auto &tile = console.at(mouse_loc);
   tile.bg = color::white;
   tile.fg = color::black;
+}
+
+void EventHandler::AreaTargetOnRender(flecs::world ecs,
+                                      tcod::Console &console) {
+  SelectOnRender(ecs, console);
+  tcod::draw_frame(console,
+                   {mouse_loc[0] - radius - 1, mouse_loc[1] - radius - 1,
+                    radius * radius, radius * radius},
+                   DECORATION, color::red, std::nullopt);
 }
 
 ActionResult

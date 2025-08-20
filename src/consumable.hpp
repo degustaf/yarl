@@ -24,3 +24,11 @@ struct ConfusionConsumable {
   ActionResult selected(flecs::entity item, flecs::entity consumer,
                         std::array<int, 2> target) const;
 };
+
+struct FireballDamageConsumable {
+  int damage;
+  int radius;
+
+  ActionResult activate(flecs::entity item) const;
+  ActionResult selected(flecs::entity item, std::array<int, 2> target) const;
+};
