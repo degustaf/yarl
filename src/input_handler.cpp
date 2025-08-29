@@ -1,16 +1,17 @@
 #include "input_handler.hpp"
 
 #include <algorithm>
-#include <libtcod/console_drawing.h>
+#include <cassert>
 #include <optional>
 
 #include <libtcod.hpp>
 
-#include "action.hpp"
 #include "color.hpp"
+#include "defines.hpp"
 #include "engine.hpp"
 #include "game_map.hpp"
 #include "inventory.hpp"
+#include "message_log.hpp"
 #include "render_functions.hpp"
 
 static inline void restoreMainGame(EventHandler &e) {
@@ -18,12 +19,19 @@ static inline void restoreMainGame(EventHandler &e) {
   e.click = &EventHandler::MainGameClick;
   e.on_render = &EventHandler::MainGameOnRender;
   e.handle_action = &EventHandler::MainGameHandleAction;
+  e.item_selected = nullptr;
+  e.loc_selected = nullptr;
 }
 
 static inline void makeHistoryHandler(EventHandler &e, flecs::world ecs) {
   e.keyDown = &EventHandler::HistoryKeyDown;
+  e.click = &EventHandler::MainGameClick;
   e.on_render = &EventHandler::HistoryOnRender;
-  e.log_length = ecs.get<Engine>().messageLog.size();
+  e.handle_action = &EventHandler::MainGameHandleAction;
+  e.item_selected = nullptr;
+  e.loc_selected = nullptr;
+
+  e.log_length = ecs.lookup("messageLog").get<MessageLog>().size();
   e.cursor = e.log_length - 1;
 }
 
@@ -35,10 +43,13 @@ static inline void makeInventoryHandler(EventHandler &e, flecs::world ecs) {
   e.on_render = &EventHandler::InventoryOnRender;
   e.handle_action = &EventHandler::AskUserHandleAction;
   e.item_selected = f;
+  e.loc_selected = nullptr;
+
   e.title = TITLE;
-  e.q = ecs.query_builder<const Named>()
+  e.q = ecs.query_builder<const Named>("module::playerItem")
             .with<ContainedBy>(ecs.lookup("player"))
             .with<Item>()
+            .cached()
             .build();
 }
 
@@ -47,6 +58,7 @@ static void makeLookHandler(EventHandler &e, flecs::world ecs) {
   e.click = &EventHandler::SelectClick;
   e.on_render = &EventHandler::SelectOnRender;
   e.handle_action = &EventHandler::AskUserHandleAction;
+  e.item_selected = nullptr;
   e.loc_selected = &EventHandler::LookSelectedLoc;
 
   e.mouse_loc = ecs.lookup("player").get<Position>();
@@ -72,6 +84,24 @@ std::unique_ptr<Action> EventHandler::dispatch(SDL_Event *event,
   default:
     return nullptr;
   }
+}
+
+void EventHandler::mainMenu(void) {
+  keyDown = &EventHandler::MainMenuKeyDown;
+  click = &EventHandler::MainGameClick;
+  on_render = &EventHandler::MainMenuOnRender;
+  handle_action = &EventHandler::MainMenuHandleAction;
+  item_selected = nullptr;
+  loc_selected = nullptr;
+}
+
+void EventHandler::gameOver(void) {
+  keyDown = &EventHandler::GameOverKeyDown;
+  click = &EventHandler::MainGameClick;
+  on_render = &EventHandler::MainGameOnRender;
+  handle_action = &EventHandler::MainGameHandleAction;
+  item_selected = nullptr;
+  loc_selected = nullptr;
 }
 
 std::unique_ptr<Action> EventHandler::MainGameKeyDown(SDL_KeyboardEvent *key,
@@ -144,7 +174,7 @@ std::unique_ptr<Action> EventHandler::GameOverKeyDown(SDL_KeyboardEvent *key,
                                                       flecs::world) {
   switch (key->scancode) {
   case SDL_SCANCODE_ESCAPE:
-    return std::make_unique<ExitAction>();
+    return std::make_unique<QuitWithoutSavingAction>();
 
   default:
     return nullptr;
@@ -287,11 +317,40 @@ std::unique_ptr<Action> EventHandler::SelectKeyDown(SDL_KeyboardEvent *key,
     modifier *= 20;
   }
 
-  auto &map = ecs.target<CurrentMap>().get<GameMap>();
+  auto &map = ecs.lookup("currentMap").target<CurrentMap>().get<GameMap>();
   mouse_loc[0] =
       std::clamp(mouse_loc[0] + dxy[0] * modifier, 0, map.getWidth());
   mouse_loc[1] =
       std::clamp(mouse_loc[1] + dxy[1] * modifier, 0, map.getHeight());
+  return nullptr;
+}
+
+std::unique_ptr<Action> EventHandler::MainMenuKeyDown(SDL_KeyboardEvent *key,
+                                                      flecs::world ecs) {
+  switch (key->scancode) {
+  case SDL_SCANCODE_Q:
+  case SDL_SCANCODE_ESCAPE:
+    return std::make_unique<ExitAction>();
+  case SDL_SCANCODE_C:
+    if (Engine::load(ecs, saveFilename, *this)) {
+      restoreMainGame(*this);
+    }
+    break;
+  case SDL_SCANCODE_N:
+    Engine::new_game(ecs);
+    restoreMainGame(*this);
+    break;
+
+  default:
+    return nullptr;
+  }
+
+  return nullptr;
+}
+
+std::unique_ptr<Action> EventHandler::PopupKeyDown(SDL_KeyboardEvent *,
+                                                   flecs::world) {
+  parent(this);
   return nullptr;
 }
 
@@ -308,7 +367,7 @@ std::unique_ptr<Action> EventHandler::AskUserClick(SDL_MouseButtonEvent *,
 
 std::unique_ptr<Action> EventHandler::SelectClick(SDL_MouseButtonEvent *button,
                                                   flecs::world ecs) {
-  auto &map = ecs.target<CurrentMap>().get<GameMap>();
+  auto &map = ecs.lookup("currentMap").target<CurrentMap>().get<GameMap>();
   if (map.inBounds((int)button->x, (int)button->y)) {
     if (button->button == SDL_BUTTON_LEFT) {
       return (this->*loc_selected)({(int)button->x, (int)button->y});
@@ -318,15 +377,14 @@ std::unique_ptr<Action> EventHandler::SelectClick(SDL_MouseButtonEvent *button,
 }
 
 void EventHandler::MainGameOnRender(flecs::world ecs, tcod::Console &console) {
-  auto map = ecs.target<CurrentMap>();
+  auto map = ecs.lookup("currentMap").target<CurrentMap>();
   auto &gMap = map.get_mut<GameMap>();
   gMap.render(console);
 
-  const auto &engine = ecs.get<Engine>();
-  engine.messageLog.render(console, 21, 45, 40, 5);
+  ecs.lookup("messageLog").get<MessageLog>().render(console, 21, 45, 40, 5);
 
   auto q =
-      ecs.query_builder<const Position, const Renderable>()
+      ecs.query_builder<const Position, const Renderable>("module::renderable")
           .with(flecs::ChildOf, map)
           .order_by<const Renderable>([](auto, auto r1, auto, auto r2) {
             return static_cast<int>(r1->layer) - static_cast<int>(r2->layer);
@@ -334,7 +392,7 @@ void EventHandler::MainGameOnRender(flecs::world ecs, tcod::Console &console) {
           .build();
 
   q.each([&](auto p, auto r) {
-    if (gMap.isInFov(p.x, p.y)) {
+    if (gMap.isInFov(p)) {
       r.render(console, p);
     }
   });
@@ -360,9 +418,10 @@ void EventHandler::HistoryOnRender(flecs::world ecs, tcod::Console &console) {
   tcod::print_rect(logConsole, {0, 0, logConsole.get_width(), 1},
                    "┤Message history├", std::nullopt, std::nullopt,
                    TCOD_CENTER);
-  ecs.get<Engine>().messageLog.render(logConsole, 1, 1,
-                                      logConsole.get_width() - 2,
-                                      logConsole.get_height() - 2, cursor);
+  ecs.lookup("messageLog")
+      .get<MessageLog>()
+      .render(logConsole, 1, 1, logConsole.get_width() - 2,
+              logConsole.get_height() - 2, cursor);
   tcod::blit(console, logConsole, {3, 3});
 }
 
@@ -404,20 +463,66 @@ void EventHandler::AreaTargetOnRender(flecs::world ecs,
                    DECORATION, color::red, std::nullopt);
 }
 
+void EventHandler::MainMenuOnRender(flecs::world, tcod::Console &console) {
+  static auto background_image = TCODImage("assets/menu_background.png");
+  tcod::draw_quartergraphics(console, background_image);
+  tcod::print(console, {console.get_width() / 2, console.get_height() / 2 - 4},
+              "Yet Another Roguelike", color::menu_title, std::nullopt,
+              TCOD_CENTER);
+  tcod::print(console, {console.get_width() / 2, console.get_height() - 2},
+              "By degustaf", color::menu_title, std::nullopt, TCOD_CENTER);
+
+  static const auto choices =
+      std::array{"[N] Play a new game     ", "[C] Continue last game  ",
+                 "[Q] Quit                "};
+  for (auto i = 0; i < (int)choices.size(); i++) {
+    tcod::print(console,
+                {console.get_width() / 2, console.get_height() / 2 - 2 + i},
+                choices[i], color::menu_text, color::black, TCOD_CENTER);
+  }
+}
+
+void EventHandler::PopupOnRender(flecs::world ecs, tcod::Console &console) {
+  parentOnRender(this, ecs, console);
+  for (auto &tile : console) {
+    tile.fg /= 8;
+    tile.bg /= 8;
+  }
+
+  tcod::print(console, {console.get_width() / 2, console.get_height() / 2},
+              text, color::white, color::black, TCOD_CENTER);
+}
+
 ActionResult
 EventHandler::MainGameHandleAction(flecs::world ecs,
                                    std::unique_ptr<Action> action) {
   if (action) {
     auto player = ecs.entity("player");
     auto ret = action->perform(player);
-    auto &engine = ecs.get_mut<Engine>();
     if (ret.msg.size() > 0) {
-      engine.messageLog.addMessage(ret.msg, ret.fg);
+      ecs.lookup("messageLog")
+          .get_mut<MessageLog>()
+          .addMessage(ret.msg, ret.fg);
     }
     if (ret) {
-      ecs.target<CurrentMap>().get_mut<GameMap>().update_fov(player);
-      engine.handle_enemy_turns(ecs);
+      ecs.lookup("currentMap")
+          .target<CurrentMap>()
+          .get_mut<GameMap>()
+          .update_fov(player);
+      Engine::handle_enemy_turns(ecs);
     }
+    return ret;
+  }
+  return {ActionResultType::Failure, ""};
+}
+
+ActionResult
+EventHandler::MainMenuHandleAction(flecs::world ecs,
+                                   std::unique_ptr<Action> action) {
+  if (action) {
+    auto ret = action->perform(ecs.entity());
+    assert(ret.msg.size() == 0);
+    assert(!ret);
     return ret;
   }
   return {ActionResultType::Failure, ""};

@@ -25,4 +25,14 @@ constexpr auto healthRecovered = tcod::ColorRGB{0, 0xFF, 0};
 constexpr auto barText = white;
 constexpr auto barFilled = tcod::ColorRGB{0, 0x60, 0};
 constexpr auto barEmpty = tcod::ColorRGB{0x40, 0x10, 0x10};
+
+constexpr auto menu_title = tcod::ColorRGB{0xFF, 0xFF, 0x3F};
+constexpr auto menu_text = white;
 }; // namespace color
+
+static inline TCOD_ColorRGBA &operator/=(TCOD_ColorRGBA &lhs, uint8_t rhs) {
+  lhs.r /= rhs;
+  lhs.g /= rhs;
+  lhs.b /= rhs;
+  return lhs;
+}

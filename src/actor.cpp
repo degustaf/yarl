@@ -3,8 +3,8 @@
 #include <algorithm>
 
 #include "ai.hpp"
-#include "engine.hpp"
 #include "input_handler.hpp"
+#include "message_log.hpp"
 
 const std::vector<RenderOrder> allRenderOrders = {
     RenderOrder::Corpse, RenderOrder::Item, RenderOrder::Actor};
@@ -39,7 +39,7 @@ void Fighter::die(flecs::entity self) {
   self.remove<BlocksMovement>();
 
   auto ecs = self.world();
-  ecs.query_builder()
+  ecs.query_builder("module::ai")
       .with(flecs::IsA, ecs.component<Ai>())
       .build()
       .each([&](auto e) {
@@ -50,13 +50,13 @@ void Fighter::die(flecs::entity self) {
 
   auto &name = self.get_mut<Named>();
   auto player = ecs.lookup("player");
-  auto &engine = ecs.get_mut<Engine>();
+  auto &messageLog = ecs.lookup("messageLog").get_mut<MessageLog>();
   if (self == player) {
-    engine.messageLog.addMessage("You died!", color::playerDie);
-    engine.eventHandler.keyDown = &EventHandler::GameOverKeyDown;
+    messageLog.addMessage("You died!", color::playerDie);
+    ecs.get_mut<EventHandler>().gameOver();
   } else {
     auto msg = tcod::stringf("%s is dead!", name.name.c_str());
-    engine.messageLog.addMessage(msg, color::enemyDie);
+    messageLog.addMessage(msg, color::enemyDie);
   }
   name.name = "remains of " + name.name;
 }

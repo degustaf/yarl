@@ -1,19 +1,17 @@
 #pragma once
 
+#include <string>
+
 #include <flecs.h>
 
 #include "input_handler.hpp"
-#include "message_log.hpp"
 
-struct Engine {
-  EventHandler eventHandler;
-  MessageLog messageLog;
+namespace Engine {
 
-  Engine() = default;
-  Engine(const Engine &) = delete;
-  Engine &operator=(const Engine &) = delete;
-  Engine(Engine &&) = default;
-  Engine &operator=(Engine &&) = default;
+void handle_enemy_turns(flecs::world ecs);
+void save_as(flecs::world ecs, const std::string &file_name);
+bool load(flecs::world ecs, const std::string &file_name,
+          EventHandler &eventHandler);
 
-  void handle_enemy_turns(flecs::world ecs) const;
-};
+void new_game(flecs::world ecs);
+}; // namespace Engine

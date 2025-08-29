@@ -11,7 +11,7 @@
 
 ActionResult MoveAction::perform(flecs::entity e) const {
   auto &pos = e.get_mut<Position>();
-  auto mapEntity = e.world().target<CurrentMap>();
+  auto mapEntity = e.world().lookup("currentMap").target<CurrentMap>();
   auto &map = mapEntity.get<GameMap>();
   if (map.inBounds(pos + dxy) && map.isWalkable(pos + dxy)) {
     if (GameMap::get_blocking_entity(mapEntity, pos + dxy) == e.null()) {
@@ -25,7 +25,7 @@ ActionResult MoveAction::perform(flecs::entity e) const {
 ActionResult MeleeAction::perform(flecs::entity e) const {
   auto &pos = e.get_mut<Position>();
   auto ecs = e.world();
-  auto mapEntity = ecs.target<CurrentMap>();
+  auto mapEntity = ecs.lookup("currentMap").target<CurrentMap>();
   auto target = GameMap::get_blocking_entity(mapEntity, pos + dxy);
 
   auto attack_color =
@@ -55,7 +55,7 @@ ActionResult MeleeAction::perform(flecs::entity e) const {
 
 ActionResult BumpAction::perform(flecs::entity e) const {
   auto &pos = e.get_mut<Position>();
-  auto mapEntity = e.world().target<CurrentMap>();
+  auto mapEntity = e.world().lookup("currentMap").target<CurrentMap>();
   if (GameMap::get_blocking_entity(mapEntity, pos + dxy)) {
     return MeleeAction(dxy[0], dxy[1]).perform(e);
   }
@@ -83,7 +83,10 @@ ActionResult PickupAction::perform(flecs::entity e) const {
   }
 
   auto &pos = e.get<Position>();
-  auto q = e.world().query_builder<const Position>().with<Item>().build();
+  auto q = e.world()
+               .query_builder<const Position>("module::pickup")
+               .with<Item>()
+               .build();
   auto item = q.find(
       [&](flecs::entity item, auto &p) { return e != item && p == pos; });
   if (item) {
@@ -100,7 +103,7 @@ ActionResult DropItemAction::perform(flecs::entity e) const {
   auto msg =
       tcod::stringf("You dropped the %s.", item.get<Named>().name.c_str());
   item.remove<ContainedBy>(e)
-      .add(flecs::ChildOf, e.world().target<CurrentMap>())
+      .add(flecs::ChildOf, e.world().lookup("currentMap").target<CurrentMap>())
       .set<Position>(e.get<Position>());
   return {ActionResultType::Success, msg};
 }

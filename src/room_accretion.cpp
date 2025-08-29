@@ -4,6 +4,7 @@
 
 #include <array>
 #include <cassert>
+#include <cstdint>
 
 #include "actor.hpp"
 
@@ -65,8 +66,9 @@ static void place_entities(flecs::entity map, const RectangularRoom &r,
   const auto item_count = rng.getInt(0, MAX_ITEMS_PER_ROOM);
 
   auto ecs = map.world();
-  auto q =
-      ecs.query_builder<const Position>().with(flecs::ChildOf, map).build();
+  auto q = ecs.query_builder<const Position>("module::position")
+               .with(flecs::ChildOf, map)
+               .build();
 
   for (auto i = 0; i < monster_count; i++) {
     auto x = rng.getInt(r.x1 + 1, r.x2 - 1);
@@ -118,11 +120,20 @@ static void place_entities(flecs::entity map, const RectangularRoom &r,
 
 GameMap generateDungeon(flecs::entity map, int width, int height,
                         flecs::entity player) {
-  auto dungeon = GameMap(width, height);
+  auto dungeon =
+      GameMap(width, height,
+              TCODRandom().getInt(0, std::numeric_limits<uint32_t>::max()));
+  generateDungeon(map, dungeon, player, true);
+  return dungeon;
+}
 
+void generateDungeon(flecs::entity map, GameMap &dungeon, flecs::entity player,
+                     bool generateEntities) {
   auto rooms = std::array<RectangularRoom, MAX_ROOMS>();
   size_t roomCount = 0;
-  auto rng = TCODRandom();
+  auto rng = TCODRandom(dungeon.seed);
+  auto width = dungeon.getWidth();
+  auto height = dungeon.getHeight();
 
   for (size_t i = 0; i < MAX_ROOMS; i++) {
     auto room_width = rng.getInt(ROOM_MIN_SIZE, ROOM_MAX_SIZE);
@@ -144,15 +155,20 @@ GameMap generateDungeon(flecs::entity map, int width, int height,
 
     new_room.carveOut(dungeon);
     if (roomCount == 0) {
-      player.get_mut<Position>() = new_room.center();
+      if (generateEntities) {
+        player.get_mut<Position>() = new_room.center();
+      }
     } else {
       tunnel_between(dungeon, rooms[roomCount - 1].center(), new_room.center());
-      place_entities(map, new_room, rng);
     }
 
     rooms[roomCount] = new_room;
     roomCount++;
   }
 
-  return dungeon;
+  if (generateEntities) {
+    for (size_t i = 1; i < roomCount; i++) {
+      place_entities(map, rooms[i], rng);
+    }
+  }
 }

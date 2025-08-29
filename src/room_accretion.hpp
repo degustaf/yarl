@@ -6,3 +6,6 @@
 
 GameMap generateDungeon(flecs::entity map, int width, int height,
                         flecs::entity player);
+
+void generateDungeon(flecs::entity map, GameMap &dungeon, flecs::entity player,
+                     bool generateEntities);

@@ -1,14 +1,21 @@
 #include "engine.hpp"
 
+#include <fstream>
+
 #include <libtcod.hpp>
 
 #include "ai.hpp"
 #include "game_map.hpp"
+#include "inventory.hpp"
+#include "message_log.hpp"
+#include "room_accretion.hpp"
 
-void Engine::handle_enemy_turns(flecs::world ecs) const {
-  auto map = ecs.target<CurrentMap>();
+void Engine::handle_enemy_turns(flecs::world ecs) {
+  auto map = ecs.lookup("currentMap").target<CurrentMap>();
 
-  auto q = ecs.query_builder<Ai>().with(flecs::ChildOf, map).build();
+  auto q = ecs.query_builder<Ai>("module::monsterAi")
+               .with(flecs::ChildOf, map)
+               .build();
 
   q.run([](flecs::iter &it) {
     while (it.next()) {
@@ -23,4 +30,71 @@ void Engine::handle_enemy_turns(flecs::world ecs) const {
       }
     }
   });
+}
+
+void Engine::save_as(flecs::world ecs, const std::string &file_name) {
+  auto output = std::ofstream(file_name);
+  output << ecs.to_json();
+}
+
+bool Engine::load(flecs::world ecs, const std::string &file_name,
+                  EventHandler &eventHandler) {
+  auto input = std::ifstream(file_name);
+  if (input.fail()) {
+    eventHandler.makePopup(
+        [](auto e) { e->mainMenu(); },
+        [](auto e, auto world, auto &c) { e->MainMenuOnRender(world, c); },
+        "No saved game to load.");
+    return false;
+  }
+
+  auto buffer = std::stringstream();
+  buffer << input.rdbuf();
+  if (ecs.from_json(buffer.str().c_str()) == nullptr) {
+    eventHandler.makePopup(
+        [](auto e) { e->mainMenu(); },
+        [](auto e, auto world, auto &c) { e->MainMenuOnRender(world, c); },
+        "Failed to load save.");
+    return false;
+  }
+
+  auto currentmap = ecs.lookup("currentMap");
+  if (currentmap == currentmap.null()) {
+    eventHandler.makePopup(
+        [](auto e) { e->mainMenu(); },
+        [](auto e, auto world, auto &c) { e->MainMenuOnRender(world, c); },
+        "Failed to load save.");
+    return false;
+  }
+  auto map = currentmap.target<CurrentMap>();
+  auto &gamemap = map.get_mut<GameMap>();
+  gamemap.init();
+  auto player = ecs.lookup("player");
+  generateDungeon(map, gamemap, player, false);
+  gamemap.update_fov(player);
+
+  return true;
+}
+
+void Engine::new_game(flecs::world ecs) {
+  int map_width = 80;
+  int map_height = 43;
+
+  auto player = ecs.entity("player")
+                    .set<Position>({0, 0})
+                    .set<Renderable>({'@', {255, 255, 255}, RenderOrder::Actor})
+                    .set<Named>({"Player"})
+                    .emplace<Fighter>(30, 2, 5)
+                    .set<Inventory>({26});
+  auto map = ecs.entity();
+  map.emplace<GameMap>(generateDungeon(map, map_width, map_height, player));
+
+  ecs.entity("currentMap").add<CurrentMap>(map);
+  map.get_mut<GameMap>().update_fov(player);
+
+  ecs.entity("messageLog")
+      .set<MessageLog>({})
+      .get_mut<MessageLog>()
+      .addMessage("Hello and welcome, adventurer, to yet another dungeon!",
+                  color::welcomeText);
 }

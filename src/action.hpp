@@ -54,9 +54,15 @@ struct Action {
 
 struct ExitAction : Action {
   virtual ~ExitAction() override = default;
-  virtual ActionResult
-  perform([[maybe_unused]] flecs::entity e) const override {
+  virtual ActionResult perform(flecs::entity) const override {
     return {ActionResultType::ExitGood, ""};
+  }
+};
+
+struct QuitWithoutSavingAction : Action {
+  virtual ~QuitWithoutSavingAction() override = default;
+  virtual ActionResult perform(flecs::entity) const override {
+    return {ActionResultType::ExitBad, ""};
   }
 };
 

@@ -36,7 +36,7 @@ struct Position {
   int y;
 };
 
-enum class RenderOrder {
+enum class RenderOrder /*: uint8_t*/ {
   Corpse,
   Item,
   Actor,
@@ -50,6 +50,7 @@ struct Renderable {
 
   void render(tcod::Console &console, const Position &pos) const;
 };
+// static_assert(sizeof(Renderable) == 8, "Renderable has the wrong size");
 
 struct Named {
   std::string name;

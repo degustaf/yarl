@@ -8,8 +8,8 @@
 #include "color.hpp"
 
 struct Message {
-  const std::string plain_text;
-  const tcod::ColorRGB fg;
+  std::string plain_text;
+  tcod::ColorRGB fg;
   int count = 1;
 
   std::string fullText(void) const;
@@ -24,9 +24,9 @@ struct MessageLog {
   void render(tcod::Console &console, int x, int y, int width, int height,
               size_t offset) const;
 
-private:
   std::vector<Message> messages;
 
+private:
   void render(tcod::Console &console, int x, int y, int width, int height,
               std::vector<Message>::const_reverse_iterator rbegin) const;
 };

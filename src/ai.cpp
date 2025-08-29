@@ -19,10 +19,10 @@ std::unique_ptr<Action> HostileAi::act(flecs::entity self) {
   const auto dx = target.x - pos.x;
   const auto dy = target.y - pos.y;
   const auto distance = std::max(std::abs(dx), std::abs(dy));
-  auto mapEntity = ecs.target<CurrentMap>();
+  auto mapEntity = ecs.lookup("currentMap").target<CurrentMap>();
   const auto &map = mapEntity.get<GameMap>();
 
-  if (map.isInFov(pos.x, pos.y)) {
+  if (map.isInFov(pos)) {
     if (distance <= 1) {
       return std::make_unique<MeleeAction>(dx, dy);
     }
@@ -38,7 +38,7 @@ std::unique_ptr<Action> HostileAi::act(flecs::entity self) {
       }
     }
 
-    auto q = ecs.query_builder<const Position>()
+    auto q = ecs.query_builder<const Position>("module::blocks")
                  .with<BlocksMovement>()
                  .with(flecs::ChildOf, mapEntity)
                  .build();
@@ -67,7 +67,7 @@ std::unique_ptr<Action> ConfusedAi::act(flecs::entity self) {
 
     auto ecs = self.world();
     auto ai = ecs.lookup("module::Ai");
-    auto q = ecs.query_builder().with(flecs::IsA, ai).build();
+    auto q = ecs.query_builder("module::ai").with(flecs::IsA, ai).build();
     q.each([self](auto ai) {
       if (self.has(ai) && !self.enabled(ai)) {
         self.enable(ai);

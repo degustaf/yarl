@@ -3,7 +3,8 @@
 #include "actor.hpp"
 
 bool Inventory::hasRoom(flecs::entity e) const {
-  auto q = e.world().query_builder<ContainedBy>(e).build();
+  auto q =
+      e.world().query_builder("module::inventory").with<ContainedBy>(e).build();
   return q.count() < capacity;
 }
 

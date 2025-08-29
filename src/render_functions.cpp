@@ -28,10 +28,11 @@ void renderNamesAtMouseLocation(tcod::Console &console,
                                 const std::array<int, 2> xy,
                                 const std::array<int, 2> &mouse_loc,
                                 flecs::entity map) {
-  auto q = map.world()
-               .query_builder<const Position, const Named>()
-               .with(flecs::ChildOf, map)
-               .build();
+  auto q =
+      map.world()
+          .query_builder<const Position, const Named>("module::namedPosition")
+          .with(flecs::ChildOf, map)
+          .build();
   auto msg = std::string();
   q.each([&](auto &pos, auto &name) {
     if (pos == mouse_loc) {

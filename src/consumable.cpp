@@ -3,15 +3,15 @@
 #include <cassert>
 
 #include <libtcod.hpp>
-#include <libtcod/console_printing.hpp>
 #include <memory>
 
 #include "action.hpp"
 #include "actor.hpp"
 #include "ai.hpp"
 #include "color.hpp"
-#include "engine.hpp"
 #include "game_map.hpp"
+#include "input_handler.hpp"
+#include "message_log.hpp"
 
 ActionResult HealingConsumable::activate(flecs::entity item,
                                          flecs::entity target) const {
@@ -33,16 +33,16 @@ ActionResult LightningDamageConsumable::activate(flecs::entity item,
   auto closestDistanceSq = maximumRange * maximumRange + 1;
 
   auto ecs = item.world();
-  auto map = ecs.target<CurrentMap>();
+  auto map = ecs.lookup("currentMap").target<CurrentMap>();
   auto &gameMap = map.get<GameMap>();
   auto &consumerPos = consumer.get<Position>();
   auto target = consumer.null();
-  auto q = ecs.query_builder<Position>()
+  auto q = ecs.query_builder<Position>("module::fighter")
                .with<Fighter>()
                .with(flecs::ChildOf, map)
                .build();
   q.each([&](auto e, auto &p) {
-    if ((e != consumer) && (gameMap.isInFov(p.x, p.y))) {
+    if ((e != consumer) && (gameMap.isInFov(p))) {
       auto d2 = consumerPos.distanceSquared(p);
       if (d2 < closestDistanceSq) {
         target = e;
@@ -64,7 +64,7 @@ ActionResult LightningDamageConsumable::activate(flecs::entity item,
 }
 
 ActionResult ConfusionConsumable::activate(flecs::entity item) const {
-  auto &eventHandler = item.world().get_mut<Engine>().eventHandler;
+  auto &eventHandler = item.world().get_mut<EventHandler>();
   eventHandler.makeTargetSelector(
       [item](auto xy) {
         return std::make_unique<TargetedItemAction>(item, xy);
@@ -79,15 +79,15 @@ ActionResult ConfusionConsumable::selected(flecs::entity item,
                                            flecs::entity consumer,
                                            std::array<int, 2> target) const {
   auto ecs = item.world();
-  auto map = ecs.target<CurrentMap>();
+  auto map = ecs.lookup("currentMap").target<CurrentMap>();
   auto &gameMap = map.get<GameMap>();
-  if (!gameMap.isInFov(target[0], target[1])) {
+  if (!gameMap.isInFov(target)) {
     return {ActionResultType::Failure,
             "You cannot target an area that you cannot see.",
             color::impossible};
   }
 
-  auto target_entity = ecs.query_builder<const Position>()
+  auto target_entity = ecs.query_builder<const Position>("flecs::enemyWithAi")
                            .with(flecs::ChildOf, map)
                            .with<Ai>()
                            .build()
@@ -106,7 +106,7 @@ ActionResult ConfusionConsumable::selected(flecs::entity item,
       target_entity.get<Named>().name.c_str());
 
   auto ai = ecs.lookup("module::Ai");
-  auto q = ecs.query_builder().with(flecs::IsA, ai).build();
+  auto q = ecs.query_builder("module::ai").with(flecs::IsA, ai).build();
   q.each([target_entity](auto ai) {
     if (target_entity.has(ai) && target_entity.enabled(ai)) {
       target_entity.disable(ai);
@@ -124,7 +124,7 @@ ActionResult ConfusionConsumable::selected(flecs::entity item,
 
 ActionResult FireballDamageConsumable::activate(flecs::entity item) const {
   auto ecs = item.world();
-  auto &eventHandler = ecs.get_mut<Engine>().eventHandler;
+  auto &eventHandler = ecs.get_mut<EventHandler>();
   eventHandler.makeAreaTargetSelector(
       [item](auto xy) {
         return std::make_unique<TargetedItemAction>(item, xy);
@@ -139,19 +139,20 @@ ActionResult
 FireballDamageConsumable::selected(flecs::entity item,
                                    std::array<int, 2> target) const {
   auto ecs = item.world();
-  auto map = ecs.target<CurrentMap>();
+  auto map = ecs.lookup("currentMap").target<CurrentMap>();
   auto &gameMap = map.get<GameMap>();
-  if (!gameMap.isInFov(target[0], target[1])) {
+  if (!gameMap.isInFov(target)) {
     return {ActionResultType::Failure,
             "You cannot target an area that you cannot see.",
             color::impossible};
   }
 
-  auto q = ecs.query_builder<const Position, Fighter, const Named>()
+  auto q = ecs.query_builder<const Position, Fighter, const Named>(
+                  "module::fighterPosition")
                .with(flecs::ChildOf, map)
                .build();
   auto targets_hit = false;
-  auto &engine = ecs.get_mut<Engine>();
+  auto &messageLog = ecs.lookup("messageLog").get_mut<MessageLog>();
   ecs.defer_begin();
   q.each([&](auto e, const Position &p, Fighter &f, const Named &name) {
     if (p.distanceSquared(target) <= radius * radius) {
@@ -159,7 +160,7 @@ FireballDamageConsumable::selected(flecs::entity item,
       auto msg = tcod::stringf(
           "The %s is engulfed in a fiery explosion, taking %d damage!",
           name.name.c_str(), damage);
-      engine.messageLog.addMessage(msg, color::enemyDie);
+      messageLog.addMessage(msg, color::enemyDie);
       f.take_damage(damage, e);
     }
   });
