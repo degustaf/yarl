@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <cstdlib>
-#include <libtcod/console_printing.hpp>
 #include <memory>
 
 #include "action.hpp"

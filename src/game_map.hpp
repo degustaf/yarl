@@ -12,31 +12,39 @@ struct CurrentMap {};
 struct Tile {
   uint8_t flags;
 
-  static constexpr auto Explored = uint8_t(1);
+  static constexpr auto Explored = uint8_t(0x1);
+  static constexpr auto Stairs = uint8_t(0x2);
 };
 
 struct GameMap {
-  GameMap(int width = 0, int height = 0, uint32_t seed = 0)
-      : width(width), height(height), seed(seed), tiles(width * height),
+  GameMap(int width = 0, int height = 0, int level = 1)
+      : width(width), height(height), level(level), tiles(width * height),
         map(width, height) {
     map.clear();
   };
 
   void init() { map = TCODMap(width, height); }
 
-  bool inBounds(int x, int y) const;
-  bool inBounds(std::array<int, 2> xy) const;
+  inline bool inBounds(int x, int y) const {
+    return 0 <= x && x < width && 0 <= y && y < height;
+  }
+  inline bool inBounds(std::array<int, 2> xy) const {
+    return inBounds(xy[0], xy[1]);
+  }
   inline int getWidth() const { return width; }
   inline int getHeight() const { return height; }
-  bool isInFov(std::array<int, 2> xy) const {
+  inline bool isInFov(std::array<int, 2> xy) const {
     return map.isInFov(xy[0], xy[1]);
   }
-
-  bool isWalkable(std::array<int, 2> xy) const {
+  inline bool isWalkable(std::array<int, 2> xy) const {
     return map.isWalkable(xy[0], xy[1]);
   }
-  void carveOut(int x, int y);
+  inline bool isStairs(std::array<int, 2> xy) const {
+    return tiles[(size_t)(xy[1] * width + xy[0])].flags & Tile::Stairs;
+  }
 
+  void carveOut(int x, int y);
+  GameMap nextFloor(flecs::entity map, flecs::entity player) const;
   void render(tcod::Console &console) const;
   void update_fov(flecs::entity player);
 
@@ -45,7 +53,7 @@ struct GameMap {
 
   int width;
   int height;
-  uint32_t seed;
+  int level;
   std::vector<Tile> tiles;
 
 private:

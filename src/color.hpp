@@ -11,6 +11,7 @@ constexpr auto playerAtk = tcod::ColorRGB{0xE0, 0xE0, 0xE0};
 constexpr auto enemyAtk = tcod::ColorRGB{0xFF, 0x30, 0x30};
 constexpr auto needsTarget = tcod::ColorRGB{0x3F, 0xFF, 0xFF};
 constexpr auto statusEffectApplied = tcod::ColorRGB{0x3F, 0xFF, 0x3F};
+constexpr auto descend = tcod::ColorRGB{0x9F, 0x3F, 0xFF};
 
 constexpr auto playerDie = tcod::ColorRGB{0xFF, 0x30, 0x30};
 constexpr auto enemyDie = tcod::ColorRGB{0xFF, 0xA0, 0x30};

@@ -1,6 +1,8 @@
 #include "engine.hpp"
 
+#include <cstdint>
 #include <fstream>
+#include <limits>
 
 #include <libtcod.hpp>
 
@@ -77,18 +79,20 @@ bool Engine::load(flecs::world ecs, const std::string &file_name,
 }
 
 void Engine::new_game(flecs::world ecs) {
-  int map_width = 80;
-  int map_height = 43;
+  const int map_width = 80;
+  const int map_height = 43;
 
+  ecs.entity("seed").set<Seed>({(uint32_t)TCODRandom::getInstance()->getInt(
+      0, (int)std::numeric_limits<uint32_t>::max())});
   auto player = ecs.entity("player")
                     .set<Position>({0, 0})
                     .set<Renderable>({'@', {255, 255, 255}, RenderOrder::Actor})
                     .set<Named>({"Player"})
                     .emplace<Fighter>(30, 2, 5)
                     .set<Inventory>({26});
-  auto map = ecs.entity();
-  map.emplace<GameMap>(generateDungeon(map, map_width, map_height, player));
 
+  auto map = ecs.entity();
+  map.emplace<GameMap>(generateDungeon(map, map_width, map_height, 1, player));
   ecs.entity("currentMap").add<CurrentMap>(map);
   map.get_mut<GameMap>().update_fov(player);
 

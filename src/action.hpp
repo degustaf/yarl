@@ -136,3 +136,8 @@ struct MessageAction : Action {
   virtual ActionResult perform(flecs::entity e) const override;
   virtual ~MessageAction() = default;
 };
+
+struct TakeStairsAction : Action {
+  virtual ActionResult perform(flecs::entity e) const;
+  virtual ~TakeStairsAction() = default;
+};

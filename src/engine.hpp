@@ -6,6 +6,10 @@
 
 #include "input_handler.hpp"
 
+struct Seed {
+  uint32_t seed;
+};
+
 namespace Engine {
 
 void handle_enemy_turns(flecs::world ecs);

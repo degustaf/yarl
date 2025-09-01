@@ -4,7 +4,7 @@
 
 #include "game_map.hpp"
 
-GameMap generateDungeon(flecs::entity map, int width, int height,
+GameMap generateDungeon(flecs::entity map, int width, int height, int level,
                         flecs::entity player);
 
 void generateDungeon(flecs::entity map, GameMap &dungeon, flecs::entity player,

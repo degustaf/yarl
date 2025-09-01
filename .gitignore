@@ -3,6 +3,8 @@ build
 emscripten
 .cache
 
+*.sav
+
 # Jekyll files for the tutorial site.
 docs/_site
 docs/.sass-cache

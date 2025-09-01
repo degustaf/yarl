@@ -1,6 +1,7 @@
 #include "action.hpp"
 
 #include <cassert>
+
 #include <libtcod.hpp>
 
 #include "actor.hpp"
@@ -25,7 +26,9 @@ ActionResult MoveAction::perform(flecs::entity e) const {
 ActionResult MeleeAction::perform(flecs::entity e) const {
   auto &pos = e.get_mut<Position>();
   auto ecs = e.world();
-  auto mapEntity = ecs.lookup("currentMap").target<CurrentMap>();
+  auto currentMap = ecs.lookup("currentMap");
+  assert(currentMap);
+  auto mapEntity = currentMap.target<CurrentMap>();
   auto target = GameMap::get_blocking_entity(mapEntity, pos + dxy);
 
   auto attack_color =
@@ -83,14 +86,19 @@ ActionResult PickupAction::perform(flecs::entity e) const {
   }
 
   auto &pos = e.get<Position>();
+  auto currentMap = e.world().lookup("currentMap");
+  assert(currentMap);
+  auto map = currentMap.target<CurrentMap>();
   auto q = e.world()
                .query_builder<const Position>("module::pickup")
                .with<Item>()
+               .with(flecs::ChildOf, map)
+               .cache_kind(flecs::QueryCacheNone)
                .build();
   auto item = q.find(
       [&](flecs::entity item, auto &p) { return e != item && p == pos; });
   if (item) {
-    item.add<ContainedBy>(e).remove<Position>();
+    item.add<ContainedBy>(e).remove<Position>().remove(flecs::ChildOf, map);
     auto msg =
         tcod::stringf("You picked up the %s!", item.get<Named>().name.c_str());
     return {ActionResultType::Success, msg};
@@ -119,4 +127,31 @@ ActionResult TargetedItemAction::perform(flecs::entity e) const {
 
 ActionResult MessageAction::perform(flecs::entity) const {
   return {ActionResultType::Success, msg};
+}
+
+static constexpr auto mapQueries = {
+    "module::blocks",        "module::blocksPosition", "module::monsterAi",
+    "module::namedPosition", "module::renderable",
+};
+
+ActionResult TakeStairsAction::perform(flecs::entity e) const {
+  auto ecs = e.world();
+  assert(e == ecs.lookup("player"));
+  auto pos = e.get<Position>();
+
+  auto currentMap = ecs.lookup("currentMap");
+  auto map = currentMap.target<CurrentMap>();
+  auto &gameMap = map.get<GameMap>();
+  if (gameMap.isStairs(pos)) {
+    auto newMap = ecs.entity();
+    newMap.set<GameMap>(gameMap.nextFloor(newMap, e));
+    currentMap.add<CurrentMap>(newMap);
+    for (auto &q : mapQueries) {
+      ecs.lookup(q).destruct();
+    }
+    return {ActionResultType::Success, "You descend the staircase.",
+            color::descend};
+  }
+  return {ActionResultType::Failure, "There are no stairs here.",
+          color::impossible};
 }

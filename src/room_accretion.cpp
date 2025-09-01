@@ -1,12 +1,14 @@
 #include "room_accretion.hpp"
 
+#include <flecs/addons/cpp/c_types.hpp>
 #include <libtcod.hpp>
 
 #include <array>
 #include <cassert>
-#include <cstdint>
+#include <cstddef>
 
 #include "actor.hpp"
+#include "engine.hpp"
 
 struct RectangularRoom {
   RectangularRoom(int x, int y, int width, int height)
@@ -68,6 +70,7 @@ static void place_entities(flecs::entity map, const RectangularRoom &r,
   auto ecs = map.world();
   auto q = ecs.query_builder<const Position>("module::position")
                .with(flecs::ChildOf, map)
+               .cache_kind(flecs::QueryCacheNone)
                .build();
 
   for (auto i = 0; i < monster_count; i++) {
@@ -118,11 +121,9 @@ static void place_entities(flecs::entity map, const RectangularRoom &r,
   }
 }
 
-GameMap generateDungeon(flecs::entity map, int width, int height,
+GameMap generateDungeon(flecs::entity map, int width, int height, int level,
                         flecs::entity player) {
-  auto dungeon =
-      GameMap(width, height,
-              TCODRandom().getInt(0, std::numeric_limits<uint32_t>::max()));
+  auto dungeon = GameMap(width, height, level);
   generateDungeon(map, dungeon, player, true);
   return dungeon;
 }
@@ -131,7 +132,8 @@ void generateDungeon(flecs::entity map, GameMap &dungeon, flecs::entity player,
                      bool generateEntities) {
   auto rooms = std::array<RectangularRoom, MAX_ROOMS>();
   size_t roomCount = 0;
-  auto rng = TCODRandom(dungeon.seed);
+  auto seed = map.world().lookup("seed").get<Seed>();
+  auto rng = TCODRandom(seed.seed + dungeon.level);
   auto width = dungeon.getWidth();
   auto height = dungeon.getHeight();
 
@@ -165,6 +167,10 @@ void generateDungeon(flecs::entity map, GameMap &dungeon, flecs::entity player,
     rooms[roomCount] = new_room;
     roomCount++;
   }
+
+  auto downStairs = rooms[roomCount - 1].center();
+  dungeon.tiles[(size_t)(downStairs[1] * width + downStairs[0])].flags |=
+      Tile::Stairs;
 
   if (generateEntities) {
     for (size_t i = 1; i < roomCount; i++) {

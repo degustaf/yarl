@@ -6,6 +6,7 @@
 
 #include <libtcod.hpp>
 
+#include "action.hpp"
 #include "color.hpp"
 #include "defines.hpp"
 #include "engine.hpp"
@@ -141,6 +142,10 @@ std::unique_ptr<Action> EventHandler::MainGameKeyDown(SDL_KeyboardEvent *key,
     return std::make_unique<BumpAction>(1, 1);
 
   case SDL_SCANCODE_PERIOD:
+    if (key->mod & SDL_KMOD_SHIFT) {
+      return std::make_unique<TakeStairsAction>();
+    }
+    // Intentional fallthrough
   case SDL_SCANCODE_KP_5:
   case SDL_SCANCODE_CLEAR:
     return std::make_unique<WaitAction>();

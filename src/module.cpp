@@ -3,11 +3,13 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <flecs/addons/cpp/c_types.hpp>
 #include <libtcod.hpp>
 
 #include "actor.hpp"
 #include "ai.hpp"
 #include "consumable.hpp"
+#include "engine.hpp"
 #include "game_map.hpp"
 #include "input_handler.hpp"
 #include "inventory.hpp"
@@ -121,14 +123,17 @@ module::module(flecs::world ecs) {
   ecs.component<FireballDamageConsumable>().member<int>("damage").member<int>(
       "radius");
 
+  // engine.hpp
+  ecs.component<Seed>().member<uint32_t>("seed");
+
   // game_map.hpp
-  ecs.component<CurrentMap>();
+  ecs.component<CurrentMap>().add(flecs::Exclusive);
   ecs.component<Tile>().member<uint8_t>("flags");
   ecs.component<std::vector<Tile>>().opaque(std_vector_support<Tile>);
   ecs.component<GameMap>()
       .member<int>("width")
       .member<int>("height")
-      .member<uint32_t>("seed")
+      .member<int>("level")
       .member<std::vector<Tile>>("tiles");
 
   // input_handler.hpp
