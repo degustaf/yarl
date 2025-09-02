@@ -1,6 +1,5 @@
 #include "room_accretion.hpp"
 
-#include <flecs/addons/cpp/c_types.hpp>
 #include <libtcod.hpp>
 
 #include <array>
@@ -70,7 +69,6 @@ static void place_entities(flecs::entity map, const RectangularRoom &r,
   auto ecs = map.world();
   auto q = ecs.query_builder<const Position>("module::position")
                .with(flecs::ChildOf, map)
-               .cache_kind(flecs::QueryCacheNone)
                .build();
 
   for (auto i = 0; i < monster_count; i++) {

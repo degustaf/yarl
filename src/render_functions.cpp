@@ -1,7 +1,6 @@
 #include "render_functions.hpp"
 
 #include <array>
-#include <libtcod/console_printing.hpp>
 #include <optional>
 #include <string>
 
@@ -22,6 +21,12 @@ void renderBar(tcod::Console &console, int currentValue, int maxValue,
 
   auto msg = tcod::stringf("HP: %d/%d", currentValue, maxValue);
   tcod::print(console, {1, 45}, msg, color::barText, std::nullopt);
+}
+
+void renderDungeonLevel(tcod::Console &console, int level,
+                        std::array<int, 2> location) {
+  auto msg = tcod::stringf("Dungeon level: %d", level);
+  tcod::print(console, location, msg, std::nullopt, std::nullopt);
 }
 
 void renderNamesAtMouseLocation(tcod::Console &console,

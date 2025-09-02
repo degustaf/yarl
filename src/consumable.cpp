@@ -40,7 +40,6 @@ ActionResult LightningDamageConsumable::activate(flecs::entity item,
   auto q = ecs.query_builder<Position>("module::fighter")
                .with<Fighter>()
                .with(flecs::ChildOf, map)
-               .cache_kind(flecs::QueryCacheNone)
                .build();
   q.each([&](auto e, auto &p) {
     if ((e != consumer) && (gameMap.isInFov(p))) {
@@ -88,10 +87,9 @@ ActionResult ConfusionConsumable::selected(flecs::entity item,
             color::impossible};
   }
 
-  auto target_entity = ecs.query_builder<const Position>("flecs::enemyWithAi")
+  auto target_entity = ecs.query_builder<const Position>("module::enemyWithAi")
                            .with(flecs::ChildOf, map)
                            .with<Ai>()
-                           .cache_kind(flecs::QueryCacheNone)
                            .build()
                            .find([target](auto &pos) { return pos == target; });
   if (target_entity == target_entity.null()) {
@@ -152,7 +150,6 @@ FireballDamageConsumable::selected(flecs::entity item,
   auto q = ecs.query_builder<const Position, Fighter, const Named>(
                   "module::fighterPosition")
                .with(flecs::ChildOf, map)
-               .cache_kind(flecs::QueryCacheNone)
                .build();
   auto targets_hit = false;
   auto &messageLog = ecs.lookup("messageLog").get_mut<MessageLog>();

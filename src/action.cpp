@@ -93,7 +93,6 @@ ActionResult PickupAction::perform(flecs::entity e) const {
                .query_builder<const Position>("module::pickup")
                .with<Item>()
                .with(flecs::ChildOf, map)
-               .cache_kind(flecs::QueryCacheNone)
                .build();
   auto item = q.find(
       [&](flecs::entity item, auto &p) { return e != item && p == pos; });
@@ -130,8 +129,10 @@ ActionResult MessageAction::perform(flecs::entity) const {
 }
 
 static constexpr auto mapQueries = {
-    "module::blocks",        "module::blocksPosition", "module::monsterAi",
-    "module::namedPosition", "module::renderable",
+    "module::blocks",        "module::blocksPosition",  "module::enemyWithAi",
+    "module::fighter",       "module::fighterPosition", "module::monsterAi",
+    "module::namedPosition", "module::position",        "module::pickup",
+    "module::renderable",
 };
 
 ActionResult TakeStairsAction::perform(flecs::entity e) const {
@@ -147,7 +148,10 @@ ActionResult TakeStairsAction::perform(flecs::entity e) const {
     newMap.set<GameMap>(gameMap.nextFloor(newMap, e));
     currentMap.add<CurrentMap>(newMap);
     for (auto &q : mapQueries) {
-      ecs.lookup(q).destruct();
+      auto query = ecs.lookup(q);
+      if (query) {
+        query.destruct();
+      }
     }
     return {ActionResultType::Success, "You descend the staircase.",
             color::descend};

@@ -3,7 +3,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
-#include <flecs/addons/cpp/c_types.hpp>
+
 #include <libtcod.hpp>
 
 #include "actor.hpp"

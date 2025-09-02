@@ -407,6 +407,7 @@ void EventHandler::MainGameOnRender(flecs::world ecs, tcod::Console &console) {
 
   auto fighter = player.get<Fighter>();
   renderBar(console, fighter.hp(), fighter.max_hp, 20);
+  renderDungeonLevel(console, gMap.level, {0, 47});
   renderNamesAtMouseLocation(console, {21, 44}, mouse_loc, map);
 }
 
