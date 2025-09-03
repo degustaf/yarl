@@ -176,15 +176,17 @@ std::unique_ptr<Action> EventHandler::MainGameKeyDown(SDL_KeyboardEvent *key,
     return nullptr;
   case SDL_SCANCODE_G:
     return std::make_unique<PickupAction>();
-  case SDL_SCANCODE_D:
+  case SDL_SCANCODE_D: {
     static constexpr char DROP_TITLE[] = "┤Select an item to drop├";
     makeInventoryHandler<DROP_TITLE, &EventHandler::DropItemSelected>(*this,
                                                                       ecs);
     return nullptr;
-  case SDL_SCANCODE_I:
+  }
+  case SDL_SCANCODE_I: {
     static constexpr char USE_TITLE[] = "┤Select an item to use├";
     makeInventoryHandler<USE_TITLE, &EventHandler::UseItemSelected>(*this, ecs);
     return nullptr;
+  }
   case SDL_SCANCODE_V:
     makeHistoryHandler(*this, ecs);
     return nullptr;

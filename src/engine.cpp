@@ -5,6 +5,7 @@
 #include <limits>
 
 #include <libtcod.hpp>
+#include <sstream>
 
 #include "ai.hpp"
 #include "game_map.hpp"

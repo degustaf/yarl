@@ -54,7 +54,8 @@ std::unique_ptr<Action> HostileAi::act(flecs::entity self) {
   if (path.size() > 0) {
     const auto [dest_x, dest_y] = path[path.size() - 1];
     path.pop_back();
-    return std::make_unique<MoveAction>(dest_x - pos.x, dest_y - pos.y);
+    return std::make_unique<MoveAction>((int)dest_x - pos.x,
+                                        (int)dest_y - pos.y);
   }
 
   return nullptr;

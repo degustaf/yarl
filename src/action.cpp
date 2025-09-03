@@ -76,6 +76,7 @@ ActionResult ItemAction::perform(flecs::entity e) const {
     return item.get<FireballDamageConsumable>().activate(item);
   }
   assert(false);
+  return {ActionResultType::Failure, ""};
 }
 
 ActionResult PickupAction::perform(flecs::entity e) const {
@@ -122,6 +123,7 @@ ActionResult TargetedItemAction::perform(flecs::entity e) const {
     return item.get<FireballDamageConsumable>().selected(item, target);
   }
   assert(false);
+  return {ActionResultType::Failure, ""};
 }
 
 ActionResult MessageAction::perform(flecs::entity) const {
