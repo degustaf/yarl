@@ -55,16 +55,82 @@ static void tunnel_between(GameMap &map, const std::array<int, 2> &start,
   }
 }
 
-static const auto ROOM_MAX_SIZE = 10;
-static const auto ROOM_MIN_SIZE = 6;
-static const auto MAX_ROOMS = 30;
-static const auto MAX_MONSTERS_PER_ROOM = 2;
-static const auto MAX_ITEMS_PER_ROOM = 2;
+static constexpr auto ROOM_MAX_SIZE = 10;
+static constexpr auto ROOM_MIN_SIZE = 6;
+static constexpr auto MAX_ROOMS = 30;
+
+struct MaxByFloor {
+  int minFloor;
+  int count;
+};
+
+static constexpr auto max_items_by_floor =
+    std::array<MaxByFloor, 2>{MaxByFloor{1, 1}, {4, 2}};
+
+static constexpr auto max_monsters_by_floor =
+    std::array<MaxByFloor, 3>{MaxByFloor{1, 2}, {4, 3}, {6, 5}};
+
+template <size_t N>
+static int getMaxValueForFloor(const std::array<MaxByFloor, N> &maxByFloor,
+                               int floor) {
+  auto currentCount = 0;
+  for (const auto &f : maxByFloor) {
+    if (f.minFloor > floor) {
+      break;
+    } else {
+      currentCount = f.count;
+    }
+  }
+  return currentCount;
+}
+
+struct WeightsByFloor {
+  int minFloor;
+  int weight;
+  const char *name;
+};
+
+static constexpr auto item_weights =
+    std::array<WeightsByFloor, 4>{WeightsByFloor{0, 35, "module::healthPotion"},
+                                  {2, 10, "module::confusionScroll"},
+                                  {4, 25, "module::lightningScroll"},
+                                  {6, 25, "module::fireballScroll"}};
+
+static constexpr auto enemy_weights =
+    std::array<WeightsByFloor, 4>{WeightsByFloor{0, 80, "module::orc"},
+                                  {3, 15, "module::troll"},
+                                  {5, 30, "module::troll"},
+                                  {7, 60, "module::troll"}};
+
+template <size_t N>
+static const char *
+get_entity_at_random(const std::array<WeightsByFloor, N> &weights, int floor,
+                     TCODRandom &rng) {
+  auto totalWeight = 0;
+  for (const auto &w : weights) {
+    if (w.minFloor > floor) {
+      break;
+    }
+    totalWeight += w.weight;
+  }
+
+  auto choice = rng.getInt(1, totalWeight);
+  for (const auto &w : weights) {
+    if (choice <= w.weight) {
+      return w.name;
+    }
+    choice -= w.weight;
+  }
+  assert(false);
+  return "";
+}
 
 static void place_entities(flecs::entity map, const RectangularRoom &r,
-                           TCODRandom &rng) {
-  const auto monster_count = rng.getInt(0, MAX_MONSTERS_PER_ROOM);
-  const auto item_count = rng.getInt(0, MAX_ITEMS_PER_ROOM);
+                           int level, TCODRandom &rng) {
+  const auto monster_count =
+      rng.getInt(0, getMaxValueForFloor(max_monsters_by_floor, level));
+  const auto item_count =
+      rng.getInt(0, getMaxValueForFloor(max_items_by_floor, level));
 
   auto ecs = map.world();
   auto q = ecs.query_builder<const Position>("module::position")
@@ -78,15 +144,9 @@ static void place_entities(flecs::entity map, const RectangularRoom &r,
 
     auto e = q.find([&](const auto &p) { return p == pos; });
     if (e == e.null()) {
-      if (rng.getFloat(0.0f, 1.0f) < 0.8) {
-        auto orc = ecs.lookup("module::orc");
-        assert(orc);
-        ecs.entity().is_a(orc).set<Position>(pos).add(flecs::ChildOf, map);
-      } else {
-        auto troll = ecs.lookup("module::troll");
-        assert(troll);
-        ecs.entity().is_a(troll).set<Position>(pos).add(flecs::ChildOf, map);
-      }
+      auto prefab = ecs.lookup(get_entity_at_random(enemy_weights, level, rng));
+      assert(prefab);
+      ecs.entity().is_a(prefab).set<Position>(pos).add(flecs::ChildOf, map);
     }
   }
 
@@ -97,24 +157,9 @@ static void place_entities(flecs::entity map, const RectangularRoom &r,
 
     auto e = q.find([&](const auto &p) { return p == pos; });
     if (e == e.null()) {
-      auto item_chance = rng.getFloat(0.0f, 1.0f);
-      if (item_chance < 0.7) {
-        auto potion = ecs.lookup("module::healthPotion");
-        assert(potion);
-        ecs.entity().is_a(potion).set<Position>(pos).add(flecs::ChildOf, map);
-      } else if (item_chance < 0.8) {
-        auto scroll = ecs.lookup("module::fireballScroll");
-        assert(scroll);
-        ecs.entity().is_a(scroll).set<Position>(pos).add(flecs::ChildOf, map);
-      } else if (item_chance < 0.9) {
-        auto scroll = ecs.lookup("module::confusionScroll");
-        assert(scroll);
-        ecs.entity().is_a(scroll).set<Position>(pos).add(flecs::ChildOf, map);
-      } else {
-        auto scroll = ecs.lookup("module::lightningScroll");
-        assert(scroll);
-        ecs.entity().is_a(scroll).set<Position>(pos).add(flecs::ChildOf, map);
-      }
+      auto prefab = ecs.lookup(get_entity_at_random(item_weights, level, rng));
+      assert(prefab);
+      ecs.entity().is_a(prefab).set<Position>(pos).add(flecs::ChildOf, map);
     }
   }
 }
@@ -172,7 +217,7 @@ void generateDungeon(flecs::entity map, GameMap &dungeon, flecs::entity player,
 
   if (generateEntities) {
     for (size_t i = 1; i < roomCount; i++) {
-      place_entities(map, rooms[i], rng);
+      place_entities(map, rooms[i], dungeon.level, rng);
     }
   }
 }

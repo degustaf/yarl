@@ -37,7 +37,7 @@ ActionResult MeleeAction::perform(flecs::entity e) const {
   if (target != target.null()) {
     const auto &attacker = e.get<Fighter>();
     auto &defender = target.get_mut<Fighter>();
-    auto damage = attacker.power - defender.defense;
+    auto damage = std::max(attacker.power - defender.defense, 0);
     auto msg = [&]() {
       if (damage > 0) {
         return tcod::stringf("%s attacks %s for %d hit points",
