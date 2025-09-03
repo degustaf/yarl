@@ -4,6 +4,7 @@
 
 #include "ai.hpp"
 #include "input_handler.hpp"
+#include "level.hpp"
 #include "message_log.hpp"
 
 const std::vector<RenderOrder> allRenderOrders = {
@@ -57,6 +58,7 @@ void Fighter::die(flecs::entity self) {
   } else {
     auto msg = tcod::stringf("%s is dead!", name.name.c_str());
     messageLog.addMessage(msg, color::enemyDie);
+    player.get_mut<Level>().add_xp(ecs, self.get<XP>().given);
   }
   name.name = "remains of " + name.name;
 }

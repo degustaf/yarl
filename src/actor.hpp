@@ -69,8 +69,8 @@ struct Fighter {
   void take_damage(int amount, flecs::entity self);
   void die(flecs::entity self);
 
-  const int max_hp;
+  int max_hp;
   int _hp;
-  const int defense;
-  const int power;
+  int defense;
+  int power;
 };

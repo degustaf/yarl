@@ -125,15 +125,8 @@ ActionResult TargetedItemAction::perform(flecs::entity e) const {
 }
 
 ActionResult MessageAction::perform(flecs::entity) const {
-  return {ActionResultType::Success, msg};
+  return {ActionResultType::Success, msg, fg};
 }
-
-static constexpr auto mapQueries = {
-    "module::blocks",        "module::blocksPosition",  "module::enemyWithAi",
-    "module::fighter",       "module::fighterPosition", "module::monsterAi",
-    "module::namedPosition", "module::position",        "module::pickup",
-    "module::renderable",
-};
 
 ActionResult TakeStairsAction::perform(flecs::entity e) const {
   auto ecs = e.world();
@@ -147,12 +140,17 @@ ActionResult TakeStairsAction::perform(flecs::entity e) const {
     auto newMap = ecs.entity();
     newMap.set<GameMap>(gameMap.nextFloor(newMap, e));
     currentMap.add<CurrentMap>(newMap);
-    for (auto &q : mapQueries) {
-      auto query = ecs.lookup(q);
-      if (query) {
-        query.destruct();
-      }
-    }
+
+    auto module = ecs.lookup("module");
+    assert(module);
+    auto q = ecs.query_builder()
+                 .with(flecs::Query)
+                 .with(flecs::ChildOf, module)
+                 .build();
+    ecs.defer_begin();
+    q.each([](auto e) { e.destruct(); });
+    ecs.defer_end();
+
     return {ActionResultType::Success, "You descend the staircase.",
             color::descend};
   }

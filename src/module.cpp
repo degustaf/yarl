@@ -13,6 +13,7 @@
 #include "game_map.hpp"
 #include "input_handler.hpp"
 #include "inventory.hpp"
+#include "level.hpp"
 #include "message_log.hpp"
 
 template <typename Elem, typename Vector = std::vector<Elem>>
@@ -144,6 +145,10 @@ module::module(flecs::world ecs) {
   ecs.component<ContainedBy>().add(flecs::Exclusive);
   ecs.component<Item>();
 
+  // level.hpp
+  ecs.component<XP>().member<int>("given");
+  ecs.component<Level>().member<int>("current").member<int>("xp");
+
   // message_log.hpp
   ecs.component<Message>()
       .member<std::string>("plain_text")
@@ -156,14 +161,16 @@ module::module(flecs::world ecs) {
       .set<Named>({"Orc"})
       .add<BlocksMovement>()
       .set<HostileAi>({})
-      .emplace<Fighter>(10, 0, 3);
+      .emplace<Fighter>(10, 0, 3)
+      .set<XP>({35});
 
   ecs.prefab("troll")
       .set<Renderable>({'T', {0, 127, 0}, RenderOrder::Actor})
       .set<Named>({"Troll"})
       .add<BlocksMovement>()
       .set<HostileAi>({})
-      .emplace<Fighter>(16, 1, 4);
+      .emplace<Fighter>(16, 1, 4)
+      .set<XP>({100});
 
   ecs.prefab("healthPotion")
       .set<Renderable>({'!', {127, 0, 255}, RenderOrder::Item})

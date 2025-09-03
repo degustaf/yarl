@@ -130,8 +130,10 @@ struct TargetedItemAction : ItemAction {
 };
 
 struct MessageAction : Action {
-  MessageAction(std::string msg) : msg(msg){};
+  MessageAction(std::string msg, tcod::ColorRGB fg = color::white)
+      : msg(msg), fg(fg){};
   std::string msg;
+  tcod::ColorRGB fg;
 
   virtual ActionResult perform(flecs::entity e) const override;
   virtual ~MessageAction() = default;

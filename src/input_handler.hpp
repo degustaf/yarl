@@ -89,10 +89,12 @@ struct EventHandler {
   std::unique_ptr<Action> SelectKeyDown(SDL_KeyboardEvent *key, flecs::world);
   std::unique_ptr<Action> MainMenuKeyDown(SDL_KeyboardEvent *key, flecs::world);
   std::unique_ptr<Action> PopupKeyDown(SDL_KeyboardEvent *key, flecs::world);
+  std::unique_ptr<Action> LevelUpKeyDown(SDL_KeyboardEvent *key, flecs::world);
 
   std::unique_ptr<Action> MainGameClick(SDL_MouseButtonEvent *, flecs::world);
   std::unique_ptr<Action> AskUserClick(SDL_MouseButtonEvent *, flecs::world);
   std::unique_ptr<Action> SelectClick(SDL_MouseButtonEvent *, flecs::world);
+  std::unique_ptr<Action> LevelUpClick(SDL_MouseButtonEvent *, flecs::world);
 
   void MainGameOnRender(flecs::world ecs, tcod::Console &console);
   void HistoryOnRender(flecs::world ecs, tcod::Console &console);
@@ -101,6 +103,7 @@ struct EventHandler {
   void AreaTargetOnRender(flecs::world ecs, tcod::Console &console);
   void MainMenuOnRender(flecs::world ecs, tcod::Console &console);
   void PopupOnRender(flecs::world ecs, tcod::Console &console);
+  void LevelUpOnRender(flecs::world ecs, tcod::Console &console);
 
   ActionResult MainGameHandleAction(flecs::world ecs, std::unique_ptr<Action>);
   ActionResult AskUserHandleAction(flecs::world ecs, std::unique_ptr<Action>);

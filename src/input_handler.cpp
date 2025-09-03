@@ -6,12 +6,12 @@
 
 #include <libtcod.hpp>
 
-#include "action.hpp"
 #include "color.hpp"
 #include "defines.hpp"
 #include "engine.hpp"
 #include "game_map.hpp"
 #include "inventory.hpp"
+#include "level.hpp"
 #include "message_log.hpp"
 #include "render_functions.hpp"
 
@@ -63,6 +63,17 @@ static void makeLookHandler(EventHandler &e, flecs::world ecs) {
   e.loc_selected = &EventHandler::LookSelectedLoc;
 
   e.mouse_loc = ecs.lookup("player").get<Position>();
+}
+
+static inline void makeLevelUp(EventHandler &e) {
+  e.keyDown = &EventHandler::LevelUpKeyDown;
+  e.click = &EventHandler::LevelUpClick;
+  e.on_render = &EventHandler::LevelUpOnRender;
+  e.handle_action = &EventHandler::AskUserHandleAction;
+  e.item_selected = nullptr;
+  e.loc_selected = nullptr;
+
+  e.title = "Level Up";
 }
 
 std::unique_ptr<Action> EventHandler::dispatch(SDL_Event *event,
@@ -359,6 +370,35 @@ std::unique_ptr<Action> EventHandler::PopupKeyDown(SDL_KeyboardEvent *,
   return nullptr;
 }
 
+std::unique_ptr<Action> EventHandler::LevelUpKeyDown(SDL_KeyboardEvent *key,
+                                                     flecs::world ecs) {
+  auto player = ecs.lookup("player");
+  auto &level = player.get_mut<Level>();
+  auto msg = "";
+  switch (key->scancode) {
+  case SDL_SCANCODE_LSHIFT:
+  case SDL_SCANCODE_RSHIFT:
+  case SDL_SCANCODE_LCTRL:
+  case SDL_SCANCODE_RCTRL:
+  case SDL_SCANCODE_LALT:
+  case SDL_SCANCODE_RALT:
+    return nullptr;
+  case SDL_SCANCODE_A:
+    msg = level.increase_max_hp(player);
+    break;
+  case SDL_SCANCODE_B:
+    msg = level.increase_power(player);
+    break;
+  case SDL_SCANCODE_C:
+    msg = level.increase_defense(player);
+    break;
+  default:
+    return std::make_unique<MessageAction>("Invalid entry.", color::invalid);
+  }
+  restoreMainGame(*this);
+  return std::make_unique<MessageAction>(msg);
+}
+
 std::unique_ptr<Action> EventHandler::MainGameClick(SDL_MouseButtonEvent *,
                                                     flecs::world) {
   return nullptr;
@@ -379,6 +419,11 @@ std::unique_ptr<Action> EventHandler::SelectClick(SDL_MouseButtonEvent *button,
     }
   }
   return AskUserClick(button, ecs);
+}
+
+std::unique_ptr<Action> EventHandler::LevelUpClick(SDL_MouseButtonEvent *,
+                                                   flecs::world) {
+  return nullptr;
 }
 
 void EventHandler::MainGameOnRender(flecs::world ecs, tcod::Console &console) {
@@ -499,6 +544,28 @@ void EventHandler::PopupOnRender(flecs::world ecs, tcod::Console &console) {
               text, color::white, color::black, TCOD_CENTER);
 }
 
+void EventHandler::LevelUpOnRender(flecs::world ecs, tcod::Console &console) {
+  MainGameOnRender(ecs, console);
+  auto player = ecs.lookup("player");
+  auto x = player.get<Position>().x <= 30 ? 40 : 0;
+  tcod::draw_frame(console, {x, 0, 35, 8}, DECORATION, color::white,
+                   color::black);
+  tcod::print_rect(console, {x, 0, 35, 1}, title, std::nullopt, std::nullopt,
+                   TCOD_CENTER);
+  tcod::print(console, {x + 1, 1}, "Congratulations! You level up!",
+              std::nullopt, std::nullopt);
+  tcod::print(console, {x + 1, 2}, "Select an attribute to increase.",
+              std::nullopt, std::nullopt);
+
+  auto fighter = player.get<Fighter>();
+  auto msg = tcod::stringf("a) Constitution (+20 HP, from %d)", fighter.max_hp);
+  tcod::print(console, {x + 1, 4}, msg, std::nullopt, std::nullopt);
+  msg = tcod::stringf("b) Strength (+1 attack, from %d)", fighter.power);
+  tcod::print(console, {x + 1, 5}, msg, std::nullopt, std::nullopt);
+  msg = tcod::stringf("c) Agility (+1 defense, from %d)", fighter.defense);
+  tcod::print(console, {x + 1, 6}, msg, std::nullopt, std::nullopt);
+}
+
 ActionResult
 EventHandler::MainGameHandleAction(flecs::world ecs,
                                    std::unique_ptr<Action> action) {
@@ -516,6 +583,9 @@ EventHandler::MainGameHandleAction(flecs::world ecs,
           .get_mut<GameMap>()
           .update_fov(player);
       Engine::handle_enemy_turns(ecs);
+    }
+    if (player.get<Level>().requires_level_up()) {
+      makeLevelUp(*this);
     }
     return ret;
   }
