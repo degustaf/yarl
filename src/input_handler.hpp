@@ -104,6 +104,7 @@ struct EventHandler {
   void MainMenuOnRender(flecs::world ecs, tcod::Console &console);
   void PopupOnRender(flecs::world ecs, tcod::Console &console);
   void LevelUpOnRender(flecs::world ecs, tcod::Console &console);
+  void CharacterScreenOnRender(flecs::world ecs, tcod::Console &console);
 
   ActionResult MainGameHandleAction(flecs::world ecs, std::unique_ptr<Action>);
   ActionResult AskUserHandleAction(flecs::world ecs, std::unique_ptr<Action>);

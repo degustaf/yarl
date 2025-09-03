@@ -76,6 +76,17 @@ static inline void makeLevelUp(EventHandler &e) {
   e.title = "Level Up";
 }
 
+static inline void makeCharacterScreen(EventHandler &e) {
+  e.keyDown = &EventHandler::AskUserKeyDown;
+  e.click = &EventHandler::AskUserClick;
+  e.on_render = &EventHandler::CharacterScreenOnRender;
+  e.handle_action = &EventHandler::AskUserHandleAction;
+  e.item_selected = nullptr;
+  e.loc_selected = nullptr;
+
+  e.title = "Character Information";
+}
+
 std::unique_ptr<Action> EventHandler::dispatch(SDL_Event *event,
                                                flecs::world ecs) {
   switch (event->type) {
@@ -160,6 +171,9 @@ std::unique_ptr<Action> EventHandler::MainGameKeyDown(SDL_KeyboardEvent *key,
   case SDL_SCANCODE_KP_5:
   case SDL_SCANCODE_CLEAR:
     return std::make_unique<WaitAction>();
+  case SDL_SCANCODE_C:
+    makeCharacterScreen(*this);
+    return nullptr;
   case SDL_SCANCODE_G:
     return std::make_unique<PickupAction>();
   case SDL_SCANCODE_D:
@@ -476,11 +490,14 @@ void EventHandler::HistoryOnRender(flecs::world ecs, tcod::Console &console) {
   tcod::blit(console, logConsole, {3, 3});
 }
 
+static int menuXLocation(flecs::entity player) {
+  return player.get<Position>().x <= 30 ? 40 : 0;
+}
+
 void EventHandler::InventoryOnRender(flecs::world ecs, tcod::Console &console) {
   MainGameOnRender(ecs, console);
   auto count = q.count();
-  auto &player = ecs.lookup("player").get<Position>();
-  auto x = player.x <= 30 ? 40 : 0;
+  auto x = menuXLocation(ecs.lookup("player"));
 
   tcod::draw_frame(console, {x, 0, (int)title.size(), std::max(count + 2, 3)},
                    DECORATION, color::white, color::black);
@@ -547,7 +564,7 @@ void EventHandler::PopupOnRender(flecs::world ecs, tcod::Console &console) {
 void EventHandler::LevelUpOnRender(flecs::world ecs, tcod::Console &console) {
   MainGameOnRender(ecs, console);
   auto player = ecs.lookup("player");
-  auto x = player.get<Position>().x <= 30 ? 40 : 0;
+  auto x = menuXLocation(player);
   tcod::draw_frame(console, {x, 0, 35, 8}, DECORATION, color::white,
                    color::black);
   tcod::print_rect(console, {x, 0, 35, 1}, title, std::nullopt, std::nullopt,
@@ -564,6 +581,31 @@ void EventHandler::LevelUpOnRender(flecs::world ecs, tcod::Console &console) {
   tcod::print(console, {x + 1, 5}, msg, std::nullopt, std::nullopt);
   msg = tcod::stringf("c) Agility (+1 defense, from %d)", fighter.defense);
   tcod::print(console, {x + 1, 6}, msg, std::nullopt, std::nullopt);
+}
+
+void EventHandler::CharacterScreenOnRender(flecs::world ecs,
+                                           tcod::Console &console) {
+  MainGameOnRender(ecs, console);
+  auto player = ecs.lookup("player");
+  auto x = menuXLocation(player);
+  tcod::draw_frame(console, {x, 0, (int)title.size() + 4, 7}, DECORATION,
+                   color::white, color::black);
+  tcod::print_rect(console, {x, 0, (int)title.size() + 4, 1}, title,
+                   std::nullopt, std::nullopt, TCOD_CENTER);
+
+  auto level = player.get<Level>();
+  auto msg = tcod::stringf("Level: %d", level.current);
+  tcod::print(console, {x + 1, 1}, msg, std::nullopt, std::nullopt);
+  msg = tcod::stringf("XP: %d", level.xp);
+  tcod::print(console, {x + 1, 2}, msg, std::nullopt, std::nullopt);
+  msg = tcod::stringf("XP for next level: %d", level.xp_to_next_level());
+  tcod::print(console, {x + 1, 3}, msg, std::nullopt, std::nullopt);
+
+  auto fighter = player.get<Fighter>();
+  msg = tcod::stringf("Attack: %d", fighter.power);
+  tcod::print(console, {x + 1, 4}, msg, std::nullopt, std::nullopt);
+  msg = tcod::stringf("Defense: %d", fighter.defense);
+  tcod::print(console, {x + 1, 5}, msg, std::nullopt, std::nullopt);
 }
 
 ActionResult
