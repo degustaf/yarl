@@ -61,16 +61,18 @@ struct BlocksMovement {};
 struct Fighter {
   Fighter() : Fighter(0, 0, 0){};
   Fighter(int hp, int defense, int power)
-      : max_hp(hp), _hp(hp), defense(defense), power(power){};
+      : max_hp(hp), _hp(hp), base_defense(defense), base_power(power){};
 
   int hp(void) const { return _hp; }
   void set_hp(int value, flecs::entity self);
   int heal(int amount, flecs::entity self);
   void take_damage(int amount, flecs::entity self);
   void die(flecs::entity self);
+  int defense(flecs::entity self) const;
+  int power(flecs::entity self) const;
 
   int max_hp;
   int _hp;
-  int defense;
-  int power;
+  int base_defense;
+  int base_power;
 };

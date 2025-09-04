@@ -117,12 +117,19 @@ module::module(flecs::world ecs) {
       .add(flecs::CanToggle);
 
   // consumable.hpp
-  ecs.component<HealingConsumable>().member<int>("amount");
-  ecs.component<LightningDamageConsumable>().member<int>("damage").member<int>(
-      "maximumRange");
-  ecs.component<ConfusionConsumable>().member<int>("number_of_turns");
-  ecs.component<FireballDamageConsumable>().member<int>("damage").member<int>(
-      "radius");
+  ecs.component<Consumable>();
+  ecs.component<HealingConsumable>().member<int>("amount").is_a<Consumable>();
+  ecs.component<LightningDamageConsumable>()
+      .member<int>("damage")
+      .member<int>("maximumRange")
+      .is_a<Consumable>();
+  ecs.component<ConfusionConsumable>()
+      .member<int>("number_of_turns")
+      .is_a<Consumable>();
+  ecs.component<FireballDamageConsumable>()
+      .member<int>("damage")
+      .member<int>("radius")
+      .is_a<Consumable>();
 
   // engine.hpp
   ecs.component<Seed>().member<uint32_t>("seed");
@@ -144,6 +151,13 @@ module::module(flecs::world ecs) {
   ecs.component<Inventory>().member<int>("capacity");
   ecs.component<ContainedBy>().add(flecs::Exclusive);
   ecs.component<Item>();
+  ecs.component<EquipmentType>();
+  ecs.component<Equippable>()
+      .member<EquipmentType>("type")
+      .member<int>("power_bonus")
+      .member<int>("defense_bonus");
+  ecs.component<Armor>().add(flecs::Exclusive);
+  ecs.component<Weapon>().add(flecs::Exclusive);
 
   // level.hpp
   ecs.component<XP>().member<int>("given");
@@ -195,4 +209,28 @@ module::module(flecs::world ecs) {
       .set<Named>({"Fireball Scroll"})
       .add<Item>()
       .set<FireballDamageConsumable>({12, 3});
+
+  ecs.prefab("dagger")
+      .set<Renderable>({'/', {0, 191, 255}, RenderOrder::Item})
+      .set<Named>({"Dagger"})
+      .add<Item>()
+      .set<Equippable>({EquipmentType::Weapon, 2, 0});
+
+  ecs.prefab("sword")
+      .set<Renderable>({'/', {0, 191, 255}, RenderOrder::Item})
+      .set<Named>({"Sword"})
+      .add<Item>()
+      .set<Equippable>({EquipmentType::Weapon, 4, 0});
+
+  ecs.prefab("leatherArmor")
+      .set<Renderable>({'[', {139, 69, 19}, RenderOrder::Item})
+      .set<Named>({"Leather armor"})
+      .add<Item>()
+      .set<Equippable>({EquipmentType::Armor, 0, 1});
+
+  ecs.prefab("chainMail")
+      .set<Renderable>({'[', {139, 69, 19}, RenderOrder::Item})
+      .set<Named>({"Chain mail"})
+      .add<Item>()
+      .set<Equippable>({EquipmentType::Armor, 0, 3});
 }

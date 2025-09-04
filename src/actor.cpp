@@ -4,6 +4,7 @@
 
 #include "ai.hpp"
 #include "input_handler.hpp"
+#include "inventory.hpp"
 #include "level.hpp"
 #include "message_log.hpp"
 
@@ -61,6 +62,34 @@ void Fighter::die(flecs::entity self) {
     player.get_mut<Level>().add_xp(ecs, self.get<XP>().given);
   }
   name.name = "remains of " + name.name;
+}
+
+int Fighter::defense(flecs::entity self) const {
+  auto defense = base_defense;
+  auto weapon = self.target<Weapon>();
+  if (weapon) {
+    defense += weapon.get<Equippable>().defense_bonus;
+  }
+  auto armor = self.target<Armor>();
+  if (armor) {
+    defense += armor.get<Equippable>().defense_bonus;
+  }
+
+  return defense;
+}
+
+int Fighter::power(flecs::entity self) const {
+  auto power = base_power;
+  auto weapon = self.target<Weapon>();
+  if (weapon) {
+    power += weapon.get<Equippable>().power_bonus;
+  }
+  auto armor = self.target<Armor>();
+  if (armor) {
+    power += armor.get<Equippable>().power_bonus;
+  }
+
+  return power;
 }
 
 void Renderable::render(tcod::Console &console, const Position &pos) const {

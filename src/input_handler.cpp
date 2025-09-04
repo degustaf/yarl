@@ -7,6 +7,7 @@
 #include <libtcod.hpp>
 
 #include "color.hpp"
+#include "consumable.hpp"
 #include "defines.hpp"
 #include "engine.hpp"
 #include "game_map.hpp"
@@ -506,9 +507,11 @@ void EventHandler::InventoryOnRender(flecs::world ecs, tcod::Console &console) {
   tcod::print_rect(console, {x, 0, (int)title.size(), 1}, title, std::nullopt,
                    std::nullopt, TCOD_CENTER);
   if (count > 0) {
+    auto player = ecs.lookup("player");
     auto idx = 0;
-    q.each([&](const auto &name) {
-      auto msg = tcod::stringf("(%c) %s", 'a' + idx, name.name.c_str());
+    q.each([&](flecs::entity e, const auto &name) {
+      auto msg = tcod::stringf("(%c) %s%s", 'a' + idx, name.name.c_str(),
+                               isEquipped(player, e) ? " (E)" : "");
       tcod::print(console, {x + 1, idx + 1}, msg, std::nullopt, std::nullopt);
       idx++;
     });
@@ -579,9 +582,11 @@ void EventHandler::LevelUpOnRender(flecs::world ecs, tcod::Console &console) {
   auto fighter = player.get<Fighter>();
   auto msg = tcod::stringf("a) Constitution (+20 HP, from %d)", fighter.max_hp);
   tcod::print(console, {x + 1, 4}, msg, std::nullopt, std::nullopt);
-  msg = tcod::stringf("b) Strength (+1 attack, from %d)", fighter.power);
+  msg =
+      tcod::stringf("b) Strength (+1 attack, from %d)", fighter.power(player));
   tcod::print(console, {x + 1, 5}, msg, std::nullopt, std::nullopt);
-  msg = tcod::stringf("c) Agility (+1 defense, from %d)", fighter.defense);
+  msg = tcod::stringf("c) Agility (+1 defense, from %d)",
+                      fighter.defense(player));
   tcod::print(console, {x + 1, 6}, msg, std::nullopt, std::nullopt);
 }
 
@@ -604,9 +609,9 @@ void EventHandler::CharacterScreenOnRender(flecs::world ecs,
   tcod::print(console, {x + 1, 3}, msg, std::nullopt, std::nullopt);
 
   auto fighter = player.get<Fighter>();
-  msg = tcod::stringf("Attack: %d", fighter.power);
+  msg = tcod::stringf("Attack: %d", fighter.power(player));
   tcod::print(console, {x + 1, 4}, msg, std::nullopt, std::nullopt);
-  msg = tcod::stringf("Defense: %d", fighter.defense);
+  msg = tcod::stringf("Defense: %d", fighter.defense(player));
   tcod::print(console, {x + 1, 5}, msg, std::nullopt, std::nullopt);
 }
 
@@ -662,7 +667,13 @@ std::unique_ptr<Action> EventHandler::DropItemSelected(flecs::entity item) {
 }
 
 std::unique_ptr<Action> EventHandler::UseItemSelected(flecs::entity item) {
-  return std::make_unique<ItemAction>(item);
+  if (isConsumable(item)) {
+    return std::make_unique<ItemAction>(item);
+  }
+  if (item.has<Equippable>()) {
+    return std::make_unique<EquipAction>(item);
+  }
+  return nullptr;
 }
 
 std::unique_ptr<Action> EventHandler::LookSelectedLoc(std::array<int, 2>) {

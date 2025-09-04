@@ -37,7 +37,7 @@ ActionResult MeleeAction::perform(flecs::entity e) const {
   if (target != target.null()) {
     const auto &attacker = e.get<Fighter>();
     auto &defender = target.get_mut<Fighter>();
-    auto damage = std::max(attacker.power - defender.defense, 0);
+    auto damage = std::max(attacker.power(e) - defender.defense(target), 0);
     auto msg = [&]() {
       if (damage > 0) {
         return tcod::stringf("%s attacks %s for %d hit points",
@@ -108,8 +108,9 @@ ActionResult PickupAction::perform(flecs::entity e) const {
 }
 
 ActionResult DropItemAction::perform(flecs::entity e) const {
-  auto msg =
-      tcod::stringf("You dropped the %s.", item.get<Named>().name.c_str());
+  auto msg = isEquipped(e, item) ? toggleEquip<true>(e, item) + " " : "";
+  msg = tcod::stringf("%sYou dropped the %s.", msg.c_str(),
+                      item.get<Named>().name.c_str());
   item.remove<ContainedBy>(e)
       .add(flecs::ChildOf, e.world().lookup("currentMap").target<CurrentMap>())
       .set<Position>(e.get<Position>());
@@ -158,4 +159,8 @@ ActionResult TakeStairsAction::perform(flecs::entity e) const {
   }
   return {ActionResultType::Failure, "There are no stairs here.",
           color::impossible};
+}
+
+ActionResult EquipAction::perform(flecs::entity e) const {
+  return {ActionResultType::Success, toggleEquip<true>(e, item)};
 }

@@ -91,9 +91,16 @@ void Engine::new_game(flecs::world ecs) {
                     .set<Position>({0, 0})
                     .set<Renderable>({'@', {255, 255, 255}, RenderOrder::Actor})
                     .set<Named>({"Player"})
-                    .emplace<Fighter>(30, 2, 5)
+                    .emplace<Fighter>(30, 1, 2)
                     .set<Inventory>({26})
                     .emplace<Level>();
+  auto dagger =
+      ecs.entity().is_a(ecs.lookup("module::dagger")).add<ContainedBy>(player);
+  toggleEquip<false>(player, dagger);
+  auto leather = ecs.entity()
+                     .is_a(ecs.lookup("module::leatherArmor"))
+                     .add<ContainedBy>(player);
+  toggleEquip<false>(player, leather);
 
   auto map = ecs.entity();
   map.emplace<GameMap>(generateDungeon(map, map_width, map_height, 1, player));

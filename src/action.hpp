@@ -143,3 +143,11 @@ struct TakeStairsAction : Action {
   virtual ActionResult perform(flecs::entity e) const;
   virtual ~TakeStairsAction() = default;
 };
+
+struct EquipAction : Action {
+  EquipAction(flecs::entity item) : item(item){};
+  flecs::entity item;
+
+  virtual ActionResult perform(flecs::entity e) const;
+  virtual ~EquipAction() = default;
+};

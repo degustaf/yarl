@@ -37,9 +37,8 @@ struct RectangularRoom {
 };
 
 static void tunnel_between(GameMap &map, const std::array<int, 2> &start,
-                           const std::array<int, 2> &end) {
+                           const std::array<int, 2> &end, TCODRandom &rng) {
   auto center = [&] {
-    auto rng = TCODRandom();
     if (rng.getInt(0, 1) == 0) {
       return std::array<int, 2>{start[0], end[1]};
     } else {
@@ -90,11 +89,14 @@ struct WeightsByFloor {
   const char *name;
 };
 
-static constexpr auto item_weights =
-    std::array<WeightsByFloor, 4>{WeightsByFloor{0, 35, "module::healthPotion"},
-                                  {2, 10, "module::confusionScroll"},
-                                  {4, 25, "module::lightningScroll"},
-                                  {6, 25, "module::fireballScroll"}};
+static constexpr auto item_weights = std::array<WeightsByFloor, 6>{
+    WeightsByFloor{0, 35, "module::healthPotion"},
+    {2, 10, "module::confusionScroll"},
+    {4, 25, "module::lightningScroll"},
+    {4, 5, "module::sword"},
+    {6, 25, "module::fireballScroll"},
+    {6, 15, "module::chainMail"},
+};
 
 static constexpr auto enemy_weights =
     std::array<WeightsByFloor, 4>{WeightsByFloor{0, 80, "module::orc"},
@@ -204,7 +206,8 @@ void generateDungeon(flecs::entity map, GameMap &dungeon, flecs::entity player,
         player.get_mut<Position>() = new_room.center();
       }
     } else {
-      tunnel_between(dungeon, rooms[roomCount - 1].center(), new_room.center());
+      tunnel_between(dungeon, rooms[roomCount - 1].center(), new_room.center(),
+                     rng);
     }
 
     rooms[roomCount] = new_room;

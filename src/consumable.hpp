@@ -4,6 +4,8 @@
 
 #include "action.hpp"
 
+struct Consumable {};
+
 struct HealingConsumable {
   int amount;
 
@@ -32,3 +34,8 @@ struct FireballDamageConsumable {
   ActionResult activate(flecs::entity item) const;
   ActionResult selected(flecs::entity item, std::array<int, 2> target) const;
 };
+
+inline bool isConsumable(flecs::entity e) {
+  return e.has<HealingConsumable>() || e.has<LightningDamageConsumable>() ||
+         e.has<ConfusionConsumable>() || e.has<FireballDamageConsumable>();
+}

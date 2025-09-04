@@ -46,7 +46,7 @@ const char *Level::increase_max_hp(flecs::entity e, int amount) {
 const char *Level::increase_power(flecs::entity e, int amount) {
   static constexpr auto msg = "You feel stronger!";
 
-  e.get_mut<Fighter>().power += amount;
+  e.get_mut<Fighter>().base_power += amount;
   increaseLevel();
 
   return msg;
@@ -55,7 +55,7 @@ const char *Level::increase_power(flecs::entity e, int amount) {
 const char *Level::increase_defense(flecs::entity e, int amount) {
   static constexpr auto msg = "Your movements are getting swifter!";
 
-  e.get_mut<Fighter>().defense += amount;
+  e.get_mut<Fighter>().base_defense += amount;
   increaseLevel();
 
   return msg;
