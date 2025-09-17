@@ -3,23 +3,25 @@
 #include <array>
 #include <climits>
 #include <cmath>
-#include <cstddef>
 #include <queue>
 #include <vector>
 
+#include <flecs.h>
+
 #include "defines.hpp"
+#include "game_map.hpp"
 
 namespace pathfinding {
 
-using Index = std::array<size_t, 2>;
+using Index = std::array<int, 2>;
 inline bool operator==(const Index &lhs, const Index &rhs) {
   return lhs[0] == rhs[0] && lhs[1] == rhs[1];
 }
 
 template <typename T> class map {
 public:
-  map(const std::array<size_t, 2> &dimensions) : map(dimensions, T()){};
-  map(const std::array<size_t, 2> &dimensions, const T &val)
+  map(const Index &dimensions) : map(dimensions, T()){};
+  map(const Index &dimensions, const T &val)
       : dimensions(dimensions), cost(dimensions[0] * dimensions[1], val){};
 
   inline T &operator[](const Index &idx) {
@@ -28,8 +30,47 @@ public:
   inline const T &operator[](const Index &idx) const {
     return cost[idx[0] + dimensions[0] * idx[1]];
   };
+  inline void resize(size_t n) { cost.resize(n); }
+
+  auto begin() { return cost.begin(); };
+  auto end() { return cost.end(); };
 
   Index dimensions;
+
+  static map constructCost(flecs::entity mapEntity, T initial, T blocked,
+                           T openable, T infinity) {
+    return constructCost(mapEntity, mapEntity.get<GameMap>(), initial, blocked,
+                         openable, infinity);
+  }
+
+  static map constructCost(flecs::entity mapEntity, const GameMap &gameMap,
+                           T initial, T blocked, T openable, T infinity) {
+    auto cost =
+        map<int>(std::array{gameMap.getWidth(), gameMap.getHeight()}, initial);
+    for (auto y = 0; y < gameMap.getHeight(); y++) {
+      for (auto x = 0; x < gameMap.getWidth(); x++) {
+        if (!gameMap.isWalkable({x, y})) {
+          cost[{x, y}] = infinity;
+        }
+      }
+    }
+
+    auto q = mapEntity.world()
+                 .query_builder<const Position>("module::blocks")
+                 .with<BlocksMovement>()
+                 .with(flecs::ChildOf, mapEntity)
+                 .build();
+
+    q.each([&](flecs::entity e, const Position &p) {
+      if (e.has<Openable>()) {
+        cost[p] = openable;
+      } else {
+        cost[p] = blocked;
+      }
+    });
+
+    return cost;
+  };
 
 private:
   std::vector<T> cost;
@@ -85,5 +126,35 @@ std::vector<Index> aStar(map<int> cost, Index start, Index goal, Heuristic h) {
   }
   return std::vector<Index>();
 }
+
+class Dijkstra {
+public:
+  Dijkstra(int width, int height, map<int> &&cost)
+      : width(width), height(height), distance({width, height}, infinity),
+        cost(cost), cameFrom({width, height}){};
+  inline void set(int x, int y, int value) { set({x, y}, value); };
+  void set(Index xy, int value);
+  void scan(void);
+  std::array<int, 2> roll(int x, int y) const;
+  Dijkstra &operator*=(float scale);
+  std::array<int, 2> findMin(void) const;
+  std::array<int, 2> findMax(void) const;
+  std::vector<std::array<int, 2>> pathDown(std::array<int, 2> start) const;
+  inline std::vector<std::array<int, 2>>
+  pathUp(std::array<int, 2> start) const {
+    return pathUp(start, findMax());
+  }
+  std::vector<std::array<int, 2>> pathUp(std::array<int, 2> start,
+                                         std::array<int, 2> goal) const;
+
+  static const int infinity;
+
+private:
+  int width;
+  int height;
+  map<int> distance;
+  map<int> cost;
+  map<Index> cameFrom;
+};
 
 } // namespace pathfinding

@@ -2,10 +2,12 @@
 
 #include <algorithm>
 #include <cassert>
+#include <libtcod/console_types.hpp>
 #include <optional>
 
 #include <libtcod.hpp>
 
+#include "ai.hpp"
 #include "color.hpp"
 #include "consumable.hpp"
 #include "defines.hpp"
@@ -15,19 +17,11 @@
 #include "level.hpp"
 #include "message_log.hpp"
 #include "render_functions.hpp"
-
-static inline void restoreMainGame(EventHandler &e) {
-  e.keyDown = &EventHandler::MainGameKeyDown;
-  e.click = &EventHandler::MainGameClick;
-  e.on_render = &EventHandler::MainGameOnRender;
-  e.handle_action = &EventHandler::MainGameHandleAction;
-  e.item_selected = nullptr;
-  e.loc_selected = nullptr;
-}
+#include "scent.hpp"
 
 static inline void makeHistoryHandler(EventHandler &e, flecs::world ecs) {
   e.keyDown = &EventHandler::HistoryKeyDown;
-  e.click = &EventHandler::MainGameClick;
+  e.click = &EventHandler::EmptyClick;
   e.on_render = &EventHandler::HistoryOnRender;
   e.handle_action = &EventHandler::MainGameHandleAction;
   e.item_selected = nullptr;
@@ -89,7 +83,7 @@ static inline void makeCharacterScreen(EventHandler &e) {
 }
 
 std::unique_ptr<Action> EventHandler::dispatch(SDL_Event *event,
-                                               flecs::world ecs) {
+                                               flecs::world &ecs) {
   switch (event->type) {
   case SDL_EVENT_QUIT:
     return std::make_unique<ExitAction>();
@@ -110,9 +104,30 @@ std::unique_ptr<Action> EventHandler::dispatch(SDL_Event *event,
   }
 }
 
+void EventHandler::restoreMainGame() {
+  keyDown = &EventHandler::MainGameKeyDown;
+  click = &EventHandler::MainGameClick;
+  on_render = &EventHandler::MainGameOnRender;
+  handle_action = &EventHandler::MainGameHandleAction;
+  item_selected = nullptr;
+  loc_selected = nullptr;
+}
+
+void EventHandler::jumpConfirm(bool useRope, flecs::entity item) {
+  keyDown = &EventHandler::JumpKeyDown;
+  click = &EventHandler::AskUserClick;
+  on_render = &EventHandler::JumpOnRender;
+  handle_action = &EventHandler::AskUserHandleAction;
+  item_selected = nullptr;
+  loc_selected = nullptr;
+
+  this->useRope = useRope;
+  this->item = item;
+}
+
 void EventHandler::mainMenu(void) {
   keyDown = &EventHandler::MainMenuKeyDown;
-  click = &EventHandler::MainGameClick;
+  click = &EventHandler::EmptyClick;
   on_render = &EventHandler::MainMenuOnRender;
   handle_action = &EventHandler::MainMenuHandleAction;
   item_selected = nullptr;
@@ -121,48 +136,126 @@ void EventHandler::mainMenu(void) {
 
 void EventHandler::gameOver(void) {
   keyDown = &EventHandler::GameOverKeyDown;
-  click = &EventHandler::MainGameClick;
+  click = &EventHandler::EmptyClick;
   on_render = &EventHandler::MainGameOnRender;
   handle_action = &EventHandler::MainGameHandleAction;
   item_selected = nullptr;
   loc_selected = nullptr;
 }
 
+void EventHandler::winGame(void) {
+  keyDown = &EventHandler::GameOverKeyDown;
+  click = &EventHandler::EmptyClick;
+  on_render = &EventHandler::WinOnRender;
+  handle_action = &EventHandler::MainMenuHandleAction;
+  item_selected = nullptr;
+  loc_selected = nullptr;
+}
+
+static constexpr auto COMMAND_MENU_WIDTH = 50;
+static constexpr auto COMMAND_MENU_HEIGHT = 28;
+
+static tcod::Console buildCommandMenu(void) {
+  auto con = tcod::Console(COMMAND_MENU_WIDTH, COMMAND_MENU_HEIGHT);
+  con.clear();
+  tcod::draw_frame(con, {0, 0, COMMAND_MENU_WIDTH, COMMAND_MENU_HEIGHT},
+                   DECORATION, color::menu_border, std::nullopt);
+
+  tcod::print(con, {COMMAND_MENU_WIDTH / 2 - 4, 1}, "Commands", color::white,
+              std::nullopt);
+
+  // vim directions
+  tcod::print(con, {3, 3}, "y k u", color::white, std::nullopt);
+  tcod::print(con, {4, 4}, "\\|/", color::white, std::nullopt);
+  tcod::print(con, {3, 5}, "h-*-l", color::white, std::nullopt);
+  tcod::print(con, {4, 6}, "/|\\", color::white, std::nullopt);
+  tcod::print(con, {3, 7}, "b j n", color::white, std::nullopt);
+
+  // numpad directions.
+  tcod::print(con, {10, 2}, "numpad", color::white, std::nullopt);
+  tcod::print(con, {10, 3}, "7 8 9", color::white, std::nullopt);
+  tcod::print(con, {11, 4}, "\\|/", color::white, std::nullopt);
+  tcod::print(con, {10, 5}, "4-*-6", color::white, std::nullopt);
+  tcod::print(con, {11, 6}, "/|\\", color::white, std::nullopt);
+  tcod::print(con, {10, 7}, "1 2 3", color::white, std::nullopt);
+
+  auto y = 9;
+
+  tcod::print(con, {2, y++}, "Hold <shift> to move 2 spaces", color::white,
+              std::nullopt);
+  tcod::print(con, {2, y++}, "Hold <ctrl> to move 3 spaces", color::white,
+              std::nullopt);
+  y++;
+  tcod::print(con, {2, y++}, "5: wait", color::white, std::nullopt);
+  tcod::print(con, {2, y++}, ".: wait", color::white, std::nullopt);
+  tcod::print(con, {2, y++}, ">: Take elevator", color::white, std::nullopt);
+  tcod::print(con, {2, y++}, "C: This menu", color::white, std::nullopt);
+  tcod::print(con, {2, y++}, "D: Drop an item", color::white, std::nullopt);
+  tcod::print(con, {2, y++}, "F: Fire a weapon", color::white, std::nullopt);
+  tcod::print(con, {2, y++}, "G: Pick up an item", color::white, std::nullopt);
+  tcod::print(con, {2, y++}, "I: Inventory", color::white, std::nullopt);
+  tcod::print(con, {2, y++}, "V: View game log", color::white, std::nullopt);
+  tcod::print(con, {2, y++}, "X: View character information", color::white,
+              std::nullopt);
+  tcod::print(con, {2, y++}, "/: Look around map", color::white, std::nullopt);
+  tcod::print(con, {2, y++}, "Esc: exit menu", color::white, std::nullopt);
+
+  return con;
+}
+
+void EventHandler::commandsMenu(void) {
+  static auto menuConsole = buildCommandMenu();
+  makePopup([](auto e) { e->restoreMainGame(); },
+            [](auto e, auto world, auto &c, auto ts) {
+              e->MainGameOnRender(world, c, ts);
+            },
+            [](auto, tcod::Console &c) {
+              tcod::blit(c, menuConsole,
+                         {(c.get_width() - COMMAND_MENU_WIDTH) / 2,
+                          (c.get_height() - COMMAND_MENU_HEIGHT) / 2});
+            });
+}
+
 std::unique_ptr<Action> EventHandler::MainGameKeyDown(SDL_KeyboardEvent *key,
-                                                      flecs::world ecs) {
+                                                      flecs::world &ecs) {
+  auto speed = 1;
+  if (key->mod & SDL_KMOD_SHIFT)
+    speed *= 2;
+  if (key->mod & SDL_KMOD_CTRL)
+    speed *= 3;
   switch (key->scancode) {
   case SDL_SCANCODE_UP:
   case SDL_SCANCODE_KP_8:
   case SDL_SCANCODE_K:
-    return std::make_unique<BumpAction>(0, -1);
+    return std::make_unique<BumpAction>(0, -1, speed);
   case SDL_SCANCODE_DOWN:
   case SDL_SCANCODE_KP_2:
   case SDL_SCANCODE_J:
-    return std::make_unique<BumpAction>(0, 1);
+    return std::make_unique<BumpAction>(0, 1, speed);
   case SDL_SCANCODE_LEFT:
   case SDL_SCANCODE_KP_4:
   case SDL_SCANCODE_H:
-    return std::make_unique<BumpAction>(-1, 0);
+    return std::make_unique<BumpAction>(-1, 0, speed);
   case SDL_SCANCODE_RIGHT:
   case SDL_SCANCODE_KP_6:
   case SDL_SCANCODE_L:
-    return std::make_unique<BumpAction>(1, 0);
+    return std::make_unique<BumpAction>(1, 0, speed);
   case SDL_SCANCODE_HOME:
   case SDL_SCANCODE_KP_7:
   case SDL_SCANCODE_Y:
-    return std::make_unique<BumpAction>(-1, -1);
+    return std::make_unique<BumpAction>(-1, -1, speed);
   case SDL_SCANCODE_END:
   case SDL_SCANCODE_KP_1:
   case SDL_SCANCODE_B:
-    return std::make_unique<BumpAction>(-1, 1);
+    return std::make_unique<BumpAction>(-1, 1, speed);
   case SDL_SCANCODE_PAGEUP:
   case SDL_SCANCODE_KP_9:
   case SDL_SCANCODE_U:
-    return std::make_unique<BumpAction>(1, -1);
+    return std::make_unique<BumpAction>(1, -1, speed);
   case SDL_SCANCODE_PAGEDOWN:
   case SDL_SCANCODE_KP_3:
   case SDL_SCANCODE_N:
-    return std::make_unique<BumpAction>(1, 1);
+    return std::make_unique<BumpAction>(1, 1, speed);
 
   case SDL_SCANCODE_PERIOD:
     if (key->mod & SDL_KMOD_SHIFT) {
@@ -172,31 +265,40 @@ std::unique_ptr<Action> EventHandler::MainGameKeyDown(SDL_KeyboardEvent *key,
   case SDL_SCANCODE_KP_5:
   case SDL_SCANCODE_CLEAR:
     return std::make_unique<WaitAction>();
+
   case SDL_SCANCODE_C:
-    makeCharacterScreen(*this);
+    commandsMenu();
     return nullptr;
-  case SDL_SCANCODE_G:
-    return std::make_unique<PickupAction>();
   case SDL_SCANCODE_D: {
     static constexpr char DROP_TITLE[] = "┤Select an item to drop├";
     makeInventoryHandler<DROP_TITLE, &EventHandler::DropItemSelected>(*this,
                                                                       ecs);
     return nullptr;
   }
+  case SDL_SCANCODE_F:
+    return std::make_unique<RangedTargetAction>();
+  case SDL_SCANCODE_G:
+    return std::make_unique<PickupAction>();
   case SDL_SCANCODE_I: {
     static constexpr char USE_TITLE[] = "┤Select an item to use├";
     makeInventoryHandler<USE_TITLE, &EventHandler::UseItemSelected>(*this, ecs);
     return nullptr;
   }
+  case SDL_SCANCODE_O:
+    return std::make_unique<DoorAction>();
   case SDL_SCANCODE_V:
     makeHistoryHandler(*this, ecs);
+    return nullptr;
+  case SDL_SCANCODE_X:
+    makeCharacterScreen(*this);
     return nullptr;
   case SDL_SCANCODE_SLASH:
     makeLookHandler(*this, ecs);
     return nullptr;
 
   case SDL_SCANCODE_ESCAPE:
-    return std::make_unique<ExitAction>();
+    mainMenu();
+    return nullptr;
 
   default:
     return nullptr;
@@ -204,10 +306,12 @@ std::unique_ptr<Action> EventHandler::MainGameKeyDown(SDL_KeyboardEvent *key,
 }
 
 std::unique_ptr<Action> EventHandler::GameOverKeyDown(SDL_KeyboardEvent *key,
-                                                      flecs::world) {
+                                                      flecs::world &) {
   switch (key->scancode) {
-  case SDL_SCANCODE_ESCAPE:
-    return std::make_unique<QuitWithoutSavingAction>();
+  case SDL_SCANCODE_ESCAPE: {
+    mainMenu();
+    return nullptr;
+  }
 
   default:
     return nullptr;
@@ -215,7 +319,7 @@ std::unique_ptr<Action> EventHandler::GameOverKeyDown(SDL_KeyboardEvent *key,
 }
 
 std::unique_ptr<Action> EventHandler::HistoryKeyDown(SDL_KeyboardEvent *key,
-                                                     flecs::world) {
+                                                     flecs::world &) {
   switch (key->scancode) {
   case SDL_SCANCODE_UP:
     if (cursor == 0) {
@@ -245,13 +349,13 @@ std::unique_ptr<Action> EventHandler::HistoryKeyDown(SDL_KeyboardEvent *key,
     return nullptr;
 
   default:
-    restoreMainGame(*this);
+    restoreMainGame();
     return nullptr;
   }
 }
 
 std::unique_ptr<Action> EventHandler::AskUserKeyDown(SDL_KeyboardEvent *key,
-                                                     flecs::world) {
+                                                     flecs::world &) {
   switch (key->scancode) {
   case SDL_SCANCODE_LSHIFT:
   case SDL_SCANCODE_RSHIFT:
@@ -261,13 +365,13 @@ std::unique_ptr<Action> EventHandler::AskUserKeyDown(SDL_KeyboardEvent *key,
   case SDL_SCANCODE_RALT:
     return nullptr;
   default:
-    restoreMainGame(*this);
+    restoreMainGame();
     return nullptr;
   }
 }
 
 std::unique_ptr<Action> EventHandler::InventoryKeyDown(SDL_KeyboardEvent *key,
-                                                       flecs::world ecs) {
+                                                       flecs::world &ecs) {
   auto idx = key->scancode - SDL_SCANCODE_A;
   if (0 <= idx && idx < q.count()) {
     return (this->*item_selected)(q.page(idx, 1).first());
@@ -276,7 +380,7 @@ std::unique_ptr<Action> EventHandler::InventoryKeyDown(SDL_KeyboardEvent *key,
 }
 
 std::unique_ptr<Action> EventHandler::SelectKeyDown(SDL_KeyboardEvent *key,
-                                                    flecs::world ecs) {
+                                                    flecs::world &ecs) {
   auto dxy = std::array<int, 2>{0, 0};
 
   switch (key->scancode) {
@@ -287,11 +391,6 @@ std::unique_ptr<Action> EventHandler::SelectKeyDown(SDL_KeyboardEvent *key,
   case SDL_SCANCODE_LALT:
   case SDL_SCANCODE_RALT:
     return nullptr;
-
-  case SDL_SCANCODE_RETURN:
-  case SDL_SCANCODE_RETURN2:
-  case SDL_SCANCODE_KP_ENTER:
-    return (this->*loc_selected)(mouse_loc);
 
   case SDL_SCANCODE_UP:
   case SDL_SCANCODE_KP_8:
@@ -334,8 +433,19 @@ std::unique_ptr<Action> EventHandler::SelectKeyDown(SDL_KeyboardEvent *key,
     dxy = {1, 1};
     break;
 
+  case SDL_SCANCODE_RETURN:
+  case SDL_SCANCODE_RETURN2:
+  case SDL_SCANCODE_KP_ENTER:
+    return (this->*loc_selected)(mouse_loc);
+
+  case SDL_SCANCODE_F:
+    if (useF) {
+      return (this->*loc_selected)(mouse_loc);
+    }
+    // Intentional fallthrough
+
   default:
-    restoreMainGame(*this);
+    restoreMainGame();
     return nullptr;
   }
 
@@ -359,20 +469,22 @@ std::unique_ptr<Action> EventHandler::SelectKeyDown(SDL_KeyboardEvent *key,
 }
 
 std::unique_ptr<Action> EventHandler::MainMenuKeyDown(SDL_KeyboardEvent *key,
-                                                      flecs::world ecs) {
+                                                      flecs::world &ecs) {
   switch (key->scancode) {
   case SDL_SCANCODE_Q:
   case SDL_SCANCODE_ESCAPE:
     return std::make_unique<ExitAction>();
   case SDL_SCANCODE_C:
-    if (Engine::load(ecs, saveFilename, *this)) {
-      restoreMainGame(*this);
+    if (Engine::load(ecs, data_dir / saveFilename, *this)) {
+      restoreMainGame();
     }
     break;
-  case SDL_SCANCODE_N:
+  case SDL_SCANCODE_N: {
+    Engine::clear_game_data(ecs);
     Engine::new_game(ecs);
-    restoreMainGame(*this);
+    restoreMainGame();
     break;
+  }
 
   default:
     return nullptr;
@@ -381,14 +493,23 @@ std::unique_ptr<Action> EventHandler::MainMenuKeyDown(SDL_KeyboardEvent *key,
   return nullptr;
 }
 
-std::unique_ptr<Action> EventHandler::PopupKeyDown(SDL_KeyboardEvent *,
-                                                   flecs::world) {
-  parent(this);
+std::unique_ptr<Action> EventHandler::PopupKeyDown(SDL_KeyboardEvent *key,
+                                                   flecs::world &) {
+  switch (key->scancode) {
+  case SDL_SCANCODE_ESCAPE:
+  case SDL_SCANCODE_RETURN:
+  case SDL_SCANCODE_RETURN2:
+  case SDL_SCANCODE_KP_ENTER:
+    parent(this);
+    break;
+  default:
+    break;
+  }
   return nullptr;
 }
 
 std::unique_ptr<Action> EventHandler::LevelUpKeyDown(SDL_KeyboardEvent *key,
-                                                     flecs::world ecs) {
+                                                     flecs::world &ecs) {
   auto player = ecs.lookup("player");
   auto &level = player.get_mut<Level>();
   auto msg = "";
@@ -412,18 +533,48 @@ std::unique_ptr<Action> EventHandler::LevelUpKeyDown(SDL_KeyboardEvent *key,
   default:
     return std::make_unique<MessageAction>("Invalid entry.", color::invalid);
   }
-  restoreMainGame(*this);
+  restoreMainGame();
   return std::make_unique<MessageAction>(msg);
 }
 
-std::unique_ptr<Action> EventHandler::MainGameClick(SDL_MouseButtonEvent *,
-                                                    flecs::world) {
+std::unique_ptr<Action> EventHandler::JumpKeyDown(SDL_KeyboardEvent *key,
+                                                  flecs::world &ecs) {
+  switch (key->scancode) {
+  case SDL_SCANCODE_Y:
+    if (useRope)
+      item.destruct();
+    return std::make_unique<JumpAction>(useRope);
+  case SDL_SCANCODE_J:
+    if (useRope) {
+      return std::make_unique<JumpAction>(false);
+    }
+    break;
+  default:
+    break;
+  }
+  return AskUserKeyDown(key, ecs);
+}
+
+static auto constexpr commandBox = std::array{62, 45, 12, 3};
+
+std::unique_ptr<Action> EventHandler::EmptyClick(SDL_MouseButtonEvent *,
+                                                 flecs::world) {
+  return nullptr;
+}
+
+std::unique_ptr<Action>
+EventHandler::MainGameClick(SDL_MouseButtonEvent *button, flecs::world) {
+  if (commandBox[0] <= button->x && button->x < commandBox[0] + commandBox[2] &&
+      commandBox[1] <= button->y && button->y < commandBox[1] + commandBox[3]) {
+    commandsMenu();
+    return nullptr;
+  }
   return nullptr;
 }
 
 std::unique_ptr<Action> EventHandler::AskUserClick(SDL_MouseButtonEvent *,
                                                    flecs::world) {
-  restoreMainGame(*this);
+  restoreMainGame();
   return nullptr;
 }
 
@@ -443,7 +594,8 @@ std::unique_ptr<Action> EventHandler::LevelUpClick(SDL_MouseButtonEvent *,
   return nullptr;
 }
 
-void EventHandler::MainGameOnRender(flecs::world ecs, tcod::Console &console) {
+void EventHandler::MainGameOnRender(flecs::world ecs, tcod::Console &console,
+                                    uint64_t) {
   auto map = ecs.lookup("currentMap").target<CurrentMap>();
   auto &gMap = map.get_mut<GameMap>();
   gMap.render(console);
@@ -451,33 +603,38 @@ void EventHandler::MainGameOnRender(flecs::world ecs, tcod::Console &console) {
   ecs.lookup("messageLog").get<MessageLog>().render(console, 21, 45, 40, 5);
 
   auto q =
-      ecs.query_builder<const Position, const Renderable>("module::renderable")
+      ecs.query_builder<const Position, const Renderable, const Openable *>(
+             "module::renderable")
           .with(flecs::ChildOf, map)
           .order_by<const Renderable>([](auto, auto r1, auto, auto r2) {
             return static_cast<int>(r1->layer) - static_cast<int>(r2->layer);
           })
           .build();
 
-  q.each([&](auto p, auto r) {
+  q.each([&](auto p, auto r, auto openable) {
     if (gMap.isInFov(p)) {
-      r.render(console, p);
+      r.render(console, p, true);
+    } else if (gMap.isSensed(p) && openable) {
+      r.render(console, p, true);
+    } else if (gMap.isExplored(p)) {
+      r.render(console, p, false);
     }
   });
 
   auto player = ecs.lookup("player");
-  player.get<Renderable>().render(console, player.get<Position>());
+  player.get<Renderable>().render(console, player.get<Position>(), true);
 
   auto fighter = player.get<Fighter>();
   renderBar(console, fighter.hp(), fighter.max_hp, 20);
-  renderDungeonLevel(console, gMap.level, {0, 47});
-  renderNamesAtMouseLocation(console, {21, 44}, mouse_loc, map);
+  renderSmell(console, player, 20);
+  renderDungeonLevel(console, gMap.level, {0, 49});
+  renderNamesAtMouseLocation(console, {21, 44}, mouse_loc, map, gMap);
+  renderCommandButton(console, commandBox);
 }
 
-static constexpr auto DECORATION = std::array<int, 9>{
-    0x250c, 0x2500, 0x2510, 0x2502, 0, 0x2502, 0x2514, 0x2500, 0x2518};
-
-void EventHandler::HistoryOnRender(flecs::world ecs, tcod::Console &console) {
-  MainGameOnRender(ecs, console);
+void EventHandler::HistoryOnRender(flecs::world ecs, tcod::Console &console,
+                                   uint64_t time) {
+  MainGameOnRender(ecs, console, time);
   auto logConsole =
       tcod::Console(console.get_width() - 6, console.get_height() - 6);
   tcod::draw_frame(logConsole,
@@ -497,8 +654,9 @@ static int menuXLocation(flecs::entity player) {
   return player.get<Position>().x <= 30 ? 40 : 0;
 }
 
-void EventHandler::InventoryOnRender(flecs::world ecs, tcod::Console &console) {
-  MainGameOnRender(ecs, console);
+void EventHandler::InventoryOnRender(flecs::world ecs, tcod::Console &console,
+                                     uint64_t time) {
+  MainGameOnRender(ecs, console, time);
   auto count = q.count();
   auto x = menuXLocation(ecs.lookup("player"));
 
@@ -520,54 +678,59 @@ void EventHandler::InventoryOnRender(flecs::world ecs, tcod::Console &console) {
   }
 }
 
-void EventHandler::SelectOnRender(flecs::world ecs, tcod::Console &console) {
-  MainGameOnRender(ecs, console);
+void EventHandler::SelectOnRender(flecs::world ecs, tcod::Console &console,
+                                  uint64_t time) {
+  MainGameOnRender(ecs, console, time);
   auto &tile = console.at(mouse_loc);
   tile.bg = color::white;
-  tile.fg = color::black;
 }
 
-void EventHandler::AreaTargetOnRender(flecs::world ecs,
-                                      tcod::Console &console) {
-  SelectOnRender(ecs, console);
+void EventHandler::AreaTargetOnRender(flecs::world ecs, tcod::Console &console,
+                                      uint64_t time) {
+  SelectOnRender(ecs, console, time);
   tcod::draw_frame(console,
                    {mouse_loc[0] - radius - 1, mouse_loc[1] - radius - 1,
                     radius * radius, radius * radius},
                    DECORATION, color::red, std::nullopt);
 }
 
-void EventHandler::MainMenuOnRender(flecs::world, tcod::Console &console) {
-  static auto background_image = TCODImage("assets/menu_background.png");
+void EventHandler::MainMenuOnRender(flecs::world, tcod::Console &console,
+                                    uint64_t) {
+  static constexpr auto ImageWidth = 100;
+  static const auto background_image = TCODImage("assets/teeth.png");
+  assert(background_image.getSize()[0] == ImageWidth);
   tcod::draw_quartergraphics(console, background_image);
-  tcod::print(console, {console.get_width() / 2, console.get_height() / 2 - 4},
-              "Yet Another Roguelike", color::menu_title, std::nullopt,
+
+  const auto printY = (ImageWidth / 2 + console.get_width()) / 2;
+  tcod::print(console, {printY, console.get_height() / 2 - 4},
+              "The Fiend in Facility 14", color::menu_title, std::nullopt,
               TCOD_CENTER);
-  tcod::print(console, {console.get_width() / 2, console.get_height() - 2},
-              "By degustaf", color::menu_title, std::nullopt, TCOD_CENTER);
+  tcod::print(console, {printY, console.get_height() - 2}, "By degustaf",
+              color::menu_title, std::nullopt, TCOD_CENTER);
 
   static const auto choices =
       std::array{"[N] Play a new game     ", "[C] Continue last game  ",
                  "[Q] Quit                "};
   for (auto i = 0; i < (int)choices.size(); i++) {
-    tcod::print(console,
-                {console.get_width() / 2, console.get_height() / 2 - 2 + i},
-                choices[i], color::menu_text, color::black, TCOD_CENTER);
+    tcod::print(console, {printY, console.get_height() / 2 - 2 + i}, choices[i],
+                color::menu_text, color::black, TCOD_CENTER);
   }
 }
 
-void EventHandler::PopupOnRender(flecs::world ecs, tcod::Console &console) {
-  parentOnRender(this, ecs, console);
+void EventHandler::PopupOnRender(flecs::world ecs, tcod::Console &console,
+                                 uint64_t time) {
+  parentOnRender(this, ecs, console, time);
   for (auto &tile : console) {
     tile.fg /= 8;
     tile.bg /= 8;
   }
 
-  tcod::print(console, {console.get_width() / 2, console.get_height() / 2},
-              text, color::white, color::black, TCOD_CENTER);
+  childOnRender(ecs, console);
 }
 
-void EventHandler::LevelUpOnRender(flecs::world ecs, tcod::Console &console) {
-  MainGameOnRender(ecs, console);
+void EventHandler::LevelUpOnRender(flecs::world ecs, tcod::Console &console,
+                                   uint64_t time) {
+  MainGameOnRender(ecs, console, time);
   auto player = ecs.lookup("player");
   auto x = menuXLocation(player);
   tcod::draw_frame(console, {x, 0, 35, 8}, DECORATION, color::white,
@@ -582,8 +745,8 @@ void EventHandler::LevelUpOnRender(flecs::world ecs, tcod::Console &console) {
   auto fighter = player.get<Fighter>();
   auto msg = tcod::stringf("a) Constitution (+20 HP, from %d)", fighter.max_hp);
   tcod::print(console, {x + 1, 4}, msg, std::nullopt, std::nullopt);
-  msg =
-      tcod::stringf("b) Strength (+1 attack, from %d)", fighter.power(player));
+  msg = tcod::stringf("b) Strength (+1 attack, from %d)",
+                      fighter.power(player, false));
   tcod::print(console, {x + 1, 5}, msg, std::nullopt, std::nullopt);
   msg = tcod::stringf("c) Agility (+1 defense, from %d)",
                       fighter.defense(player));
@@ -591,28 +754,149 @@ void EventHandler::LevelUpOnRender(flecs::world ecs, tcod::Console &console) {
 }
 
 void EventHandler::CharacterScreenOnRender(flecs::world ecs,
-                                           tcod::Console &console) {
-  MainGameOnRender(ecs, console);
+                                           tcod::Console &console,
+                                           uint64_t time) {
+  MainGameOnRender(ecs, console, time);
   auto player = ecs.lookup("player");
   auto x = menuXLocation(player);
-  tcod::draw_frame(console, {x, 0, (int)title.size() + 4, 7}, DECORATION,
+  tcod::draw_frame(console, {x, 0, (int)title.size() + 4, 5}, DECORATION,
                    color::white, color::black);
   tcod::print_rect(console, {x, 0, (int)title.size() + 4, 1}, title,
                    std::nullopt, std::nullopt, TCOD_CENTER);
 
-  auto level = player.get<Level>();
-  auto msg = tcod::stringf("Level: %d", level.current);
-  tcod::print(console, {x + 1, 1}, msg, std::nullopt, std::nullopt);
-  msg = tcod::stringf("XP: %d", level.xp);
-  tcod::print(console, {x + 1, 2}, msg, std::nullopt, std::nullopt);
-  msg = tcod::stringf("XP for next level: %d", level.xp_to_next_level());
-  tcod::print(console, {x + 1, 3}, msg, std::nullopt, std::nullopt);
+  // auto level = player.get<Level>();
+  // auto msg = tcod::stringf("Level: %d", level.current);
+  // tcod::print(console, {x + 1, 1}, msg, std::nullopt, std::nullopt);
+  // msg = tcod::stringf("XP: %d", level.xp);
+  // tcod::print(console, {x + 1, 2}, msg, std::nullopt, std::nullopt);
+  // msg = tcod::stringf("XP for next level: %d", level.xp_to_next_level());
+  // tcod::print(console, {x + 1, 3}, msg, std::nullopt, std::nullopt);
 
   auto fighter = player.get<Fighter>();
-  msg = tcod::stringf("Attack: %d", fighter.power(player));
-  tcod::print(console, {x + 1, 4}, msg, std::nullopt, std::nullopt);
+  auto msg = tcod::stringf("Attack: %d", fighter.power(player, false));
+  tcod::print(console, {x + 1, 1}, msg, std::nullopt, std::nullopt);
+  msg = tcod::stringf("Ranged attack: %d", fighter.power(player, true));
+  tcod::print(console, {x + 1, 2}, msg, std::nullopt, std::nullopt);
   msg = tcod::stringf("Defense: %d", fighter.defense(player));
-  tcod::print(console, {x + 1, 5}, msg, std::nullopt, std::nullopt);
+  tcod::print(console, {x + 1, 3}, msg, std::nullopt, std::nullopt);
+}
+
+void EventHandler::JumpOnRender(flecs::world ecs, tcod::Console &console,
+                                uint64_t time) {
+  MainGameOnRender(ecs, console, time);
+  for (auto &tile : console) {
+    tile.fg /= 8;
+    tile.bg /= 8;
+  }
+
+  if (useRope) {
+    tcod::print(console, {console.get_width() / 2, console.get_height() / 2},
+                "Are you sure you want to climb into the chasm?", color::white,
+                color::black, TCOD_CENTER);
+    tcod::print(
+        console, {console.get_width() / 2, console.get_height() / 2 + 2},
+        "(Y)es     (N)o     (J)ump", color::red, color::black, TCOD_CENTER);
+  } else {
+    tcod::print(console, {console.get_width() / 2, console.get_height() / 2},
+                "Are you sure you want to jump into the chasm?", color::white,
+                color::black, TCOD_CENTER);
+    tcod::print(console,
+                {console.get_width() / 2, console.get_height() / 2 + 2},
+                "(Y)es     (N)o", color::red, color::black, TCOD_CENTER);
+  }
+}
+
+void EventHandler::WinOnRender(flecs::world, tcod::Console &console,
+                               uint64_t time) {
+  static auto start_time = time;
+  static auto last_time = time;
+  auto x = console.get_width() / 2;
+  auto y = console.get_height() / 2;
+  auto time_ms = time - start_time;
+  auto ts = time - last_time;
+  auto level = (uint8_t)((time_ms >> 2) & 0xff);
+
+  switch (time_ms >> 10) {
+  case 0:
+    tcod::print(console, {x, y - 1}, "The Fiend is defeated",
+                TCOD_ColorRGB{level, level, level}, std::nullopt, TCOD_CENTER);
+    break;
+  case 1:
+    tcod::print(console, {x, y - 1}, "The Fiend is defeated", color::white,
+                std::nullopt, TCOD_CENTER);
+    tcod::print(console, {x - 4, y + 1}, "You Win.",
+                TCOD_ColorRGB{level, level, level}, std::nullopt);
+    break;
+  case 2:
+    tcod::print(console, {x, y - 1}, "The Fiend is defeated", color::white,
+                std::nullopt, TCOD_CENTER);
+    tcod::print(console, {x - 4, y + 1}, "You Win.", color::white,
+                std::nullopt);
+    break;
+  case 3:
+  case 4:
+    tcod::print(console, {x, y - 1}, "The Fiend is defeated", color::white,
+                std::nullopt, TCOD_CENTER);
+    tcod::print(console, {x - 4, y + 1}, "You Win.", color::white,
+                std::nullopt);
+    break;
+  case 5: {
+    tcod::print(console, {x, y - 1}, "The Fiend is defeated", color::white,
+                std::nullopt, TCOD_CENTER);
+    tcod::print(console, {x - 4, y + 1}, "You Win.", color::white,
+                std::nullopt);
+    auto &tile = console.at(x + 4, y + 1);
+    tile.ch = '.';
+    tile.fg = TCOD_ColorRGB{level, level, level};
+    break;
+  }
+  case 6: {
+    tcod::print(console, {x, y - 1}, "The Fiend is defeated", color::white,
+                std::nullopt, TCOD_CENTER);
+    tcod::print(console, {x - 4, y + 1}, "You Win..", color::white,
+                std::nullopt);
+    auto &tile = console.at(x + 5, y + 1);
+    tile.ch = '.';
+    tile.fg = TCOD_ColorRGB{level, level, level};
+    break;
+  }
+  case 7: {
+    tcod::print(console, {x, y - 1}, "The Fiend is defeated", color::white,
+                std::nullopt, TCOD_CENTER);
+    tcod::print(console, {x - 4, y + 1}, "You Win...", color::white,
+                std::nullopt);
+    tcod::print(console, {x - 4, y + 3}, "for now",
+                TCOD_ColorRGB{level, level, level}, std::nullopt);
+    break;
+  }
+  default: {
+    auto rng = TCODRandom::getInstance();
+    tcod::print(console, {x, y - 1}, "The Fiend is defeated", color::white,
+                std::nullopt, TCOD_CENTER);
+    if (rng->getDouble(0.0, 0.25) < (double)ts / 1000.0) {
+      auto i = rng->getInt(0, 20);
+      drops.push_back(BloodDrop(x - 10 + i));
+    }
+    for (auto &d : drops) {
+      d.update(ts);
+    }
+    for (auto it = drops.begin(); it != drops.end();) {
+      if (it->y() + y >= console.get_height()) {
+        it = drops.erase(it);
+      } else {
+        it++;
+      }
+    }
+    for (auto &d : drops) {
+      d.render(console, y);
+    }
+    tcod::print(console, {x - 4, y + 1}, "You Win...", color::white,
+                std::nullopt);
+    tcod::print(console, {x - 4, y + 3}, "for now", color::white, std::nullopt);
+    break;
+  }
+  }
+  last_time = time;
 }
 
 ActionResult
@@ -621,24 +905,53 @@ EventHandler::MainGameHandleAction(flecs::world ecs,
   if (action) {
     auto player = ecs.entity("player");
     auto ret = action->perform(player);
+    auto &log = ecs.lookup("messageLog").get_mut<MessageLog>();
     if (ret.msg.size() > 0) {
-      ecs.lookup("messageLog")
-          .get_mut<MessageLog>()
-          .addMessage(ret.msg, ret.fg);
+      log.addMessage(ret.msg, ret.fg);
     }
+    auto &scent = player.get_mut<Scent>();
     if (ret) {
-      ecs.lookup("currentMap")
-          .target<CurrentMap>()
-          .get_mut<GameMap>()
-          .update_fov(player);
+      auto map = ecs.lookup("currentMap").target<CurrentMap>();
+      auto &gameMap = map.get_mut<GameMap>();
+      gameMap.update_fov(player);
       Engine::handle_enemy_turns(ecs);
+      scent += {ScentType::player, ret.exertion};
+      gameMap.update_scent(map);
+      auto scentMessage = gameMap.detectScent(player);
+      if (scentMessage.size() > 0) {
+        log.addMessage(scentMessage);
+      }
     }
+    // if (player.has<TrackerConsumable>()) {
+    //   auto &t = player.get_mut<TrackerConsumable>();
+    //   t.turns--;
+    //   if (t.turns < 0) {
+    //     player.remove<TrackerConsumable>();
+    //   }
+    // }
     if (player.get<Level>().requires_level_up()) {
       makeLevelUp(*this);
+    } else if (scent.power > 100) {
+      auto &warning = player.get_mut<ScentWarning>();
+      if (!warning.warned) {
+        makePopup([](auto e) { e->restoreMainGame(); },
+                  [](auto e, auto world, auto &c, auto ts) {
+                    e->MainGameOnRender(world, c, ts);
+                  },
+                  [](auto, auto &c) {
+                    tcod::print(c, {c.get_width() / 2, c.get_height() / 2 - 1},
+                                "Be careful...", color::red, color::black,
+                                TCOD_CENTER);
+                    tcod::print(c, {c.get_width() / 2, c.get_height() / 2 + 1},
+                                "The Fiend can track you by your scent.",
+                                color::white, color::black, TCOD_CENTER);
+                  });
+        warning.warned = true;
+      }
     }
     return ret;
   }
-  return {ActionResultType::Failure, ""};
+  return {ActionResultType::Failure, "", 0.0f};
 }
 
 ActionResult
@@ -650,14 +963,16 @@ EventHandler::MainMenuHandleAction(flecs::world ecs,
     assert(!ret);
     return ret;
   }
-  return {ActionResultType::Failure, ""};
+  return {ActionResultType::Failure, "", 0.0f};
 }
 
 ActionResult EventHandler::AskUserHandleAction(flecs::world ecs,
                                                std::unique_ptr<Action> action) {
   auto ret = MainGameHandleAction(ecs, std::move(action));
-  if (ret) {
-    restoreMainGame(*this);
+  if (ret && handle_action == &EventHandler::AskUserHandleAction) {
+    // if handle_action != AskUserHandleAction, we've already updated which
+    // version of the event handler we're using. Don't override that.
+    restoreMainGame();
   }
   return ret;
 }
@@ -677,12 +992,12 @@ std::unique_ptr<Action> EventHandler::UseItemSelected(flecs::entity item) {
 }
 
 std::unique_ptr<Action> EventHandler::LookSelectedLoc(std::array<int, 2>) {
-  restoreMainGame(*this);
+  restoreMainGame();
   return nullptr;
 }
 
 std::unique_ptr<Action>
 EventHandler::SingleTargetSelectedLoc(std::array<int, 2> xy) {
-  restoreMainGame(*this);
+  restoreMainGame();
   return callback(xy);
 }

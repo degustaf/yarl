@@ -29,6 +29,10 @@ struct Equippable {
 struct Armor {};
 struct Weapon {};
 
+struct Ranged {
+  int range;
+};
+
 template <typename T, bool print>
 static inline std::string unequip(flecs::entity owner, flecs::entity item) {
   owner.remove<T>(item);
@@ -77,3 +81,8 @@ std::string toggleEquip(flecs::entity owner, flecs::entity item) {
 inline bool isEquipped(flecs::entity owner, flecs::entity item) {
   return (owner.target<Weapon>() == item) || (owner.target<Armor>() == item);
 }
+
+struct Taser {
+  int turns;
+  void apply(flecs::entity target) const;
+};

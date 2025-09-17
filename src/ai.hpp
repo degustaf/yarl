@@ -22,7 +22,7 @@ struct HostileAi : Ai {
   virtual std::unique_ptr<Action> act(flecs::entity self) override;
   virtual ~HostileAi() = default;
 
-  std::vector<std::array<size_t, 2>> path;
+  std::vector<std::array<int, 2>> path;
 };
 
 struct ConfusedAi : Ai {

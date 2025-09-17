@@ -5,6 +5,7 @@
 
 #include <array>
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -12,12 +13,16 @@ struct Position {
   Position() : x(0), y(0){};
   Position(int x, int y) : x(x), y(y){};
   Position(std::array<int, 2> xy) : x(xy[0]), y(xy[1]){};
+  Position(int xy[2]) : x(xy[0]), y(xy[1]){};
   operator std::array<int, 2>() const { return {x, y}; };
   operator std::array<size_t, 2>() const { return {(size_t)x, (size_t)y}; };
-  Position operator+(std::array<int, 2> dxy) const {
+  inline Position operator+(const std::array<int, 2> &dxy) const {
     return {x + dxy[0], y + dxy[1]};
   };
-  bool operator==(const Position &rhs) const {
+  inline Position operator+(const int (&dxy)[2]) const {
+    return {x + dxy[0], y + dxy[1]};
+  };
+  inline bool operator==(const Position &rhs) const {
     return x == rhs.x && y == rhs.y;
   };
 
@@ -45,18 +50,24 @@ extern const std::vector<RenderOrder> allRenderOrders;
 
 struct Renderable {
   int32_t ch;
-  tcod::ColorRGB color;
+  tcod::ColorRGB fg;
+  std::optional<tcod::ColorRGB> bg;
   RenderOrder layer;
+  bool fovOnly = true;
 
-  void render(tcod::Console &console, const Position &pos) const;
+  void render(tcod::Console &console, const Position &pos, bool inFov) const;
 };
-// static_assert(sizeof(Renderable) == 8, "Renderable has the wrong size");
 
 struct Named {
   std::string name;
 };
 
 struct BlocksMovement {};
+struct BlocksFov {};
+struct Openable {};
+struct Fountain {};
+
+void toggleDoor(flecs::entity door);
 
 struct Fighter {
   Fighter() : Fighter(0, 0, 0){};
@@ -69,10 +80,27 @@ struct Fighter {
   void take_damage(int amount, flecs::entity self);
   void die(flecs::entity self);
   int defense(flecs::entity self) const;
-  int power(flecs::entity self) const;
+  int power(flecs::entity self, bool ranged) const;
 
   int max_hp;
   int _hp;
   int base_defense;
   int base_power;
+};
+
+struct Regenerator {
+  int healTurns;
+  int turns = 0;
+  void update(flecs::entity self);
+};
+
+struct OnDeath {
+  virtual void onDeath(flecs::entity self) const = 0;
+  virtual ~OnDeath() = default;
+};
+
+struct Frozen {
+  int turns;
+
+  void update(flecs::entity self);
 };
