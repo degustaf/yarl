@@ -1,0 +1,11 @@
+prefab fountain {
+  module.Renderable: {
+    ch: 38
+    fg: {r: 0, g: 0, b:255}
+    bg: { member: [] }
+    layer: Actor
+    fovOnly: true
+  }
+  BlocksMovement {}
+  Fountain {}
+}

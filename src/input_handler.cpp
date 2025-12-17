@@ -7,7 +7,6 @@
 
 #include <libtcod.hpp>
 
-#include "ai.hpp"
 #include "color.hpp"
 #include "consumable.hpp"
 #include "defines.hpp"
@@ -460,7 +459,8 @@ std::unique_ptr<Action> EventHandler::SelectKeyDown(SDL_KeyboardEvent *key,
     modifier *= 20;
   }
 
-  auto &map = ecs.lookup("currentMap").target<CurrentMap>().get<GameMap>();
+  auto cm = ecs.lookup("currentMap").target<CurrentMap>();
+  auto &map = cm.get<GameMap>();
   mouse_loc[0] =
       std::clamp(mouse_loc[0] + dxy[0] * modifier, 0, map.getWidth());
   mouse_loc[1] =
@@ -580,7 +580,8 @@ std::unique_ptr<Action> EventHandler::AskUserClick(SDL_MouseButtonEvent *,
 
 std::unique_ptr<Action> EventHandler::SelectClick(SDL_MouseButtonEvent *button,
                                                   flecs::world ecs) {
-  auto &map = ecs.lookup("currentMap").target<CurrentMap>().get<GameMap>();
+  auto cm = ecs.lookup("currentMap").target<CurrentMap>();
+  auto &map = cm.get<GameMap>();
   if (map.inBounds((int)button->x, (int)button->y)) {
     if (button->button == SDL_BUTTON_LEFT) {
       return (this->*loc_selected)({(int)button->x, (int)button->y});
@@ -697,13 +698,9 @@ void EventHandler::AreaTargetOnRender(flecs::world ecs, tcod::Console &console,
 void EventHandler::MainMenuOnRender(flecs::world, tcod::Console &console,
                                     uint64_t) {
   static constexpr auto ImageWidth = 100;
-  static const auto background_image = TCODImage("assets/teeth.png");
-  assert(background_image.getSize()[0] == ImageWidth);
-  tcod::draw_quartergraphics(console, background_image);
-
   const auto printY = (ImageWidth / 2 + console.get_width()) / 2;
   tcod::print(console, {printY, console.get_height() / 2 - 4},
-              "The Fiend in Facility 14", color::menu_title, std::nullopt,
+              "Yet Another Roguelike", color::menu_title, std::nullopt,
               TCOD_CENTER);
   tcod::print(console, {printY, console.get_height() - 2}, "By degustaf",
               color::menu_title, std::nullopt, TCOD_CENTER);

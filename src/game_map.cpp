@@ -2,8 +2,8 @@
 
 #include <cstddef>
 
+#include "basic_dungeon.hpp"
 #include "defines.hpp"
-#include "room_accretion.hpp"
 #include "scent.hpp"
 
 static inline void deleteMapEntity(flecs::world ecs, flecs::entity map) {
@@ -47,7 +47,7 @@ void GameMap::nextFloor(flecs::entity player) const {
   auto ecs = player.world();
   auto newMap = ecs.entity();
   newMap.set<GameMap>(
-      roomAccretion::generateDungeon(newMap, width, height, level + 1, player));
+      basicDungeon::generateDungeon(newMap, width, height, level + 1, player));
   auto oldMap = ecs.lookup("currentMap").target<CurrentMap>();
   ecs.lookup("currentMap").add<CurrentMap>(newMap);
   deleteMapEntity(oldMap);

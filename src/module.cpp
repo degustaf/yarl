@@ -4,6 +4,7 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <filesystem>
 #include <optional>
 
 #include <libtcod.hpp>
@@ -378,10 +379,15 @@ module::module(flecs::world ecs) {
       .set<Named>({"door"})
       .add<Openable>();
 
-  ecs.prefab("fountain")
-      .set<Renderable>(
-          {'&', color::blue, std::nullopt, RenderOrder::Actor, false})
-      .set<Named>({"fountain"})
-      .add<BlocksMovement>()
-      .add<Fountain>();
+  // ecs.prefab("fountain")
+  //     .set<Renderable>(
+  //         {'&', color::blue, std::nullopt, RenderOrder::Actor, false})
+  //     .set<Named>({"fountain"})
+  //     .add<BlocksMovement>()
+  //     .add<Fountain>();
+
+  const std::filesystem::path data_dir = "assets/scripts";
+  for (auto &file : std::filesystem::recursive_directory_iterator(data_dir)) {
+    ecs.script_run_file(file.path().c_str());
+  }
 }
