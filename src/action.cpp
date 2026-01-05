@@ -261,7 +261,8 @@ ActionResult TakeStairsAction::perform(flecs::entity e) const {
   assert(e == ecs.lookup("player"));
   auto pos = e.get<Position>();
 
-  auto &gameMap = ecs.lookup("currentMap").target<CurrentMap>().get<GameMap>();
+  auto currentMap = ecs.lookup("currentMap").target<CurrentMap>();
+  auto &gameMap = currentMap.get<GameMap>();
   if (gameMap.isStairs(pos)) {
     gameMap.nextFloor(e);
 
@@ -273,8 +274,8 @@ ActionResult TakeStairsAction::perform(flecs::entity e) const {
 }
 
 ActionResult JumpAction::perform(flecs::entity e) const {
-  auto &gameMap =
-      e.world().lookup("currentMap").target<CurrentMap>().get<GameMap>();
+  auto currentMap = e.world().lookup("currentMap").target<CurrentMap>();
+  auto &gameMap = currentMap.get<GameMap>();
   gameMap.nextFloor(e);
 
   constexpr auto fallDamage = 4;

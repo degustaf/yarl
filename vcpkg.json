@@ -2,15 +2,15 @@
   "dependencies": [
     {
       "name": "libtcod",
-      "version>=": "2.1.1"
+      "version>=": "2.2.1"
     },
     {
       "name": "flecs",
-      "version>=": "4.1.0"
+      "version>=": "4.1.1"
     },
     {
       "name": "sdl3",
-      "version>=": "3.2.16"
+      "version>=": "3.2.22"
     }
   ],
   "builtin-baseline": "bffcbb75f71553824aa948a7e7b4f798662a6fa7"

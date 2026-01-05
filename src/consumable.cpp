@@ -240,7 +240,8 @@ void TrackerConsumable<T>::render(Console &console, flecs::entity map) const {
 ActionResult RopeConsumable::activate(flecs::entity item,
                                       flecs::entity consumer) const {
   auto ecs = item.world();
-  auto &map = ecs.lookup("currentMap").target<CurrentMap>().get<GameMap>();
+  auto currentMap = ecs.lookup("currentMap").target<CurrentMap>();
+  auto &map = currentMap.get<GameMap>();
   auto pos = consumer.get<Position>();
   bool usable = false;
   for (auto &dir : directions) {

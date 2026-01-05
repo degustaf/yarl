@@ -460,7 +460,8 @@ std::unique_ptr<Action> EventHandler::SelectKeyDown(SDL_KeyboardEvent *key,
     modifier *= 20;
   }
 
-  auto &map = ecs.lookup("currentMap").target<CurrentMap>().get<GameMap>();
+  auto currentMap = ecs.lookup("currentMap").target<CurrentMap>();
+  auto &map = currentMap.get<GameMap>();
   mouse_loc[0] =
       std::clamp(mouse_loc[0] + dxy[0] * modifier, 0, map.getWidth());
   mouse_loc[1] =
@@ -580,7 +581,8 @@ std::unique_ptr<Action> EventHandler::AskUserClick(SDL_MouseButtonEvent *,
 
 std::unique_ptr<Action> EventHandler::SelectClick(SDL_MouseButtonEvent *button,
                                                   flecs::world ecs) {
-  auto &map = ecs.lookup("currentMap").target<CurrentMap>().get<GameMap>();
+  auto currentMap = ecs.lookup("currentMap").target<CurrentMap>();
+  auto &map = currentMap.get<GameMap>();
   if (map.inBounds((int)button->x, (int)button->y)) {
     if (button->button == SDL_BUTTON_LEFT) {
       return (this->*loc_selected)({(int)button->x, (int)button->y});
