@@ -699,9 +699,9 @@ void EventHandler::AreaTargetOnRender(flecs::world ecs, tcod::Console &console,
 void EventHandler::MainMenuOnRender(flecs::world, tcod::Console &console,
                                     uint64_t) {
   static constexpr auto ImageWidth = 100;
-  static const auto background_image = TCODImage("assets/teeth.png");
-  assert(background_image.getSize()[0] == ImageWidth);
-  tcod::draw_quartergraphics(console, background_image);
+  // static const auto background_image = TCODImage("assets/teeth.png");
+  // assert(background_image.getSize()[0] == ImageWidth);
+  // tcod::draw_quartergraphics(console, background_image);
 
   const auto printY = (ImageWidth / 2 + console.get_width()) / 2;
   tcod::print(console, {printY, console.get_height() / 2 - 4},

@@ -1,3 +1,4 @@
+#include <libtcod/tileset.hpp>
 #define SDL_MAIN_USE_CALLBACKS
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
@@ -22,8 +23,8 @@ SDL_AppResult SDL_AppInit(void **data, [[maybe_unused]] int argc,
   // Configure the context.
   auto params = TCOD_ContextParams{};
 
-  tcod::Tileset tileset = tcod::load_tilesheet("assets/terminal16x16.png",
-                                               {16, 16}, tcod::CHARMAP_CP437);
+  tcod::Tileset tileset = tcod::load_tilesheet("assets/dejavu10x10_gs_tc.png",
+                                               {32, 8}, tcod::CHARMAP_TCOD);
   params.tcod_version = TCOD_COMPILEDVERSION; // This is required.
   params.columns = width;
   params.rows = height;
