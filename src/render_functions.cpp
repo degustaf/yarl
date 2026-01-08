@@ -1,6 +1,5 @@
 #include "render_functions.hpp"
 
-#include <libtcod/console_printing.hpp>
 #include <optional>
 #include <string>
 
@@ -9,23 +8,23 @@
 #include "defines.hpp"
 #include "scent.hpp"
 
-void renderBar(tcod::Console &console, int currentValue, int maxValue,
+void renderBar(Console &console, int currentValue, int maxValue,
                int totalWidth) {
   auto bar_width = (int)(((double)currentValue) / maxValue * totalWidth);
 
-  tcod::draw_rect(console, {0, 45, totalWidth, 1}, 1, std::nullopt,
-                  color::barEmpty);
+  Console::draw_rect(console, {0, 45, totalWidth, 1}, 1, std::nullopt,
+                     color::barEmpty);
 
   if (bar_width > 0) {
-    tcod::draw_rect(console, {0, 45, bar_width, 1}, 1, std::nullopt,
-                    color::barFilled);
+    Console::draw_rect(console, {0, 45, bar_width, 1}, 1, std::nullopt,
+                       color::barFilled);
   }
 
   auto msg = tcod::stringf("HP: %d/%d", currentValue, maxValue);
-  tcod::print(console, {1, 45}, msg, color::barText, std::nullopt);
+  Console::print(console, {1, 45}, msg, color::barText, std::nullopt);
 }
 
-void renderSmell(tcod::Console &console, flecs::entity player, int totalWidth) {
+void renderSmell(Console &console, flecs::entity player, int totalWidth) {
   auto scent = player.get<Scent>();
   auto bg = [](auto scent) {
     switch (scent.type) {
@@ -47,29 +46,28 @@ void renderSmell(tcod::Console &console, flecs::entity player, int totalWidth) {
   auto bar_width =
       std::min((int)((scent.power * (float)totalWidth) / 100.0f), totalWidth);
 
-  tcod::draw_rect(console, {0, 47, totalWidth, 1}, 1, std::nullopt,
-                  color::barEmpty);
+  Console::draw_rect(console, {0, 47, totalWidth, 1}, 1, std::nullopt,
+                     color::barEmpty);
   if (bar_width > 0) {
-    tcod::draw_rect(console, {0, 47, bar_width, 1}, 1, std::nullopt, bg);
+    Console::draw_rect(console, {0, 47, bar_width, 1}, 1, std::nullopt, bg);
   }
 
   auto msg = tcod::stringf("Scent: %d", (int)scent.power);
-  tcod::print(console, {1, 47}, msg, color::barText, std::nullopt);
+  Console::print(console, {1, 47}, msg, color::barText, std::nullopt);
   if (bg == color::yellow) {
     for (auto x = 1; x < bar_width; x++) {
-      console.at(x, 47).fg = color::black;
+      console.at({x, 47}).fg = color::black;
     }
   }
 }
 
-void renderDungeonLevel(tcod::Console &console, int level,
+void renderDungeonLevel(Console &console, int level,
                         std::array<int, 2> location) {
   auto msg = tcod::stringf("Dungeon level: %d", level);
-  tcod::print(console, location, msg, std::nullopt, std::nullopt);
+  Console::print(console, location, msg, std::nullopt, std::nullopt);
 }
 
-void renderNamesAtMouseLocation(tcod::Console &console,
-                                const std::array<int, 2> xy,
+void renderNamesAtMouseLocation(Console &console, const std::array<int, 2> &xy,
                                 const std::array<int, 2> &mouse_loc,
                                 flecs::entity map, const GameMap &gameMap) {
   auto q =
@@ -92,13 +90,12 @@ void renderNamesAtMouseLocation(tcod::Console &console,
   if (gameMap.isStairs(mouse_loc)) {
     msg = msg + (msg.size() > 0 ? ", " : "") + "an elevator";
   }
-  tcod::print(console, xy, msg, std::nullopt, std::nullopt);
+  Console::print(console, xy, msg, std::nullopt, std::nullopt);
 }
 
-void renderCommandButton(tcod::Console &console,
-                         const std::array<int, 4> &xywh) {
-  tcod::draw_frame(console, xywh, DECORATION, color::menu_border,
-                   color::darkGrey);
-  tcod::print(console, {xywh[0] + 1, xywh[1] + 1}, "(C)ommands", std::nullopt,
-              std::nullopt);
+void renderCommandButton(Console &console, const std::array<int, 4> &xywh) {
+  Console::draw_frame(console, xywh, DECORATION, color::menu_border,
+                      color::darkGrey);
+  Console::print(console, {xywh[0] + 1, xywh[1] + 1}, "(C)ommands",
+                 std::nullopt, std::nullopt);
 }

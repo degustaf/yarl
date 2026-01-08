@@ -85,28 +85,28 @@ static constexpr auto chasm_light =
 static constexpr auto chasm_dark =
     TCOD_ConsoleTile{0x2591, {100, 100, 100, 255}, {50, 50, 150, 255}};
 
-void GameMap::render(tcod::Console &console) const {
+void GameMap::render(Console &console) const {
   for (auto y = 0; y < height; y++) {
     for (auto x = 0; x < width; x++) {
       if (map.isInFov(x, y)) {
-        console.at(x, y) = isStairs({x, y})          ? stairs_light
-                           : isKnownBloody({x, y})   ? bloody_floor_light
-                           : map.isWalkable(x, y)    ? floor_light
-                           : map.isTransparent(x, y) ? chasm_light
-                                                     : wall_light;
+        console.at({x, y}) = isStairs({x, y})          ? stairs_light
+                             : isKnownBloody({x, y})   ? bloody_floor_light
+                             : map.isWalkable(x, y)    ? floor_light
+                             : map.isTransparent(x, y) ? chasm_light
+                                                       : wall_light;
       } else if (isExplored(x, y)) {
-        console.at(x, y) = isStairs({x, y})          ? stairs_dark
-                           : isKnownBloody({x, y})   ? bloody_floor_dark
-                           : map.isWalkable(x, y)    ? floor_dark
-                           : map.isTransparent(x, y) ? chasm_dark
-                                                     : wall_dark;
+        console.at({x, y}) = isStairs({x, y})          ? stairs_dark
+                             : isKnownBloody({x, y})   ? bloody_floor_dark
+                             : map.isWalkable(x, y)    ? floor_dark
+                             : map.isTransparent(x, y) ? chasm_dark
+                                                       : wall_dark;
       } else if (isSensed(x, y)) {
-        console.at(x, y) = isStairs({x, y})          ? stairs_sensed
-                           : map.isWalkable(x, y)    ? floor_sensed
-                           : map.isTransparent(x, y) ? chasm_dark
-                                                     : wall_dark;
+        console.at({x, y}) = isStairs({x, y})          ? stairs_sensed
+                             : map.isWalkable(x, y)    ? floor_sensed
+                             : map.isTransparent(x, y) ? chasm_dark
+                                                       : wall_dark;
       } else {
-        console.at(x, y) = shroud;
+        console.at({x, y}) = shroud;
       }
     }
   }

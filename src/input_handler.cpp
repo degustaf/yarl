@@ -2,13 +2,13 @@
 
 #include <algorithm>
 #include <cassert>
-#include <libtcod/console_types.hpp>
 #include <optional>
 
 #include <libtcod.hpp>
 
 #include "ai.hpp"
 #include "color.hpp"
+#include "console.hpp"
 #include "consumable.hpp"
 #include "defines.hpp"
 #include "engine.hpp"
@@ -155,50 +155,52 @@ void EventHandler::winGame(void) {
 static constexpr auto COMMAND_MENU_WIDTH = 50;
 static constexpr auto COMMAND_MENU_HEIGHT = 28;
 
-static tcod::Console buildCommandMenu(void) {
-  auto con = tcod::Console(COMMAND_MENU_WIDTH, COMMAND_MENU_HEIGHT);
+static Console buildCommandMenu(void) {
+  auto con = Console(COMMAND_MENU_WIDTH, COMMAND_MENU_HEIGHT);
   con.clear();
-  tcod::draw_frame(con, {0, 0, COMMAND_MENU_WIDTH, COMMAND_MENU_HEIGHT},
-                   DECORATION, color::menu_border, std::nullopt);
+  Console::draw_frame(con, {0, 0, COMMAND_MENU_WIDTH, COMMAND_MENU_HEIGHT},
+                      DECORATION, color::menu_border, std::nullopt);
 
-  tcod::print(con, {COMMAND_MENU_WIDTH / 2 - 4, 1}, "Commands", color::white,
-              std::nullopt);
+  Console::print(con, {COMMAND_MENU_WIDTH / 2 - 4, 1}, "Commands", color::white,
+                 std::nullopt);
 
   // vim directions
-  tcod::print(con, {3, 3}, "y k u", color::white, std::nullopt);
-  tcod::print(con, {4, 4}, "\\|/", color::white, std::nullopt);
-  tcod::print(con, {3, 5}, "h-*-l", color::white, std::nullopt);
-  tcod::print(con, {4, 6}, "/|\\", color::white, std::nullopt);
-  tcod::print(con, {3, 7}, "b j n", color::white, std::nullopt);
+  Console::print(con, {3, 3}, "y k u", color::white, std::nullopt);
+  Console::print(con, {4, 4}, "\\|/", color::white, std::nullopt);
+  Console::print(con, {3, 5}, "h-*-l", color::white, std::nullopt);
+  Console::print(con, {4, 6}, "/|\\", color::white, std::nullopt);
+  Console::print(con, {3, 7}, "b j n", color::white, std::nullopt);
 
   // numpad directions.
-  tcod::print(con, {10, 2}, "numpad", color::white, std::nullopt);
-  tcod::print(con, {10, 3}, "7 8 9", color::white, std::nullopt);
-  tcod::print(con, {11, 4}, "\\|/", color::white, std::nullopt);
-  tcod::print(con, {10, 5}, "4-*-6", color::white, std::nullopt);
-  tcod::print(con, {11, 6}, "/|\\", color::white, std::nullopt);
-  tcod::print(con, {10, 7}, "1 2 3", color::white, std::nullopt);
+  Console::print(con, {10, 2}, "numpad", color::white, std::nullopt);
+  Console::print(con, {10, 3}, "7 8 9", color::white, std::nullopt);
+  Console::print(con, {11, 4}, "\\|/", color::white, std::nullopt);
+  Console::print(con, {10, 5}, "4-*-6", color::white, std::nullopt);
+  Console::print(con, {11, 6}, "/|\\", color::white, std::nullopt);
+  Console::print(con, {10, 7}, "1 2 3", color::white, std::nullopt);
 
   auto y = 9;
 
-  tcod::print(con, {2, y++}, "Hold <shift> to move 2 spaces", color::white,
-              std::nullopt);
-  tcod::print(con, {2, y++}, "Hold <ctrl> to move 3 spaces", color::white,
-              std::nullopt);
+  Console::print(con, {2, y++}, "Hold <shift> to move 2 spaces", color::white,
+                 std::nullopt);
+  Console::print(con, {2, y++}, "Hold <ctrl> to move 3 spaces", color::white,
+                 std::nullopt);
   y++;
-  tcod::print(con, {2, y++}, "5: wait", color::white, std::nullopt);
-  tcod::print(con, {2, y++}, ".: wait", color::white, std::nullopt);
-  tcod::print(con, {2, y++}, ">: Take elevator", color::white, std::nullopt);
-  tcod::print(con, {2, y++}, "C: This menu", color::white, std::nullopt);
-  tcod::print(con, {2, y++}, "D: Drop an item", color::white, std::nullopt);
-  tcod::print(con, {2, y++}, "F: Fire a weapon", color::white, std::nullopt);
-  tcod::print(con, {2, y++}, "G: Pick up an item", color::white, std::nullopt);
-  tcod::print(con, {2, y++}, "I: Inventory", color::white, std::nullopt);
-  tcod::print(con, {2, y++}, "V: View game log", color::white, std::nullopt);
-  tcod::print(con, {2, y++}, "X: View character information", color::white,
-              std::nullopt);
-  tcod::print(con, {2, y++}, "/: Look around map", color::white, std::nullopt);
-  tcod::print(con, {2, y++}, "Esc: exit menu", color::white, std::nullopt);
+  Console::print(con, {2, y++}, "5: wait", color::white, std::nullopt);
+  Console::print(con, {2, y++}, ".: wait", color::white, std::nullopt);
+  Console::print(con, {2, y++}, ">: Take elevator", color::white, std::nullopt);
+  Console::print(con, {2, y++}, "C: This menu", color::white, std::nullopt);
+  Console::print(con, {2, y++}, "D: Drop an item", color::white, std::nullopt);
+  Console::print(con, {2, y++}, "F: Fire a weapon", color::white, std::nullopt);
+  Console::print(con, {2, y++}, "G: Pick up an item", color::white,
+                 std::nullopt);
+  Console::print(con, {2, y++}, "I: Inventory", color::white, std::nullopt);
+  Console::print(con, {2, y++}, "V: View game log", color::white, std::nullopt);
+  Console::print(con, {2, y++}, "X: View character information", color::white,
+                 std::nullopt);
+  Console::print(con, {2, y++}, "/: Look around map", color::white,
+                 std::nullopt);
+  Console::print(con, {2, y++}, "Esc: exit menu", color::white, std::nullopt);
 
   return con;
 }
@@ -209,10 +211,10 @@ void EventHandler::commandsMenu(void) {
             [](auto e, auto world, auto &c, auto ts) {
               e->MainGameOnRender(world, c, ts);
             },
-            [](auto, tcod::Console &c) {
-              tcod::blit(c, menuConsole,
-                         {(c.get_width() - COMMAND_MENU_WIDTH) / 2,
-                          (c.get_height() - COMMAND_MENU_HEIGHT) / 2});
+            [](auto, Console &c) {
+              Console::blit(c, menuConsole,
+                            {(c.get_width() - COMMAND_MENU_WIDTH) / 2,
+                             (c.get_height() - COMMAND_MENU_HEIGHT) / 2});
             });
 }
 
@@ -596,7 +598,7 @@ std::unique_ptr<Action> EventHandler::LevelUpClick(SDL_MouseButtonEvent *,
   return nullptr;
 }
 
-void EventHandler::MainGameOnRender(flecs::world ecs, tcod::Console &console,
+void EventHandler::MainGameOnRender(flecs::world ecs, Console &console,
                                     uint64_t) {
   auto map = ecs.lookup("currentMap").target<CurrentMap>();
   auto &gMap = map.get_mut<GameMap>();
@@ -634,92 +636,92 @@ void EventHandler::MainGameOnRender(flecs::world ecs, tcod::Console &console,
   renderCommandButton(console, commandBox);
 }
 
-void EventHandler::HistoryOnRender(flecs::world ecs, tcod::Console &console,
+void EventHandler::HistoryOnRender(flecs::world ecs, Console &console,
                                    uint64_t time) {
   MainGameOnRender(ecs, console, time);
-  auto logConsole =
-      tcod::Console(console.get_width() - 6, console.get_height() - 6);
-  tcod::draw_frame(logConsole,
-                   {0, 0, logConsole.get_width(), logConsole.get_height()},
-                   DECORATION, std::nullopt, std::nullopt);
-  tcod::print_rect(logConsole, {0, 0, logConsole.get_width(), 1},
-                   "┤Message history├", std::nullopt, std::nullopt,
-                   TCOD_CENTER);
+  auto logConsole = Console(console.get_width() - 6, console.get_height() - 6);
+  Console::draw_frame(logConsole,
+                      {0, 0, logConsole.get_width(), logConsole.get_height()},
+                      DECORATION, std::nullopt, std::nullopt);
+  Console::print_rect(logConsole, {0, 0, logConsole.get_width(), 1},
+                      "┤Message history├", std::nullopt, std::nullopt,
+                      TCOD_CENTER);
   ecs.lookup("messageLog")
       .get<MessageLog>()
       .render(logConsole, 1, 1, logConsole.get_width() - 2,
               logConsole.get_height() - 2, cursor);
-  tcod::blit(console, logConsole, {3, 3});
+  Console::blit(console, logConsole, {3, 3});
 }
 
 static int menuXLocation(flecs::entity player) {
   return player.get<Position>().x <= 30 ? 40 : 0;
 }
 
-void EventHandler::InventoryOnRender(flecs::world ecs, tcod::Console &console,
+void EventHandler::InventoryOnRender(flecs::world ecs, Console &console,
                                      uint64_t time) {
   MainGameOnRender(ecs, console, time);
   auto count = q.count();
   auto x = menuXLocation(ecs.lookup("player"));
 
-  tcod::draw_frame(console, {x, 0, (int)title.size(), std::max(count + 2, 3)},
-                   DECORATION, color::white, color::black);
-  tcod::print_rect(console, {x, 0, (int)title.size(), 1}, title, std::nullopt,
-                   std::nullopt, TCOD_CENTER);
+  Console::draw_frame(console,
+                      {x, 0, (int)title.size(), std::max(count + 2, 3)},
+                      DECORATION, color::white, color::black);
+  Console::print_rect(console, {x, 0, (int)title.size(), 1}, title,
+                      std::nullopt, std::nullopt, TCOD_CENTER);
   if (count > 0) {
     auto player = ecs.lookup("player");
     auto idx = 0;
     q.each([&](flecs::entity e, const auto &name) {
       auto msg = tcod::stringf("(%c) %s%s", 'a' + idx, name.name.c_str(),
                                isEquipped(player, e) ? " (E)" : "");
-      tcod::print(console, {x + 1, idx + 1}, msg, std::nullopt, std::nullopt);
+      Console::print(console, {x + 1, idx + 1}, msg, std::nullopt,
+                     std::nullopt);
       idx++;
     });
   } else {
-    tcod::print(console, {x + 1, 1}, "(Empty)", std::nullopt, std::nullopt);
+    Console::print(console, {x + 1, 1}, "(Empty)", std::nullopt, std::nullopt);
   }
 }
 
-void EventHandler::SelectOnRender(flecs::world ecs, tcod::Console &console,
+void EventHandler::SelectOnRender(flecs::world ecs, Console &console,
                                   uint64_t time) {
   MainGameOnRender(ecs, console, time);
   auto &tile = console.at(mouse_loc);
   tile.bg = color::white;
 }
 
-void EventHandler::AreaTargetOnRender(flecs::world ecs, tcod::Console &console,
+void EventHandler::AreaTargetOnRender(flecs::world ecs, Console &console,
                                       uint64_t time) {
   SelectOnRender(ecs, console, time);
-  tcod::draw_frame(console,
-                   {mouse_loc[0] - radius - 1, mouse_loc[1] - radius - 1,
-                    radius * radius, radius * radius},
-                   DECORATION, color::red, std::nullopt);
+  Console::draw_frame(console,
+                      {mouse_loc[0] - radius - 1, mouse_loc[1] - radius - 1,
+                       radius * radius, radius * radius},
+                      DECORATION, color::red, std::nullopt);
 }
 
-void EventHandler::MainMenuOnRender(flecs::world, tcod::Console &console,
-                                    uint64_t) {
+void EventHandler::MainMenuOnRender(flecs::world, Console &console, uint64_t) {
   static constexpr auto ImageWidth = 100;
   // static const auto background_image = TCODImage("assets/teeth.png");
   // assert(background_image.getSize()[0] == ImageWidth);
   // tcod::draw_quartergraphics(console, background_image);
 
   const auto printY = (ImageWidth / 2 + console.get_width()) / 2;
-  tcod::print(console, {printY, console.get_height() / 2 - 4},
-              "The Fiend in Facility 14", color::menu_title, std::nullopt,
-              TCOD_CENTER);
-  tcod::print(console, {printY, console.get_height() - 2}, "By degustaf",
-              color::menu_title, std::nullopt, TCOD_CENTER);
+  Console::print(console, {printY, console.get_height() / 2 - 4},
+                 "The Fiend in Facility 14", color::menu_title, std::nullopt,
+                 TCOD_CENTER);
+  Console::print(console, {printY, console.get_height() - 2}, "By degustaf",
+                 color::menu_title, std::nullopt, TCOD_CENTER);
 
   static const auto choices =
       std::array{"[N] Play a new game     ", "[C] Continue last game  ",
                  "[Q] Quit                "};
   for (auto i = 0; i < (int)choices.size(); i++) {
-    tcod::print(console, {printY, console.get_height() / 2 - 2 + i}, choices[i],
-                color::menu_text, color::black, TCOD_CENTER);
+    Console::print(console, {printY, console.get_height() / 2 - 2 + i},
+                   choices[i], color::menu_text, color::black, TCOD_CENTER);
   }
 }
 
-void EventHandler::PopupOnRender(flecs::world ecs, tcod::Console &console,
+void EventHandler::PopupOnRender(flecs::world ecs, Console &console,
                                  uint64_t time) {
   parentOnRender(this, ecs, console, time);
   for (auto &tile : console) {
@@ -730,60 +732,59 @@ void EventHandler::PopupOnRender(flecs::world ecs, tcod::Console &console,
   childOnRender(ecs, console);
 }
 
-void EventHandler::LevelUpOnRender(flecs::world ecs, tcod::Console &console,
+void EventHandler::LevelUpOnRender(flecs::world ecs, Console &console,
                                    uint64_t time) {
   MainGameOnRender(ecs, console, time);
   auto player = ecs.lookup("player");
   auto x = menuXLocation(player);
-  tcod::draw_frame(console, {x, 0, 35, 8}, DECORATION, color::white,
-                   color::black);
-  tcod::print_rect(console, {x, 0, 35, 1}, title, std::nullopt, std::nullopt,
-                   TCOD_CENTER);
-  tcod::print(console, {x + 1, 1}, "Congratulations! You level up!",
-              std::nullopt, std::nullopt);
-  tcod::print(console, {x + 1, 2}, "Select an attribute to increase.",
-              std::nullopt, std::nullopt);
+  Console::draw_frame(console, {x, 0, 35, 8}, DECORATION, color::white,
+                      color::black);
+  Console::print_rect(console, {x, 0, 35, 1}, title, std::nullopt, std::nullopt,
+                      TCOD_CENTER);
+  Console::print(console, {x + 1, 1}, "Congratulations! You level up!",
+                 std::nullopt, std::nullopt);
+  Console::print(console, {x + 1, 2}, "Select an attribute to increase.",
+                 std::nullopt, std::nullopt);
 
   auto fighter = player.get<Fighter>();
   auto msg = tcod::stringf("a) Constitution (+20 HP, from %d)", fighter.max_hp);
-  tcod::print(console, {x + 1, 4}, msg, std::nullopt, std::nullopt);
+  Console::print(console, {x + 1, 4}, msg, std::nullopt, std::nullopt);
   msg = tcod::stringf("b) Strength (+1 attack, from %d)",
                       fighter.power(player, false));
-  tcod::print(console, {x + 1, 5}, msg, std::nullopt, std::nullopt);
+  Console::print(console, {x + 1, 5}, msg, std::nullopt, std::nullopt);
   msg = tcod::stringf("c) Agility (+1 defense, from %d)",
                       fighter.defense(player));
-  tcod::print(console, {x + 1, 6}, msg, std::nullopt, std::nullopt);
+  Console::print(console, {x + 1, 6}, msg, std::nullopt, std::nullopt);
 }
 
-void EventHandler::CharacterScreenOnRender(flecs::world ecs,
-                                           tcod::Console &console,
+void EventHandler::CharacterScreenOnRender(flecs::world ecs, Console &console,
                                            uint64_t time) {
   MainGameOnRender(ecs, console, time);
   auto player = ecs.lookup("player");
   auto x = menuXLocation(player);
-  tcod::draw_frame(console, {x, 0, (int)title.size() + 4, 5}, DECORATION,
-                   color::white, color::black);
-  tcod::print_rect(console, {x, 0, (int)title.size() + 4, 1}, title,
-                   std::nullopt, std::nullopt, TCOD_CENTER);
+  Console::draw_frame(console, {x, 0, (int)title.size() + 4, 5}, DECORATION,
+                      color::white, color::black);
+  Console::print_rect(console, {x, 0, (int)title.size() + 4, 1}, title,
+                      std::nullopt, std::nullopt, TCOD_CENTER);
 
   // auto level = player.get<Level>();
   // auto msg = tcod::stringf("Level: %d", level.current);
-  // tcod::print(console, {x + 1, 1}, msg, std::nullopt, std::nullopt);
+  // Console::print(console, {x + 1, 1}, msg, std::nullopt, std::nullopt);
   // msg = tcod::stringf("XP: %d", level.xp);
-  // tcod::print(console, {x + 1, 2}, msg, std::nullopt, std::nullopt);
+  // Console::print(console, {x + 1, 2}, msg, std::nullopt, std::nullopt);
   // msg = tcod::stringf("XP for next level: %d", level.xp_to_next_level());
-  // tcod::print(console, {x + 1, 3}, msg, std::nullopt, std::nullopt);
+  // Console::print(console, {x + 1, 3}, msg, std::nullopt, std::nullopt);
 
   auto fighter = player.get<Fighter>();
   auto msg = tcod::stringf("Attack: %d", fighter.power(player, false));
-  tcod::print(console, {x + 1, 1}, msg, std::nullopt, std::nullopt);
+  Console::print(console, {x + 1, 1}, msg, std::nullopt, std::nullopt);
   msg = tcod::stringf("Ranged attack: %d", fighter.power(player, true));
-  tcod::print(console, {x + 1, 2}, msg, std::nullopt, std::nullopt);
+  Console::print(console, {x + 1, 2}, msg, std::nullopt, std::nullopt);
   msg = tcod::stringf("Defense: %d", fighter.defense(player));
-  tcod::print(console, {x + 1, 3}, msg, std::nullopt, std::nullopt);
+  Console::print(console, {x + 1, 3}, msg, std::nullopt, std::nullopt);
 }
 
-void EventHandler::JumpOnRender(flecs::world ecs, tcod::Console &console,
+void EventHandler::JumpOnRender(flecs::world ecs, Console &console,
                                 uint64_t time) {
   MainGameOnRender(ecs, console, time);
   for (auto &tile : console) {
@@ -792,24 +793,23 @@ void EventHandler::JumpOnRender(flecs::world ecs, tcod::Console &console,
   }
 
   if (useRope) {
-    tcod::print(console, {console.get_width() / 2, console.get_height() / 2},
-                "Are you sure you want to climb into the chasm?", color::white,
-                color::black, TCOD_CENTER);
-    tcod::print(
+    Console::print(console, {console.get_width() / 2, console.get_height() / 2},
+                   "Are you sure you want to climb into the chasm?",
+                   color::white, color::black, TCOD_CENTER);
+    Console::print(
         console, {console.get_width() / 2, console.get_height() / 2 + 2},
         "(Y)es     (N)o     (J)ump", color::red, color::black, TCOD_CENTER);
   } else {
-    tcod::print(console, {console.get_width() / 2, console.get_height() / 2},
-                "Are you sure you want to jump into the chasm?", color::white,
-                color::black, TCOD_CENTER);
-    tcod::print(console,
-                {console.get_width() / 2, console.get_height() / 2 + 2},
-                "(Y)es     (N)o", color::red, color::black, TCOD_CENTER);
+    Console::print(console, {console.get_width() / 2, console.get_height() / 2},
+                   "Are you sure you want to jump into the chasm?",
+                   color::white, color::black, TCOD_CENTER);
+    Console::print(console,
+                   {console.get_width() / 2, console.get_height() / 2 + 2},
+                   "(Y)es     (N)o", color::red, color::black, TCOD_CENTER);
   }
 }
 
-void EventHandler::WinOnRender(flecs::world, tcod::Console &console,
-                               uint64_t time) {
+void EventHandler::WinOnRender(flecs::world, Console &console, uint64_t time) {
   static auto start_time = time;
   static auto last_time = time;
   auto x = console.get_width() / 2;
@@ -820,61 +820,62 @@ void EventHandler::WinOnRender(flecs::world, tcod::Console &console,
 
   switch (time_ms >> 10) {
   case 0:
-    tcod::print(console, {x, y - 1}, "The Fiend is defeated",
-                TCOD_ColorRGB{level, level, level}, std::nullopt, TCOD_CENTER);
+    Console::print(console, {x, y - 1}, "The Fiend is defeated",
+                   TCOD_ColorRGB{level, level, level}, std::nullopt,
+                   TCOD_CENTER);
     break;
   case 1:
-    tcod::print(console, {x, y - 1}, "The Fiend is defeated", color::white,
-                std::nullopt, TCOD_CENTER);
-    tcod::print(console, {x - 4, y + 1}, "You Win.",
-                TCOD_ColorRGB{level, level, level}, std::nullopt);
+    Console::print(console, {x, y - 1}, "The Fiend is defeated", color::white,
+                   std::nullopt, TCOD_CENTER);
+    Console::print(console, {x - 4, y + 1}, "You Win.",
+                   TCOD_ColorRGB{level, level, level}, std::nullopt);
     break;
   case 2:
-    tcod::print(console, {x, y - 1}, "The Fiend is defeated", color::white,
-                std::nullopt, TCOD_CENTER);
-    tcod::print(console, {x - 4, y + 1}, "You Win.", color::white,
-                std::nullopt);
+    Console::print(console, {x, y - 1}, "The Fiend is defeated", color::white,
+                   std::nullopt, TCOD_CENTER);
+    Console::print(console, {x - 4, y + 1}, "You Win.", color::white,
+                   std::nullopt);
     break;
   case 3:
   case 4:
-    tcod::print(console, {x, y - 1}, "The Fiend is defeated", color::white,
-                std::nullopt, TCOD_CENTER);
-    tcod::print(console, {x - 4, y + 1}, "You Win.", color::white,
-                std::nullopt);
+    Console::print(console, {x, y - 1}, "The Fiend is defeated", color::white,
+                   std::nullopt, TCOD_CENTER);
+    Console::print(console, {x - 4, y + 1}, "You Win.", color::white,
+                   std::nullopt);
     break;
   case 5: {
-    tcod::print(console, {x, y - 1}, "The Fiend is defeated", color::white,
-                std::nullopt, TCOD_CENTER);
-    tcod::print(console, {x - 4, y + 1}, "You Win.", color::white,
-                std::nullopt);
-    auto &tile = console.at(x + 4, y + 1);
+    Console::print(console, {x, y - 1}, "The Fiend is defeated", color::white,
+                   std::nullopt, TCOD_CENTER);
+    Console::print(console, {x - 4, y + 1}, "You Win.", color::white,
+                   std::nullopt);
+    auto &tile = console.at({x + 4, y + 1});
     tile.ch = '.';
     tile.fg = TCOD_ColorRGB{level, level, level};
     break;
   }
   case 6: {
-    tcod::print(console, {x, y - 1}, "The Fiend is defeated", color::white,
-                std::nullopt, TCOD_CENTER);
-    tcod::print(console, {x - 4, y + 1}, "You Win..", color::white,
-                std::nullopt);
-    auto &tile = console.at(x + 5, y + 1);
+    Console::print(console, {x, y - 1}, "The Fiend is defeated", color::white,
+                   std::nullopt, TCOD_CENTER);
+    Console::print(console, {x - 4, y + 1}, "You Win..", color::white,
+                   std::nullopt);
+    auto &tile = console.at({x + 5, y + 1});
     tile.ch = '.';
     tile.fg = TCOD_ColorRGB{level, level, level};
     break;
   }
   case 7: {
-    tcod::print(console, {x, y - 1}, "The Fiend is defeated", color::white,
-                std::nullopt, TCOD_CENTER);
-    tcod::print(console, {x - 4, y + 1}, "You Win...", color::white,
-                std::nullopt);
-    tcod::print(console, {x - 4, y + 3}, "for now",
-                TCOD_ColorRGB{level, level, level}, std::nullopt);
+    Console::print(console, {x, y - 1}, "The Fiend is defeated", color::white,
+                   std::nullopt, TCOD_CENTER);
+    Console::print(console, {x - 4, y + 1}, "You Win...", color::white,
+                   std::nullopt);
+    Console::print(console, {x - 4, y + 3}, "for now",
+                   TCOD_ColorRGB{level, level, level}, std::nullopt);
     break;
   }
   default: {
     auto rng = TCODRandom::getInstance();
-    tcod::print(console, {x, y - 1}, "The Fiend is defeated", color::white,
-                std::nullopt, TCOD_CENTER);
+    Console::print(console, {x, y - 1}, "The Fiend is defeated", color::white,
+                   std::nullopt, TCOD_CENTER);
     if (rng->getDouble(0.0, 0.25) < (double)ts / 1000.0) {
       auto i = rng->getInt(0, 20);
       drops.push_back(BloodDrop(x - 10 + i));
@@ -892,9 +893,10 @@ void EventHandler::WinOnRender(flecs::world, tcod::Console &console,
     for (auto &d : drops) {
       d.render(console, y);
     }
-    tcod::print(console, {x - 4, y + 1}, "You Win...", color::white,
-                std::nullopt);
-    tcod::print(console, {x - 4, y + 3}, "for now", color::white, std::nullopt);
+    Console::print(console, {x - 4, y + 1}, "You Win...", color::white,
+                   std::nullopt);
+    Console::print(console, {x - 4, y + 3}, "for now", color::white,
+                   std::nullopt);
     break;
   }
   }
@@ -941,12 +943,13 @@ EventHandler::MainGameHandleAction(flecs::world ecs,
                     e->MainGameOnRender(world, c, ts);
                   },
                   [](auto, auto &c) {
-                    tcod::print(c, {c.get_width() / 2, c.get_height() / 2 - 1},
-                                "Be careful...", color::red, color::black,
-                                TCOD_CENTER);
-                    tcod::print(c, {c.get_width() / 2, c.get_height() / 2 + 1},
-                                "The Fiend can track you by your scent.",
-                                color::white, color::black, TCOD_CENTER);
+                    Console::print(
+                        c, {c.get_width() / 2, c.get_height() / 2 - 1},
+                        "Be careful...", color::red, color::black, TCOD_CENTER);
+                    Console::print(c,
+                                   {c.get_width() / 2, c.get_height() / 2 + 1},
+                                   "The Fiend can track you by your scent.",
+                                   color::white, color::black, TCOD_CENTER);
                   });
         warning.warned = true;
       }

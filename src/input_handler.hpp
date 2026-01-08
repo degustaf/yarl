@@ -12,9 +12,10 @@
 #include "action.hpp"
 #include "actor.hpp"
 #include "blood.hpp"
+#include "console.hpp"
 
 struct EventHandler {
-  EventHandler() { mainMenu(); };
+  EventHandler() : mouse_loc({0, 0}) { mainMenu(); };
   EventHandler(const EventHandler &) = delete;
   EventHandler &operator=(const EventHandler &) = delete;
   EventHandler(EventHandler &&) = default;
@@ -71,7 +72,7 @@ struct EventHandler {
                                                    flecs::world &ecs);
   std::unique_ptr<Action> (EventHandler::*click)(SDL_MouseButtonEvent *button,
                                                  flecs::world ecs);
-  void (EventHandler::*on_render)(flecs::world ecs, tcod::Console &console,
+  void (EventHandler::*on_render)(flecs::world ecs, Console &console,
                                   uint64_t time);
   ActionResult (EventHandler::*handle_action)(flecs::world ecs,
                                               std::unique_ptr<Action> action);
@@ -90,9 +91,9 @@ struct EventHandler {
   std::vector<BloodDrop> drops = std::vector<BloodDrop>();
   std::function<std::unique_ptr<Action>(std::array<int, 2>)> callback = nullptr;
   std::function<void(EventHandler *)> parent = nullptr;
-  std::function<void(EventHandler *, flecs::world, tcod::Console &, uint64_t)>
+  std::function<void(EventHandler *, flecs::world, Console &, uint64_t)>
       parentOnRender = nullptr;
-  std::function<void(flecs::world, tcod::Console &)> childOnRender = nullptr;
+  std::function<void(flecs::world, Console &)> childOnRender = nullptr;
 
   std::unique_ptr<Action> MainGameKeyDown(SDL_KeyboardEvent *key,
                                           flecs::world &);
@@ -117,22 +118,18 @@ struct EventHandler {
   std::unique_ptr<Action> SelectClick(SDL_MouseButtonEvent *, flecs::world);
   std::unique_ptr<Action> LevelUpClick(SDL_MouseButtonEvent *, flecs::world);
 
-  void MainGameOnRender(flecs::world ecs, tcod::Console &console,
-                        uint64_t time);
-  void HistoryOnRender(flecs::world ecs, tcod::Console &console, uint64_t time);
-  void InventoryOnRender(flecs::world ecs, tcod::Console &console,
-                         uint64_t time);
-  void SelectOnRender(flecs::world ecs, tcod::Console &console, uint64_t time);
-  void AreaTargetOnRender(flecs::world ecs, tcod::Console &console,
-                          uint64_t time);
-  void MainMenuOnRender(flecs::world ecs, tcod::Console &console,
-                        uint64_t time);
-  void PopupOnRender(flecs::world ecs, tcod::Console &console, uint64_t time);
-  void LevelUpOnRender(flecs::world ecs, tcod::Console &console, uint64_t time);
-  void CharacterScreenOnRender(flecs::world ecs, tcod::Console &console,
+  void MainGameOnRender(flecs::world ecs, Console &console, uint64_t time);
+  void HistoryOnRender(flecs::world ecs, Console &console, uint64_t time);
+  void InventoryOnRender(flecs::world ecs, Console &console, uint64_t time);
+  void SelectOnRender(flecs::world ecs, Console &console, uint64_t time);
+  void AreaTargetOnRender(flecs::world ecs, Console &console, uint64_t time);
+  void MainMenuOnRender(flecs::world ecs, Console &console, uint64_t time);
+  void PopupOnRender(flecs::world ecs, Console &console, uint64_t time);
+  void LevelUpOnRender(flecs::world ecs, Console &console, uint64_t time);
+  void CharacterScreenOnRender(flecs::world ecs, Console &console,
                                uint64_t time);
-  void JumpOnRender(flecs::world ecs, tcod::Console &console, uint64_t time);
-  void WinOnRender(flecs::world ecs, tcod::Console &console, uint64_t time);
+  void JumpOnRender(flecs::world ecs, Console &console, uint64_t time);
+  void WinOnRender(flecs::world ecs, Console &console, uint64_t time);
 
   ActionResult MainGameHandleAction(flecs::world ecs, std::unique_ptr<Action>);
   ActionResult AskUserHandleAction(flecs::world ecs, std::unique_ptr<Action>);

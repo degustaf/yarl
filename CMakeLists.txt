@@ -14,6 +14,7 @@ project(
 )
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/bin")  # Save all runtime files to this directory.
+set(SDL_WAYLAND ON)
 
 file(
     GLOB_RECURSE SOURCE_FILES

@@ -4,11 +4,13 @@
 
 #include <libtcod.hpp>
 
+#include "console.hpp"
+
 class BloodDrop {
 public:
-  BloodDrop(int x) : x(x), y_(0.0), dy(0.0){};
+  BloodDrop(int x) : x(x), y_(0.0), dy(0.0) {};
   void update(uint64_t ms);
-  void render(tcod::Console &console, int y_offset) const;
+  void render(Console &console, int y_offset) const;
   int y(void) const { return (int)y_; }
 
 private:

@@ -12,11 +12,11 @@ void BloodDrop::update(uint64_t ms) {
   dy += dt * gravity;
 }
 
-void BloodDrop::render(tcod::Console &console, int y_offset) const {
+void BloodDrop::render(Console &console, int y_offset) const {
   double integer = 0.0;
   double frac = modf(y_, &integer);
   auto ch = y_ < 0.5 ? '`' : y_ < 1.0 ? 0xBF : frac < 0.5 ? '`' : '.';
-  auto &tile = console.at(x, y_offset + (int)integer);
+  auto &tile = console.at({x, y_offset + (int)integer});
   tile.ch = ch;
   tile.fg = color::red;
 }

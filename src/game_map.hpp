@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 #include <vector>
 
 #include <flecs.h>
@@ -11,7 +12,8 @@
 struct CurrentMap {};
 
 struct Tile {
-  uint8_t flags;
+  Tile() : flags(0) {};
+  uint8_t flags = 0;
 
   static constexpr auto Explored = uint8_t(0x1);
   static constexpr auto Stairs = uint8_t(0x2);
@@ -25,8 +27,9 @@ void deleteMapEntity(flecs::world ecs);
 
 struct GameMap {
   GameMap(int width = 0, int height = 0, int level = 1)
-      : width(width), height(height), level(level), tiles(width * height),
-        scent(width * height), map(width, height) {
+      : width(width), height(height), level(level),
+        tiles(width * height, Tile()), scent(width * height, Scent()),
+        map(width, height) {
     map.clear();
   };
 
@@ -60,6 +63,10 @@ struct GameMap {
     tiles[(size_t)(y * width + x)].flags |= Tile::Stairs;
   }
   inline bool isStairs(std::array<int, 2> xy) const {
+    std::cout << xy[0] << "\n";
+    std::cout << xy[1] << "\n";
+    std::cout << width << "\n";
+    std::cout << tiles[(size_t)(xy[1] * width + xy[0])].flags << "\n";
     return tiles[(size_t)(xy[1] * width + xy[0])].flags & Tile::Stairs;
   };
   inline void makeBloody(std::array<int, 2> xy) {
@@ -95,7 +102,7 @@ struct GameMap {
 
   void carveOut(int x, int y);
   void nextFloor(flecs::entity player) const;
-  void render(tcod::Console &console) const;
+  void render(Console &console) const;
   void update_fov(flecs::entity player);
   void update_scent(flecs::entity map);
   void reveal();

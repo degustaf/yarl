@@ -132,7 +132,7 @@ int Fighter::power(flecs::entity self, bool ranged) const {
   return power;
 }
 
-void Renderable::render(tcod::Console &console, const Position &pos,
+void Renderable::render(Console &console, const Position &pos,
                         bool inFov) const {
   if (fovOnly && !inFov) {
     return;

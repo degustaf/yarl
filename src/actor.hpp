@@ -9,11 +9,13 @@
 #include <string>
 #include <vector>
 
+#include "console.hpp"
+
 struct Position {
-  Position() : x(0), y(0){};
-  Position(int x, int y) : x(x), y(y){};
-  Position(std::array<int, 2> xy) : x(xy[0]), y(xy[1]){};
-  Position(int xy[2]) : x(xy[0]), y(xy[1]){};
+  Position() : x(0), y(0) {};
+  Position(int x, int y) : x(x), y(y) {};
+  Position(std::array<int, 2> xy) : x(xy[0]), y(xy[1]) {};
+  Position(int xy[2]) : x(xy[0]), y(xy[1]) {};
   operator std::array<int, 2>() const { return {x, y}; };
   operator std::array<size_t, 2>() const { return {(size_t)x, (size_t)y}; };
   inline Position operator+(const std::array<int, 2> &dxy) const {
@@ -55,7 +57,7 @@ struct Renderable {
   RenderOrder layer;
   bool fovOnly = true;
 
-  void render(tcod::Console &console, const Position &pos, bool inFov) const;
+  void render(Console &console, const Position &pos, bool inFov) const;
 };
 
 struct Named {
@@ -70,9 +72,9 @@ struct Fountain {};
 void toggleDoor(flecs::entity door);
 
 struct Fighter {
-  Fighter() : Fighter(0, 0, 0){};
+  Fighter() : Fighter(0, 0, 0) {};
   Fighter(int hp, int defense, int power)
-      : max_hp(hp), _hp(hp), base_defense(defense), base_power(power){};
+      : max_hp(hp), _hp(hp), base_defense(defense), base_power(power) {};
 
   int hp(void) const { return _hp; }
   void set_hp(int value, flecs::entity self);

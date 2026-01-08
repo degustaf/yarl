@@ -22,13 +22,13 @@ void MessageLog::addMessage(const std::string &text, tcod::ColorRGB fg,
   }
 }
 
-void MessageLog::render(tcod::Console &console, int x, int y, int width,
+void MessageLog::render(Console &console, int x, int y, int width,
                         int height) const {
   render(console, x, y, width, height, messages.rbegin());
 }
 
-void MessageLog::render(tcod::Console &console, int x, int y, int width,
-                        int height, size_t offset) const {
+void MessageLog::render(Console &console, int x, int y, int width, int height,
+                        size_t offset) const {
   render(console, x, y, width, height,
          std::reverse_iterator(messages.begin() + (std::ptrdiff_t)offset + 1));
 }
@@ -55,7 +55,7 @@ static std::vector<substringIndices> wrap(const std::string &str,
 }
 
 void MessageLog::render(
-    tcod::Console &console, int x, int y, int width, int height,
+    Console &console, int x, int y, int width, int height,
     std::vector<Message>::const_reverse_iterator rbegin) const {
   auto y_offset = height - 1;
   for (auto it = rbegin; it != messages.rend(); it++) {
@@ -63,8 +63,8 @@ void MessageLog::render(
     const auto &str = it->fullText();
     auto lines = wrap(str, (std::string::size_type)width);
     for (auto jt = lines.rbegin(); jt != lines.rend(); jt++) {
-      tcod::print(console, {x, y + y_offset}, str.substr(jt->pos, jt->count),
-                  it->fg, std::nullopt);
+      Console::print(console, {x, y + y_offset}, str.substr(jt->pos, jt->count),
+                     it->fg, std::nullopt);
       y_offset--;
       if (y_offset < 0) {
         return;

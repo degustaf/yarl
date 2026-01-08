@@ -14,25 +14,17 @@
 #include "engine.hpp"
 #include "input_handler.hpp"
 #include "module.hpp"
+#include "renderer.hpp"
+
+static constexpr auto clear_color = TCOD_ColorRGBA{0, 0, 0, 255};
 
 SDL_AppResult SDL_AppInit(void **data, [[maybe_unused]] int argc,
                           [[maybe_unused]] char **argv) {
   int width = 80;
   int height = 50;
 
-  // Configure the context.
-  auto params = TCOD_ContextParams{};
-
   tcod::Tileset tileset = tcod::load_tilesheet("assets/dejavu10x10_gs_tc.png",
                                                {32, 8}, tcod::CHARMAP_TCOD);
-  params.tcod_version = TCOD_COMPILEDVERSION; // This is required.
-  params.columns = width;
-  params.rows = height;
-  params.tileset = tileset.get();
-  params.window_title = "Yet Another Roguelike";
-  params.sdl_window_flags = SDL_WINDOW_RESIZABLE;
-  params.vsync = true;
-
 #ifdef __EMSCRIPTEN__
   EM_ASM(const save_dir = UTF8ToString($0); FS.mkdir(save_dir);
          FS.mount(IDBFS, {autoPersist : true}, save_dir);
@@ -48,9 +40,8 @@ SDL_AppResult SDL_AppInit(void **data, [[maybe_unused]] int argc,
   auto *ecs = new flecs::world();
   *data = ecs;
   ecs->import <module>();
-  ecs->set<tcod::Context>(tcod::Context(params));
-  ecs->set<tcod::Console>(
-      ecs->get_mut<tcod::Context>().new_console(width, height));
+  ecs->emplace<SDLData>(width, height, "Yet Another Roguelike", tileset.get());
+  ecs->set<Console>(ecs->get_mut<SDLData>().new_console(width, height));
   ecs->add<EventHandler>();
 
 #if !defined NDEBUG
@@ -63,11 +54,19 @@ SDL_AppResult SDL_AppInit(void **data, [[maybe_unused]] int argc,
 
 SDL_AppResult SDL_AppIterate(void *appstate) {
   auto ecs = *static_cast<flecs::world *>(appstate);
-  auto &console = ecs.get_mut<tcod::Console>();
+  auto &console = ecs.get_mut<Console>();
   console.clear();
   auto &eventHandler = ecs.get_mut<EventHandler>();
   (eventHandler.*(eventHandler.on_render))(ecs, console, SDL_GetTicks());
-  ecs.get_mut<tcod::Context>().present(console);
+  auto &data = ecs.get_mut<SDLData>();
+  auto renderer = data.renderer();
+  SDL_SetRenderTarget(renderer, nullptr);
+  SDL_SetRenderDrawColor(renderer, clear_color.r, clear_color.g, clear_color.b,
+                         clear_color.a);
+  SDL_RenderClear(renderer);
+  data.accumulate(console);
+  SDL_RenderPresent(renderer);
+
 #if !defined NDEBUG
   ecs.progress();
 #endif
@@ -77,7 +76,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
   auto &ecs = *static_cast<flecs::world *>(appstate);
   auto &eh = ecs.get_mut<EventHandler>();
-  ecs.get_mut<tcod::Context>().convert_event_coordinates(*event);
+  ecs.get_mut<SDLData>().convert_event_coordinates(*event);
   return (eh.*(eh.handle_action))(ecs, eh.dispatch(event, ecs));
 }
 
@@ -93,6 +92,6 @@ void SDL_AppQuit(void *data, SDL_AppResult result) {
     // TODO handle game not started.
     Engine::save_as(*ecs, data_dir / saveFilename);
   }
-  // ecs->release();
-  // delete ecs;
+  ecs->release();
+  delete ecs;
 }

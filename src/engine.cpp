@@ -65,7 +65,7 @@ bool Engine::load(flecs::world ecs, const std::filesystem::path &file_name,
                              e->MainMenuOnRender(world, c, ts);
                            },
                            [](auto, auto &c) {
-                             tcod::print(
+                             Console::print(
                                  c, {c.get_width() / 2, c.get_height() / 2},
                                  "No saved game to load.", color::white,
                                  color::black, TCOD_CENTER);
@@ -81,7 +81,7 @@ bool Engine::load(flecs::world ecs, const std::filesystem::path &file_name,
                              e->MainMenuOnRender(world, c, ts);
                            },
                            [](auto, auto &c) {
-                             tcod::print(
+                             Console::print(
                                  c, {c.get_width() / 2, c.get_height() / 2},
                                  "Failed to load save.", color::white,
                                  color::black, TCOD_CENTER);
@@ -96,7 +96,7 @@ bool Engine::load(flecs::world ecs, const std::filesystem::path &file_name,
                              e->MainMenuOnRender(world, c, ts);
                            },
                            [](auto, auto &c) {
-                             tcod::print(
+                             Console::print(
                                  c, {c.get_width() / 2, c.get_height() / 2},
                                  "Failed to load save.", color::white,
                                  color::black, TCOD_CENTER);

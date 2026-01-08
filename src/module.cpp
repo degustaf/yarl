@@ -11,6 +11,7 @@
 #include "actor.hpp"
 #include "ai.hpp"
 #include "color.hpp"
+#include "console.hpp"
 #include "consumable.hpp"
 #include "engine.hpp"
 #include "game_map.hpp"
@@ -18,6 +19,7 @@
 #include "inventory.hpp"
 #include "level.hpp"
 #include "message_log.hpp"
+#include "renderer.hpp"
 #include "scent.hpp"
 
 template <typename Elem, typename Vector = std::vector<Elem>>
@@ -115,8 +117,7 @@ module::module(flecs::world ecs) {
       });
 
   // TCOD
-  ecs.component<tcod::Context>();
-  ecs.component<tcod::Console>();
+  ecs.component<Console>();
   ecs.component<tcod::ColorRGB>()
       .member<uint8_t>("r")
       .member<uint8_t>("g")
@@ -183,6 +184,9 @@ module::module(flecs::world ecs) {
 
   // engine.hpp
   ecs.component<Seed>().member<uint32_t>("seed");
+
+  // renderer.hpp
+  ecs.component<SDLData>();
 
   // scent.hpp
   ecs.component<ScentType>();
