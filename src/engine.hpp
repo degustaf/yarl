@@ -17,6 +17,6 @@ void save_as(flecs::world ecs, const std::filesystem::path &file_name);
 bool load(flecs::world ecs, const std::filesystem::path &file_name,
           EventHandler &eventHandler);
 
-void new_game(flecs::world ecs);
+void new_game(flecs::world ecs, int map_width, int map_height);
 void clear_game_data(flecs::world ecs);
 }; // namespace Engine

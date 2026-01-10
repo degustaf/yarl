@@ -1,7 +1,7 @@
-#include <libtcod/tileset.hpp>
 #define SDL_MAIN_USE_CALLBACKS
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
+#include <SDL3_ttf/SDL_ttf.h>
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
@@ -20,11 +20,9 @@ static constexpr auto clear_color = TCOD_ColorRGBA{0, 0, 0, 255};
 
 SDL_AppResult SDL_AppInit(void **data, [[maybe_unused]] int argc,
                           [[maybe_unused]] char **argv) {
-  int width = 80;
-  int height = 50;
+  static constexpr auto width = 160;
+  static constexpr auto height = 50;
 
-  tcod::Tileset tileset = tcod::load_tilesheet("assets/dejavu10x10_gs_tc.png",
-                                               {32, 8}, tcod::CHARMAP_TCOD);
 #ifdef __EMSCRIPTEN__
   EM_ASM(const save_dir = UTF8ToString($0); FS.mkdir(save_dir);
          FS.mount(IDBFS, {autoPersist : true}, save_dir);
@@ -40,14 +38,23 @@ SDL_AppResult SDL_AppInit(void **data, [[maybe_unused]] int argc,
   auto *ecs = new flecs::world();
   *data = ecs;
   ecs->import <module>();
-  ecs->emplace<SDLData>(width, height, "Yet Another Roguelike", tileset.get());
+  ecs->emplace<SDLData>(width, height, 15.0f, "Yet Another Roguelike",
+                        "assets/CodeNewRoman.ttf");
   ecs->set<Console>(ecs->get_mut<SDLData>().new_console(width, height));
-  ecs->add<EventHandler>();
+  ecs->emplace<EventHandler>(std::array{width, height});
 
 #if !defined NDEBUG
   ecs->import <flecs::stats>();
   ecs->set<flecs::Rest>({});
 #endif
+
+  if (!std::filesystem::exists(data_dir) ||
+      !std::filesystem::is_directory(data_dir)) {
+    std::filesystem::create_directory(data_dir);
+  }
+
+  assert(ecs->get<EventHandler>().mouse_loc[0] >= 0);
+  assert(ecs->get<EventHandler>().mouse_loc[1] >= 0);
 
   return SDL_APP_CONTINUE;
 }
@@ -57,6 +64,8 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
   auto &console = ecs.get_mut<Console>();
   console.clear();
   auto &eventHandler = ecs.get_mut<EventHandler>();
+  assert(eventHandler.mouse_loc[0] >= 0);
+  assert(eventHandler.mouse_loc[1] >= 0);
   (eventHandler.*(eventHandler.on_render))(ecs, console, SDL_GetTicks());
   auto &data = ecs.get_mut<SDLData>();
   auto renderer = data.renderer();
@@ -94,4 +103,6 @@ void SDL_AppQuit(void *data, SDL_AppResult result) {
   }
   ecs->release();
   delete ecs;
+  TTF_Quit();
+  SDL_Quit();
 }

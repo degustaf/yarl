@@ -35,7 +35,7 @@ struct Console : private tcod::Console {
   auto &on_delete(void) { return get()->on_delete; }
 
   void clear(const TCOD_ConsoleTile &tile = {
-                 0x20, {255, 255, 255, 255}, {0, 0, 0, 255}}) noexcept {
+                 ' ', {255, 255, 255, 255}, {0, 0, 0, 255}}) noexcept {
     for (auto &it : *this)
       it = tile;
   }

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <iostream>
 #include <vector>
 
 #include <flecs.h>
@@ -63,10 +62,6 @@ struct GameMap {
     tiles[(size_t)(y * width + x)].flags |= Tile::Stairs;
   }
   inline bool isStairs(std::array<int, 2> xy) const {
-    std::cout << xy[0] << "\n";
-    std::cout << xy[1] << "\n";
-    std::cout << width << "\n";
-    std::cout << tiles[(size_t)(xy[1] * width + xy[0])].flags << "\n";
     return tiles[(size_t)(xy[1] * width + xy[0])].flags & Tile::Stairs;
   };
   inline void makeBloody(std::array<int, 2> xy) {

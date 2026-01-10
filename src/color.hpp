@@ -6,9 +6,11 @@ namespace color {
 constexpr auto white = tcod::ColorRGB{0xFF, 0xFF, 0xFF};
 constexpr auto black = tcod::ColorRGB{0, 0, 0};
 constexpr auto red = tcod::ColorRGB{0xFF, 0, 0};
-constexpr auto darkred = tcod::ColorRGB{0x99, 0, 0};
+constexpr auto darkerRed = tcod::ColorRGB{0x99, 0, 0};
 constexpr auto green = tcod::ColorRGB{0, 0xFF, 0};
 constexpr auto neonGreen = tcod::ColorRGB{0x39, 0xFF, 0x14};
+constexpr auto desaturatedGreen = tcod::ColorRGB{0x3F, 0x7F, 0x3F};
+constexpr auto darkerGreen = tcod::ColorRGB{0, 0x7F, 0};
 constexpr auto blue = tcod::ColorRGB{0, 0, 0xFF};
 constexpr auto yellow = tcod::ColorRGB{0xFF, 0xFF, 0};
 constexpr auto orange = tcod::ColorRGB{0xFF, 0x6E, 0};
@@ -25,7 +27,7 @@ constexpr auto descend = tcod::ColorRGB{0x9F, 0x3F, 0xFF};
 constexpr auto playerDie = tcod::ColorRGB{0xFF, 0x30, 0x30};
 constexpr auto enemyDie = tcod::ColorRGB{0xFF, 0xA0, 0x30};
 
-constexpr auto invalid = tcod::ColorRGB{0xFF, 0xFF, 0};
+constexpr auto invalid = color::yellow;
 constexpr auto impossible = tcod::ColorRGB{0x80, 0x80, 0x80};
 constexpr auto error = tcod::ColorRGB{0xFF, 0x40, 0x40};
 

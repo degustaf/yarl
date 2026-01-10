@@ -15,7 +15,18 @@
 #include "console.hpp"
 
 struct EventHandler {
-  EventHandler() : mouse_loc({0, 0}) { mainMenu(); };
+  EventHandler(const std::array<int, 2> &dim)
+      : mouse_loc({0, 0}), dim(dim),
+        commandBox({dim[0] - COMMAND_BUTTON_WIDTH - 2, dim[1] - HUD_HEIGHT,
+                    COMMAND_BUTTON_WIDTH, HUD_HEIGHT - 2}) {
+    assert(BAR_WIDTH < dim[0]);
+    assert(HUD_HEIGHT < dim[1]);
+    assert(mouse_loc[0] >= 0);
+    assert(mouse_loc[1] >= 0);
+    mainMenu();
+    assert(mouse_loc[0] >= 0);
+    assert(mouse_loc[1] >= 0);
+  };
   EventHandler(const EventHandler &) = delete;
   EventHandler &operator=(const EventHandler &) = delete;
   EventHandler(EventHandler &&) = default;
@@ -33,6 +44,8 @@ struct EventHandler {
     loc_selected = &EventHandler::SingleTargetSelectedLoc;
 
     mouse_loc = ecs.lookup("player").get<Position>();
+    assert(mouse_loc[0] >= 0);
+    assert(mouse_loc[1] >= 0);
     callback = f;
     this->useF = useF;
   }
@@ -46,6 +59,8 @@ struct EventHandler {
     loc_selected = &EventHandler::SingleTargetSelectedLoc;
 
     mouse_loc = ecs.lookup("player").get<Position>();
+    assert(mouse_loc[0] >= 0);
+    assert(mouse_loc[1] >= 0);
     callback = f;
     radius = r;
   }
@@ -79,7 +94,14 @@ struct EventHandler {
   std::unique_ptr<Action> (EventHandler::*item_selected)(flecs::entity item);
   std::unique_ptr<Action> (EventHandler::*loc_selected)(std::array<int, 2> loc);
 
-  std::array<int, 2> mouse_loc = {0, 0};
+  static constexpr auto BAR_WIDTH = 20;
+  static constexpr auto HUD_HEIGHT = 5;
+  static constexpr auto COMMAND_BUTTON_WIDTH = 12;
+
+  std::array<int, 2> mouse_loc;
+  std::array<int, 2> dim;
+  std::array<int, 4> commandBox;
+
   std::string title = "";
   size_t log_length = 0;
   size_t cursor = 0;

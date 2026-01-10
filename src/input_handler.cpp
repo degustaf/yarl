@@ -6,7 +6,6 @@
 
 #include <libtcod.hpp>
 
-#include "ai.hpp"
 #include "color.hpp"
 #include "console.hpp"
 #include "consumable.hpp"
@@ -58,6 +57,8 @@ static void makeLookHandler(EventHandler &e, flecs::world ecs) {
   e.loc_selected = &EventHandler::LookSelectedLoc;
 
   e.mouse_loc = ecs.lookup("player").get<Position>();
+  assert(e.mouse_loc[0] >= 0);
+  assert(e.mouse_loc[1] >= 0);
 }
 
 static inline void makeLevelUp(EventHandler &e) {
@@ -94,6 +95,8 @@ std::unique_ptr<Action> EventHandler::dispatch(SDL_Event *event,
   case SDL_EVENT_MOUSE_MOTION:
     mouse_loc[0] = (int)event->motion.x;
     mouse_loc[1] = (int)event->motion.y;
+    assert(mouse_loc[0] >= 0);
+    assert(mouse_loc[1] >= 0);
     return nullptr;
 
   case SDL_EVENT_MOUSE_BUTTON_DOWN:
@@ -105,6 +108,8 @@ std::unique_ptr<Action> EventHandler::dispatch(SDL_Event *event,
 }
 
 void EventHandler::restoreMainGame() {
+  assert(mouse_loc[0] >= 0);
+  assert(mouse_loc[1] >= 0);
   keyDown = &EventHandler::MainGameKeyDown;
   click = &EventHandler::MainGameClick;
   on_render = &EventHandler::MainGameOnRender;
@@ -126,6 +131,8 @@ void EventHandler::jumpConfirm(bool useRope, flecs::entity item) {
 }
 
 void EventHandler::mainMenu(void) {
+  assert(mouse_loc[0] >= 0);
+  assert(mouse_loc[1] >= 0);
   keyDown = &EventHandler::MainMenuKeyDown;
   click = &EventHandler::EmptyClick;
   on_render = &EventHandler::MainMenuOnRender;
@@ -152,7 +159,7 @@ void EventHandler::winGame(void) {
   loc_selected = nullptr;
 }
 
-static constexpr auto COMMAND_MENU_WIDTH = 50;
+static constexpr auto COMMAND_MENU_WIDTH = 70;
 static constexpr auto COMMAND_MENU_HEIGHT = 28;
 
 static Console buildCommandMenu(void) {
@@ -299,6 +306,7 @@ std::unique_ptr<Action> EventHandler::MainGameKeyDown(SDL_KeyboardEvent *key,
     return nullptr;
 
   case SDL_SCANCODE_ESCAPE:
+    Engine::save_as(ecs, data_dir / saveFilename);
     mainMenu();
     return nullptr;
 
@@ -483,8 +491,10 @@ std::unique_ptr<Action> EventHandler::MainMenuKeyDown(SDL_KeyboardEvent *key,
     }
     break;
   case SDL_SCANCODE_N: {
+    assert(mouse_loc[0] >= 0);
+    assert(mouse_loc[1] >= 0);
     Engine::clear_game_data(ecs);
-    Engine::new_game(ecs);
+    Engine::new_game(ecs, dim[0], dim[1] - HUD_HEIGHT - 2);
     restoreMainGame();
     break;
   }
@@ -558,8 +568,6 @@ std::unique_ptr<Action> EventHandler::JumpKeyDown(SDL_KeyboardEvent *key,
   return AskUserKeyDown(key, ecs);
 }
 
-static auto constexpr commandBox = std::array{62, 45, 12, 3};
-
 std::unique_ptr<Action> EventHandler::EmptyClick(SDL_MouseButtonEvent *,
                                                  flecs::world) {
   return nullptr;
@@ -567,8 +575,10 @@ std::unique_ptr<Action> EventHandler::EmptyClick(SDL_MouseButtonEvent *,
 
 std::unique_ptr<Action>
 EventHandler::MainGameClick(SDL_MouseButtonEvent *button, flecs::world) {
-  if (commandBox[0] <= button->x && button->x < commandBox[0] + commandBox[2] &&
-      commandBox[1] <= button->y && button->y < commandBox[1] + commandBox[3]) {
+  if (commandBox[0] <= (int)button->x &&
+      (int)button->x < commandBox[0] + commandBox[2] &&
+      commandBox[1] <= (int)button->y &&
+      (int)button->y < commandBox[1] + commandBox[3]) {
     commandsMenu();
     return nullptr;
   }
@@ -600,11 +610,16 @@ std::unique_ptr<Action> EventHandler::LevelUpClick(SDL_MouseButtonEvent *,
 
 void EventHandler::MainGameOnRender(flecs::world ecs, Console &console,
                                     uint64_t) {
+
   auto map = ecs.lookup("currentMap").target<CurrentMap>();
   auto &gMap = map.get_mut<GameMap>();
   gMap.render(console);
 
-  ecs.lookup("messageLog").get<MessageLog>().render(console, 21, 45, 40, 5);
+  ecs.lookup("messageLog")
+      .get<MessageLog>()
+      .render(console, BAR_WIDTH + 1, dim[1] - HUD_HEIGHT,
+              dim[0] - (BAR_WIDTH + 1) - (COMMAND_BUTTON_WIDTH + 1) - 1,
+              HUD_HEIGHT);
 
   auto q =
       ecs.query_builder<const Position, const Renderable, const Openable *>(
@@ -629,10 +644,14 @@ void EventHandler::MainGameOnRender(flecs::world ecs, Console &console,
   player.get<Renderable>().render(console, player.get<Position>(), true);
 
   auto fighter = player.get<Fighter>();
-  renderBar(console, fighter.hp(), fighter.max_hp, 20);
-  renderSmell(console, player, 20);
-  renderDungeonLevel(console, gMap.level, {0, 49});
-  renderNamesAtMouseLocation(console, {21, 44}, mouse_loc, map, gMap);
+  renderBar(console, fighter.hp(), fighter.max_hp, 0, dim[1] - HUD_HEIGHT,
+            BAR_WIDTH);
+  renderSmell(console, player, 0, dim[1] - HUD_HEIGHT + 2, BAR_WIDTH);
+  renderDungeonLevel(console, gMap.level, {0, dim[1] - HUD_HEIGHT + 4});
+  assert(mouse_loc[0] >= 0);
+  assert(mouse_loc[1] >= 0);
+  renderNamesAtMouseLocation(console, {BAR_WIDTH + 1, dim[1] - HUD_HEIGHT - 1},
+                             mouse_loc, map, gMap);
   renderCommandButton(console, commandBox);
 }
 
@@ -700,6 +719,8 @@ void EventHandler::AreaTargetOnRender(flecs::world ecs, Console &console,
 }
 
 void EventHandler::MainMenuOnRender(flecs::world, Console &console, uint64_t) {
+  assert(mouse_loc[0] >= 0);
+  assert(mouse_loc[1] >= 0);
   static constexpr auto ImageWidth = 100;
   // static const auto background_image = TCODImage("assets/teeth.png");
   // assert(background_image.getSize()[0] == ImageWidth);

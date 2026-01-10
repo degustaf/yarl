@@ -240,7 +240,8 @@ module::module(flecs::world ecs) {
   ecs.component<MessageLog>().opaque(std_vector_support<Message>);
 
   ecs.prefab("orc")
-      .set<Renderable>({'o', {63, 127, 63}, std::nullopt, RenderOrder::Actor})
+      .set<Renderable>(
+          {'o', color::desaturatedGreen, std::nullopt, RenderOrder::Actor})
       .set<Named>({"Orc"})
       .add<BlocksMovement>()
       .set<HostileAi>({})
@@ -248,7 +249,8 @@ module::module(flecs::world ecs) {
       .set<XP>({35});
 
   ecs.prefab("troll")
-      .set<Renderable>({'T', {0, 127, 0}, std::nullopt, RenderOrder::Actor})
+      .set<Renderable>(
+          {'T', color::darkerGreen, std::nullopt, RenderOrder::Actor})
       .set<Named>({"Troll"})
       .add<BlocksMovement>()
       .set<HostileAi>({})
@@ -256,14 +258,15 @@ module::module(flecs::world ecs) {
       .set<XP>({100});
 
   ecs.prefab("cysts")
-      .set<Renderable>({0xB6, {0, 0, 0}, std::nullopt, RenderOrder::Actor})
+      .set<Renderable>({0xB6, color::black, std::nullopt, RenderOrder::Actor})
       .set<Named>({"Fiend cysts"})
       .add<BlocksMovement>()
       .emplace<ScentOnDeath>(ScentType::fiend, 100.0f)
       .emplace<Fighter>(1, 0, 0);
 
   ecs.prefab("corpse")
-      .set<Renderable>({'%', {191, 0, 0}, std::nullopt, RenderOrder::Actor})
+      .set<Renderable>(
+          {'%', color::darkerRed, std::nullopt, RenderOrder::Actor})
       .set<Named>({"Rotting corpse"})
       .set<Scent>({ScentType::decay, 1000});
 
@@ -280,7 +283,7 @@ module::module(flecs::world ecs) {
       .set<DeodorantConsumable>({25});
 
   ecs.prefab("lightningScroll")
-      .set<Renderable>({'~', {255, 255, 0}, std::nullopt, RenderOrder::Item})
+      .set<Renderable>({'~', color::yellow, std::nullopt, RenderOrder::Item})
       .set<Named>({"Lightning Scroll"})
       .add<Item>()
       .set<LightningDamageConsumable>({20, 5});
@@ -292,7 +295,7 @@ module::module(flecs::world ecs) {
       .set<ConfusionConsumable>({10});
 
   ecs.prefab("fireballScroll")
-      .set<Renderable>({'~', {255, 0, 0}, std::nullopt, RenderOrder::Item})
+      .set<Renderable>({'~', color::red, std::nullopt, RenderOrder::Item})
       .set<Named>({"Fireball Scroll"})
       .add<Item>()
       .set<FireballDamageConsumable>({12, 3});
@@ -378,7 +381,7 @@ module::module(flecs::world ecs) {
 
   ecs.prefab("door")
       .set<Renderable>(
-          {'+', color::black, color::darkred, RenderOrder::Actor, false})
+          {'+', color::black, color::darkerRed, RenderOrder::Actor, false})
       .set<Named>({"door"})
       .add<Openable>();
 
