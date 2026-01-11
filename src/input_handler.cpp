@@ -4,8 +4,6 @@
 #include <cassert>
 #include <optional>
 
-#include <libtcod.hpp>
-
 #include "color.hpp"
 #include "console.hpp"
 #include "consumable.hpp"
@@ -17,6 +15,7 @@
 #include "message_log.hpp"
 #include "render_functions.hpp"
 #include "scent.hpp"
+#include "string.hpp"
 
 static inline void makeHistoryHandler(EventHandler &e, flecs::world ecs) {
   e.keyDown = &EventHandler::HistoryKeyDown;
@@ -683,8 +682,8 @@ void EventHandler::InventoryOnRender(flecs::world ecs, Console &console,
     auto player = ecs.lookup("player");
     auto idx = 0;
     q.each([&](flecs::entity e, const auto &name) {
-      auto msg = tcod::stringf("(%c) %s%s", 'a' + idx, name.name.c_str(),
-                               isEquipped(player, e) ? " (E)" : "");
+      auto msg = stringf("(%c) %s%s", 'a' + idx, name.name.c_str(),
+                         isEquipped(player, e) ? " (E)" : "");
       console.print({x + 1, idx + 1}, msg, std::nullopt, std::nullopt);
       idx++;
     });
@@ -756,13 +755,12 @@ void EventHandler::LevelUpOnRender(flecs::world ecs, Console &console,
                 std::nullopt);
 
   auto fighter = player.get<Fighter>();
-  auto msg = tcod::stringf("a) Constitution (+20 HP, from %d)", fighter.max_hp);
+  auto msg = stringf("a) Constitution (+20 HP, from %d)", fighter.max_hp);
   console.print({x + 1, 4}, msg, std::nullopt, std::nullopt);
-  msg = tcod::stringf("b) Strength (+1 attack, from %d)",
-                      fighter.power(player, false));
+  msg =
+      stringf("b) Strength (+1 attack, from %d)", fighter.power(player, false));
   console.print({x + 1, 5}, msg, std::nullopt, std::nullopt);
-  msg = tcod::stringf("c) Agility (+1 defense, from %d)",
-                      fighter.defense(player));
+  msg = stringf("c) Agility (+1 defense, from %d)", fighter.defense(player));
   console.print({x + 1, 6}, msg, std::nullopt, std::nullopt);
 }
 
@@ -776,19 +774,19 @@ void EventHandler::CharacterScreenOnRender(flecs::world ecs, Console &console,
   console.print_rect({x, 0, (int)title.size() + 4, 1}, title);
 
   // auto level = player.get<Level>();
-  // auto msg = tcod::stringf("Level: %d", level.current);
+  // auto msg = stringf("Level: %d", level.current);
   // console.print({x + 1, 1}, msg, std::nullopt, std::nullopt);
-  // msg = tcod::stringf("XP: %d", level.xp);
+  // msg = stringf("XP: %d", level.xp);
   // console.print({x + 1, 2}, msg, std::nullopt, std::nullopt);
-  // msg = tcod::stringf("XP for next level: %d", level.xp_to_next_level());
+  // msg = stringf("XP for next level: %d", level.xp_to_next_level());
   // console.print({x + 1, 3}, msg, std::nullopt, std::nullopt);
 
   auto fighter = player.get<Fighter>();
-  auto msg = tcod::stringf("Attack: %d", fighter.power(player, false));
+  auto msg = stringf("Attack: %d", fighter.power(player, false));
   console.print({x + 1, 1}, msg, std::nullopt, std::nullopt);
-  msg = tcod::stringf("Ranged attack: %d", fighter.power(player, true));
+  msg = stringf("Ranged attack: %d", fighter.power(player, true));
   console.print({x + 1, 2}, msg, std::nullopt, std::nullopt);
-  msg = tcod::stringf("Defense: %d", fighter.defense(player));
+  msg = stringf("Defense: %d", fighter.defense(player));
   console.print({x + 1, 3}, msg, std::nullopt, std::nullopt);
 }
 

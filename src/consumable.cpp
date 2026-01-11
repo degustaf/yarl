@@ -3,8 +3,6 @@
 #include <cassert>
 #include <memory>
 
-#include <libtcod.hpp>
-
 #include "action.hpp"
 #include "actor.hpp"
 #include "ai.hpp"
@@ -14,14 +12,15 @@
 #include "input_handler.hpp"
 #include "message_log.hpp"
 #include "scent.hpp"
+#include "string.hpp"
 
 ActionResult HealingConsumable::activate(flecs::entity item,
                                          flecs::entity target) const {
   auto &fighter = target.get_mut<Fighter>();
   auto amount_recovered = fighter.heal(amount, target);
   if (amount_recovered > 0) {
-    auto msg = tcod::stringf("You consume the %s, and recover %d HP!",
-                             item.get<Named>().name.c_str(), amount_recovered);
+    auto msg = stringf("You consume the %s, and recover %d HP!",
+                       item.get<Named>().name.c_str(), amount_recovered);
     item.destruct();
     return {ActionResultType::Success, msg, 0.0f, color::healthRecovered};
   } else {
@@ -34,8 +33,8 @@ ActionResult DeodorantConsumable::activate(flecs::entity item,
                                            flecs::entity target) const {
   auto &scent = target.get_mut<Scent>();
   auto amount_reduced = scent.reduce(amount);
-  auto msg = tcod::stringf("You apply the %s, and reduce your smell by %d.",
-                           item.get<Named>().name.c_str(), (int)amount_reduced);
+  auto msg = stringf("You apply the %s, and reduce your smell by %d.",
+                     item.get<Named>().name.c_str(), (int)amount_reduced);
   item.destruct();
   return {ActionResultType::Success, msg, 0.0f, color::healthRecovered};
 }
@@ -67,7 +66,7 @@ ActionResult LightningDamageConsumable::activate(flecs::entity item,
     return {ActionResultType::Failure, "No enemy is close enough to strike.",
             0.0f, color::impossible};
   }
-  auto msg = tcod::stringf(
+  auto msg = stringf(
       "A lighting bolt strikes the %s with a loud thunder, for %d damage!",
       target.get<Named>().name.c_str(), damage);
   target.get_mut<Fighter>().take_damage(damage, target);
@@ -113,9 +112,9 @@ ActionResult ConfusionConsumable::selected(flecs::entity item,
             color::impossible};
   }
 
-  auto msg = tcod::stringf(
-      "The eyes of the %s look vacant, as it starts to stumble around!",
-      target_entity.get<Named>().name.c_str());
+  auto msg =
+      stringf("The eyes of the %s look vacant, as it starts to stumble around!",
+              target_entity.get<Named>().name.c_str());
 
   auto ai = ecs.lookup("module::Ai");
   auto q = ecs.query_builder("module::ai").with(flecs::IsA, ai).build();
@@ -169,9 +168,9 @@ FireballDamageConsumable::selected(flecs::entity item,
   q.each([&](auto e, const Position &p, Fighter &f, const Named &name) {
     if (p.distanceSquared(target) <= radius * radius) {
       targets_hit = true;
-      auto msg = tcod::stringf(
-          "The %s is engulfed in a fiery explosion, taking %d damage!",
-          name.name.c_str(), damage);
+      auto msg =
+          stringf("The %s is engulfed in a fiery explosion, taking %d damage!",
+                  name.name.c_str(), damage);
       messageLog.addMessage(msg, color::enemyDie);
       f.take_damage(damage, e);
     }
@@ -190,9 +189,9 @@ FireballDamageConsumable::selected(flecs::entity item,
 ActionResult ScentConsumable::activate(flecs::entity item,
                                        flecs::entity consumer) const {
   consumer.set<Scent>(scent);
-  auto msg = tcod::stringf("You apply the %s and now smell like %s.",
-                           item.get<Named>().name.c_str(),
-                           scentName(scent.type).c_str());
+  auto msg =
+      stringf("You apply the %s and now smell like %s.",
+              item.get<Named>().name.c_str(), scentName(scent.type).c_str());
   item.destruct();
   return {ActionResultType::Success, msg, 0.0f, color::healthRecovered};
 }

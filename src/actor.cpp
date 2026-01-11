@@ -8,6 +8,7 @@
 #include "inventory.hpp"
 #include "level.hpp"
 #include "message_log.hpp"
+#include "string.hpp"
 
 const std::vector<RenderOrder> allRenderOrders = {
     RenderOrder::Corpse, RenderOrder::Item, RenderOrder::Actor};
@@ -93,7 +94,7 @@ void Fighter::die(flecs::entity self) {
     messageLog.addMessage("You died!", color::playerDie);
     ecs.get_mut<EventHandler>().gameOver();
   } else {
-    auto msg = tcod::stringf("%s is dead!", name.name.c_str());
+    auto msg = stringf("%s is dead!", name.name.c_str());
     messageLog.addMessage(msg, color::enemyDie);
     auto xp = self.try_get<XP>();
     if (xp)

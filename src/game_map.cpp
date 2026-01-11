@@ -5,6 +5,7 @@
 #include "defines.hpp"
 #include "room_accretion.hpp"
 #include "scent.hpp"
+#include "string.hpp"
 
 static inline void deleteMapEntity(flecs::world ecs, flecs::entity map) {
   auto q = ecs.query_builder("module::mapEntities")
@@ -215,10 +216,10 @@ std::string GameMap::detectScent(flecs::entity e) const {
   }
   auto dir = directionName(strongest);
   if (dir.size() > 0) {
-    return tcod::stringf("You stink of %s", scentName(type).c_str());
+    return stringf("You stink of %s", scentName(type).c_str());
   }
-  return tcod::stringf("You smell %s to the %s", scentName(type).c_str(),
-                       dir.c_str());
+  return stringf("You smell %s to the %s", scentName(type).c_str(),
+                 dir.c_str());
 }
 
 flecs::entity GameMap::get_blocking_entity(flecs::entity map,

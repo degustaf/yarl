@@ -2,10 +2,9 @@
 
 #include <cassert>
 
-#include <libtcod.hpp>
-
 #include "actor.hpp"
 #include "message_log.hpp"
+#include "string.hpp"
 
 static constexpr auto level_up_base = 200;
 static constexpr auto level_up_factor = 150;
@@ -17,12 +16,12 @@ int Level::xp_to_next_level(void) const {
 void Level::add_xp(flecs::world ecs, int new_xp) {
   assert(new_xp > 0);
   xp += new_xp;
-  auto msg = tcod::stringf("You gain %d experience points", new_xp);
+  auto msg = stringf("You gain %d experience points", new_xp);
   auto &log = ecs.lookup("messageLog").get_mut<MessageLog>();
   log.addMessage(msg);
 
   if (requires_level_up()) {
-    msg = tcod::stringf("You advance to level %d", current + 1);
+    msg = stringf("You advance to level %d", current + 1);
     log.addMessage(msg);
   }
 }

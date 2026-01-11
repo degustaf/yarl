@@ -4,9 +4,9 @@
 #include <string>
 
 #include <flecs.h>
-#include <libtcod.hpp>
 
 #include "actor.hpp"
+#include "string.hpp"
 
 struct Inventory {
   int capacity;
@@ -38,7 +38,7 @@ template <typename T, bool print>
 static inline std::string unequip(flecs::entity owner, flecs::entity item) {
   owner.remove<T>(item);
   if (print) {
-    return tcod::stringf("You remove the %s. ", item.get<Named>().name.c_str());
+    return stringf("You remove the %s. ", item.get<Named>().name.c_str());
   } else {
     return "";
   }
@@ -51,8 +51,8 @@ static inline std::string equip(flecs::entity owner, flecs::entity item) {
 
   owner.add<T>(item);
   if (print) {
-    return tcod::stringf("%sYou equip the %s.", msg.c_str(),
-                         item.get<Named>().name.c_str());
+    return stringf("%sYou equip the %s.", msg.c_str(),
+                   item.get<Named>().name.c_str());
   } else {
     return "";
   }

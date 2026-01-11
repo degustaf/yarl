@@ -7,6 +7,7 @@
 #include "color.hpp"
 #include "defines.hpp"
 #include "scent.hpp"
+#include "string.hpp"
 
 void renderBar(Console &console, int currentValue, int maxValue, int x, int y,
                int totalWidth) {
@@ -19,7 +20,7 @@ void renderBar(Console &console, int currentValue, int maxValue, int x, int y,
                       color::barFilled);
   }
 
-  auto msg = tcod::stringf("HP: %d/%d", currentValue, maxValue);
+  auto msg = stringf("HP: %d/%d", currentValue, maxValue);
   console.print({x + 1, y}, msg, color::barText, std::nullopt);
 }
 
@@ -51,7 +52,7 @@ void renderSmell(Console &console, flecs::entity player, int x, int y,
     console.draw_rect({x, y, bar_width, 1}, ' ', std::nullopt, bg);
   }
 
-  auto msg = tcod::stringf("Scent: %d", (int)scent.power);
+  auto msg = stringf("Scent: %d", (int)scent.power);
   console.print({x + 1, y}, msg, color::barText, std::nullopt);
   if (bg == color::yellow) {
     for (x++; x < bar_width; x++) {
@@ -62,7 +63,7 @@ void renderSmell(Console &console, flecs::entity player, int x, int y,
 
 void renderDungeonLevel(Console &console, int level,
                         std::array<int, 2> location) {
-  auto msg = tcod::stringf("'\U0001F389'Dungeon level: %d", level);
+  auto msg = stringf("'\U0001F389'Dungeon level: %d", level);
   console.print(location, msg, std::nullopt, std::nullopt);
 }
 

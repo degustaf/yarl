@@ -111,9 +111,6 @@ bool Engine::load(flecs::world ecs, const std::filesystem::path &file_name,
 }
 
 void Engine::new_game(flecs::world ecs, int map_width, int map_height) {
-  // const int map_width = 80;
-  // const int map_height = 43;
-
   auto seed = (uint32_t)TCODRandom::getInstance()->getInt(
       0, (int)std::numeric_limits<int32_t>::max());
   ecs.entity("seed").set<Seed>({seed});

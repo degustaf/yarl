@@ -9,6 +9,7 @@
 #include "defines.hpp"
 #include "game_map.hpp"
 #include "pathfinding.hpp"
+#include "string.hpp"
 
 std::unique_ptr<Action> HostileAi::act(flecs::entity self) {
   auto ecs = self.world();
@@ -58,8 +59,8 @@ std::unique_ptr<Action> ConfusedAi::act(flecs::entity self) {
       }
     });
 
-    auto msg = tcod::stringf("The %s is no longer confused.",
-                             self.get<Named>().name.c_str());
+    auto msg = stringf("The %s is no longer confused.",
+                       self.get<Named>().name.c_str());
     return std::make_unique<MessageAction>(msg);
   }
 

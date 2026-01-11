@@ -5,7 +5,7 @@
 #include <filesystem>
 #include <string>
 
-#include <libtcod.hpp>
+#include "string.hpp"
 
 constexpr auto nDirections = 8;
 constexpr int directions[nDirections][2] = {
@@ -16,13 +16,13 @@ constexpr int fourDirections[nFourDirections][2] = {
     {0, 1}, {0, -1}, {1, 0}, {-1, 0}};
 
 inline std::string directionName(const int (&dir)[2]) {
-  auto ret = tcod::stringf("%s%s",
-                           dir[1]        ? ""
-                           : dir[1] == 1 ? "south"
-                                         : "north",
-                           dir[0]        ? ""
-                           : dir[0] == 1 ? "east"
-                                         : "west");
+  auto ret = stringf("%s%s",
+                     dir[1]        ? ""
+                     : dir[1] == 1 ? "south"
+                                   : "north",
+                     dir[0]        ? ""
+                     : dir[0] == 1 ? "east"
+                                   : "west");
   if (ret.size() > 0) {
     ret[0] = (char)toupper(ret[0]);
   }

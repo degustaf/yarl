@@ -9,6 +9,7 @@
 #include "game_map.hpp"
 #include "input_handler.hpp"
 #include "inventory.hpp"
+#include "string.hpp"
 
 static ActionResult attack(flecs::entity e, std::array<int, 2> pos,
                            bool ranged) {
@@ -27,8 +28,8 @@ static ActionResult attack(flecs::entity e, std::array<int, 2> pos,
       auto taser = weapon.get<Taser>();
       taser.apply(target);
       auto msg =
-          tcod::stringf("%s tases %s for %d turns", e.get<Named>().name.c_str(),
-                        target.get<Named>().name.c_str(), taser.turns);
+          stringf("%s tases %s for %d turns", e.get<Named>().name.c_str(),
+                  target.get<Named>().name.c_str(), taser.turns);
       return {ActionResultType::Success, msg, 1.0f, attack_color};
     }
     const auto &attacker = e.get<Fighter>();
@@ -37,13 +38,13 @@ static ActionResult attack(flecs::entity e, std::array<int, 2> pos,
         std::max(attacker.power(e, ranged) - defender.defense(target), 0);
     auto msg = [&]() {
       if (damage > 0) {
-        return tcod::stringf("%s attacks %s for %d hit points",
-                             e.get<Named>().name.c_str(),
-                             target.get<Named>().name.c_str(), damage);
+        return stringf("%s attacks %s for %d hit points",
+                       e.get<Named>().name.c_str(),
+                       target.get<Named>().name.c_str(), damage);
       } else {
-        return tcod::stringf("%s attacks %s but does no damage",
-                             e.get<Named>().name.c_str(),
-                             target.get<Named>().name.c_str());
+        return stringf("%s attacks %s but does no damage",
+                       e.get<Named>().name.c_str(),
+                       target.get<Named>().name.c_str());
       }
     }();
     defender.take_damage(damage, target);
@@ -220,8 +221,7 @@ ActionResult PickupAction::perform(flecs::entity e) const {
       [&](flecs::entity item, auto &p) { return e != item && p == pos; });
   if (item) {
     item.add<ContainedBy>(e).remove<Position>().remove(flecs::ChildOf, map);
-    auto msg =
-        tcod::stringf("You picked up the %s!", item.get<Named>().name.c_str());
+    auto msg = stringf("You picked up the %s!", item.get<Named>().name.c_str());
     return {ActionResultType::Success, msg, 0.0f};
   }
   return {ActionResultType::Failure, "There is nothing here to pick up.", 0.0f,
@@ -230,8 +230,8 @@ ActionResult PickupAction::perform(flecs::entity e) const {
 
 ActionResult DropItemAction::perform(flecs::entity e) const {
   auto msg = isEquipped(e, item) ? toggleEquip<true>(e, item) + " " : "";
-  msg = tcod::stringf("%sYou dropped the %s.", msg.c_str(),
-                      item.get<Named>().name.c_str());
+  msg = stringf("%sYou dropped the %s.", msg.c_str(),
+                item.get<Named>().name.c_str());
   item.remove<ContainedBy>(e)
       .add(flecs::ChildOf, e.world().lookup("currentMap").target<CurrentMap>())
       .set<Position>(e.get<Position>());
@@ -288,8 +288,7 @@ ActionResult JumpAction::perform(flecs::entity e) const {
     scent->power /= 2.0f;
   }
 
-  auto msg =
-      tcod::stringf("You jump down the chasm taking %d damage.", fallDamage);
+  auto msg = stringf("You jump down the chasm taking %d damage.", fallDamage);
 
   return {ActionResultType::Success, msg, 1.0f, color::descend};
 }
@@ -312,8 +311,8 @@ ActionResult RangedTargetAction::perform(flecs::entity e) const {
           ecs, true);
       return {ActionResultType::Failure, "", 0.0f};
     }
-    auto msg = tcod::stringf("Your %s isn't a ranged weapon.",
-                             weapon.get<Named>().name.c_str());
+    auto msg = stringf("Your %s isn't a ranged weapon.",
+                       weapon.get<Named>().name.c_str());
     return {ActionResultType::Failure, msg, 0.0f};
   }
   return {ActionResultType::Failure, "You do not have a weapon to fire.", 0.0f};

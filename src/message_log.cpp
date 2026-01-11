@@ -1,16 +1,16 @@
 #include "message_log.hpp"
 
-#include <libtcod.hpp>
-
 #include <cassert>
 #include <cstddef>
 #include <iterator>
 #include <optional>
 #include <vector>
 
+#include "string.hpp"
+
 std::string Message::fullText(void) const {
   if (count > 1) {
-    return tcod::stringf("%s (x%d)", plain_text.c_str(), count);
+    return stringf("%s (x%d)", plain_text.c_str(), count);
   }
   return plain_text;
 }
