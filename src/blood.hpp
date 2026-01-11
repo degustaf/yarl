@@ -2,8 +2,6 @@
 
 #include <cstdint>
 
-#include <libtcod.hpp>
-
 #include "console.hpp"
 
 class BloodDrop {

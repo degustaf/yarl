@@ -1,7 +1,6 @@
 #pragma once
 
 #include <flecs.h>
-#include <libtcod.hpp>
 
 #include <array>
 

@@ -1,7 +1,6 @@
 #include "consumable.hpp"
 
 #include <cassert>
-#include <libtcod/mersenne.hpp>
 #include <memory>
 
 #include <libtcod.hpp>

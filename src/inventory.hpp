@@ -4,6 +4,7 @@
 #include <string>
 
 #include <flecs.h>
+#include <libtcod.hpp>
 
 #include "actor.hpp"
 

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <flecs.h>
-#include <libtcod.hpp>
 
 #include <array>
 #include <cstdint>
@@ -52,8 +51,8 @@ extern const std::vector<RenderOrder> allRenderOrders;
 
 struct Renderable {
   int32_t ch;
-  tcod::ColorRGB fg;
-  std::optional<tcod::ColorRGB> bg;
+  color::RGB fg;
+  std::optional<color::RGB> bg;
   RenderOrder layer;
   bool fovOnly = true;
 

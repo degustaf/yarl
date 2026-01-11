@@ -1,5 +1,7 @@
 #include "message_log.hpp"
 
+#include <libtcod.hpp>
+
 #include <cassert>
 #include <cstddef>
 #include <iterator>
@@ -13,7 +15,7 @@ std::string Message::fullText(void) const {
   return plain_text;
 }
 
-void MessageLog::addMessage(const std::string &text, tcod::ColorRGB fg,
+void MessageLog::addMessage(const std::string &text, color::RGB fg,
                             bool stack) {
   if (stack && messages.size() > 0 && messages.back().plain_text == text) {
     messages.back().count++;
@@ -63,8 +65,8 @@ void MessageLog::render(
     const auto &str = it->fullText();
     auto lines = wrap(str, (std::string::size_type)width);
     for (auto jt = lines.rbegin(); jt != lines.rend(); jt++) {
-      Console::print(console, {x, y + y_offset}, str.substr(jt->pos, jt->count),
-                     it->fg, std::nullopt);
+      console.print({x, y + y_offset}, str.substr(jt->pos, jt->count), it->fg,
+                    std::nullopt);
       y_offset--;
       if (y_offset < 0) {
         return;

@@ -3,8 +3,6 @@
 #include <cassert>
 #include <memory>
 
-#include <libtcod.hpp>
-
 #include "actor.hpp"
 #include "color.hpp"
 #include "consumable.hpp"

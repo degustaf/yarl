@@ -12,16 +12,15 @@ void renderBar(Console &console, int currentValue, int maxValue, int x, int y,
                int totalWidth) {
   auto bar_width = (int)(((double)currentValue) / maxValue * totalWidth);
 
-  Console::draw_rect(console, {x, y, totalWidth, 1}, 0x2588, std::nullopt,
-                     color::barEmpty);
+  console.draw_rect({x, y, totalWidth, 1}, ' ', std::nullopt, color::barEmpty);
 
   if (bar_width > 0) {
-    Console::draw_rect(console, {x, y, bar_width, 1}, 0x2588, std::nullopt,
-                       color::barFilled);
+    console.draw_rect({x, y, bar_width, 1}, ' ', std::nullopt,
+                      color::barFilled);
   }
 
   auto msg = tcod::stringf("HP: %d/%d", currentValue, maxValue);
-  Console::print(console, {x + 1, y}, msg, color::barText, std::nullopt);
+  console.print({x + 1, y}, msg, color::barText, std::nullopt);
 }
 
 void renderSmell(Console &console, flecs::entity player, int x, int y,
@@ -47,14 +46,13 @@ void renderSmell(Console &console, flecs::entity player, int x, int y,
   auto bar_width =
       std::min((int)((scent.power * (float)totalWidth) / 100.0f), totalWidth);
 
-  Console::draw_rect(console, {x, y, totalWidth, 1}, 0x2588, std::nullopt,
-                     color::barEmpty);
+  console.draw_rect({x, y, totalWidth, 1}, ' ', std::nullopt, color::barEmpty);
   if (bar_width > 0) {
-    Console::draw_rect(console, {x, y, bar_width, 1}, 1, std::nullopt, bg);
+    console.draw_rect({x, y, bar_width, 1}, ' ', std::nullopt, bg);
   }
 
   auto msg = tcod::stringf("Scent: %d", (int)scent.power);
-  Console::print(console, {x + 1, y}, msg, color::barText, std::nullopt);
+  console.print({x + 1, y}, msg, color::barText, std::nullopt);
   if (bg == color::yellow) {
     for (x++; x < bar_width; x++) {
       console.at({x, y}).fg = color::black;
@@ -65,7 +63,7 @@ void renderSmell(Console &console, flecs::entity player, int x, int y,
 void renderDungeonLevel(Console &console, int level,
                         std::array<int, 2> location) {
   auto msg = tcod::stringf("'\U0001F389'Dungeon level: %d", level);
-  Console::print(console, location, msg, std::nullopt, std::nullopt);
+  console.print(location, msg, std::nullopt, std::nullopt);
 }
 
 void renderNamesAtMouseLocation(Console &console, const std::array<int, 2> &xy,
@@ -91,12 +89,11 @@ void renderNamesAtMouseLocation(Console &console, const std::array<int, 2> &xy,
   if (gameMap.isStairs(mouse_loc)) {
     msg = msg + (msg.size() > 0 ? ", " : "") + "an elevator";
   }
-  Console::print(console, xy, msg, std::nullopt, std::nullopt);
+  console.print(xy, msg, std::nullopt, std::nullopt);
 }
 
 void renderCommandButton(Console &console, const std::array<int, 4> &xywh) {
-  Console::draw_frame(console, xywh, DECORATION, color::menu_border,
-                      color::darkGrey);
-  Console::print(console, {xywh[0] + 1, xywh[1] + 1}, "(C)ommands",
-                 std::nullopt, std::nullopt);
+  console.draw_frame(xywh, DECORATION, color::menu_border, color::darkGrey);
+  console.print({xywh[0] + 1, xywh[1] + 1}, "(C)ommands", std::nullopt,
+                std::nullopt);
 }

@@ -54,36 +54,36 @@ void GameMap::nextFloor(flecs::entity player) const {
 }
 
 static constexpr auto floor_light =
-    TCOD_ConsoleTile{'.', {100, 90, 25, 255}, {200, 180, 50, 255}};
+    Console::Tile{'.', {100, 90, 25, 255}, {200, 180, 50, 255}};
 static constexpr auto floor_dark =
-    TCOD_ConsoleTile{'.', {25, 25, 75, 255}, {50, 50, 150, 255}};
+    Console::Tile{'.', {25, 25, 75, 255}, {50, 50, 150, 255}};
 static constexpr auto floor_sensed =
-    TCOD_ConsoleTile{'.', {25, 25, 25, 255}, {100, 100, 100, 255}};
+    Console::Tile{'.', {25, 25, 25, 255}, {100, 100, 100, 255}};
 
 static constexpr auto bloody_floor_light =
-    TCOD_ConsoleTile{'.', {255, 0, 0, 255}, {200, 180, 50, 255}};
+    Console::Tile{'.', {255, 0, 0, 255}, {200, 180, 50, 255}};
 static constexpr auto bloody_floor_dark =
-    TCOD_ConsoleTile{'.', {122, 0, 0, 255}, {50, 50, 150, 255}};
+    Console::Tile{'.', {122, 0, 0, 255}, {50, 50, 150, 255}};
 
 static constexpr auto wall_light =
-    TCOD_ConsoleTile{'#', {0, 0, 0, 255}, {130, 110, 50, 255}};
+    Console::Tile{'#', {0, 0, 0, 255}, {130, 110, 50, 255}};
 static constexpr auto wall_dark =
-    TCOD_ConsoleTile{'#', {0, 0, 0, 255}, {0, 0, 100, 255}};
+    Console::Tile{'#', {0, 0, 0, 255}, {0, 0, 100, 255}};
 
 static constexpr auto stairs_light =
-    TCOD_ConsoleTile{'>', {255, 255, 255, 255}, {200, 180, 50, 255}};
+    Console::Tile{'>', {255, 255, 255, 255}, {200, 180, 50, 255}};
 static constexpr auto stairs_dark =
-    TCOD_ConsoleTile{'>', {255, 255, 255, 255}, {50, 50, 150, 255}};
+    Console::Tile{'>', {255, 255, 255, 255}, {50, 50, 150, 255}};
 static constexpr auto stairs_sensed =
-    TCOD_ConsoleTile{'>', {255, 255, 255, 255}, {100, 100, 100, 255}};
+    Console::Tile{'>', {255, 255, 255, 255}, {100, 100, 100, 255}};
 
 static constexpr auto shroud =
-    TCOD_ConsoleTile{' ', {255, 255, 255, 255}, {0, 0, 0, 255}};
+    Console::Tile{' ', {255, 255, 255, 255}, {0, 0, 0, 255}};
 
 static constexpr auto chasm_light =
-    TCOD_ConsoleTile{0x2591, {100, 100, 100, 255}, {50, 50, 50, 255}};
+    Console::Tile{0x2591, {100, 100, 100, 255}, {50, 50, 50, 255}};
 static constexpr auto chasm_dark =
-    TCOD_ConsoleTile{0x2591, {100, 100, 100, 255}, {50, 50, 150, 255}};
+    Console::Tile{0x2591, {100, 100, 100, 255}, {50, 50, 150, 255}};
 
 void GameMap::render(Console &console) const {
   for (auto y = 0; y < height; y++) {

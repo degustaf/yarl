@@ -6,8 +6,6 @@
 #include <cstdint>
 #include <optional>
 
-#include <libtcod.hpp>
-
 #include "actor.hpp"
 #include "ai.hpp"
 #include "color.hpp"
@@ -116,22 +114,15 @@ module::module(flecs::world ecs) {
         *data = value; // Assign new value to std::string
       });
 
-  // TCOD
-  ecs.component<Console>();
-  ecs.component<tcod::ColorRGB>()
-      .member<uint8_t>("r")
-      .member<uint8_t>("g")
-      .member<uint8_t>("b");
-
   // actor.hpp
   ecs.component<Position>().member<int>("x").member<int>("y");
   ecs.component<RenderOrder>();
-  ecs.component<std::optional<tcod::ColorRGB>>().opaque(
-      std_optional_support<tcod::ColorRGB>);
+  ecs.component<std::optional<color::RGB>>().opaque(
+      std_optional_support<color::RGB>);
   ecs.component<Renderable>()
       .member<int32_t>("ch")
-      .member<tcod::ColorRGB>("fg")
-      .member<std::optional<tcod::ColorRGB>>("bg")
+      .member<color::RGB>("fg")
+      .member<std::optional<color::RGB>>("bg")
       .member<RenderOrder>("layer");
   ecs.component<Named>().member<std::string>("name");
   ecs.component<BlocksMovement>();
@@ -160,6 +151,20 @@ module::module(flecs::world ecs) {
       .member("turns_remaining", &ConfusedAi::turns_remaining)
       .is_a<Ai>()
       .add(flecs::CanToggle);
+
+  // color.hpp
+  ecs.component<color::RGB>()
+      .member<uint8_t>("r")
+      .member<uint8_t>("g")
+      .member<uint8_t>("b");
+  ecs.component<color::RGBA>()
+      .member<uint8_t>("r")
+      .member<uint8_t>("g")
+      .member<uint8_t>("b")
+      .member<uint8_t>("a");
+
+  // console.hpp
+  ecs.component<Console>();
 
   // consumable.hpp
   ecs.component<Consumable>();
@@ -235,7 +240,7 @@ module::module(flecs::world ecs) {
   // message_log.hpp
   ecs.component<Message>()
       .member<std::string>("plain_text")
-      .member<tcod::ColorRGB>("fg")
+      .member<color::RGB>("fg")
       .member<int>("count");
   ecs.component<MessageLog>().opaque(std_vector_support<Message>);
 

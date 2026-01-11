@@ -1,4 +1,5 @@
 #include "inventory.hpp"
+
 #include "actor.hpp"
 
 bool Inventory::hasRoom(flecs::entity e) const {

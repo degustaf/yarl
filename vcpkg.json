@@ -15,6 +15,10 @@
     {
       "name": "sdl3-ttf",
       "version>=": "3.2.2"
+    },
+    {
+      "name": "utf8proc",
+      "version>=": "2.11.0"
     }
   ],
   "builtin-baseline": "bffcbb75f71553824aa948a7e7b4f798662a6fa7"

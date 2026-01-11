@@ -1,8 +1,8 @@
 #include "renderer.hpp"
 
+#include <algorithm>
 #include <cassert>
 #include <cmath>
-#include <iostream>
 #include <memory>
 #include <stdexcept>
 
@@ -83,7 +83,7 @@ static void render_texture_setup(SDL_Renderer *renderer,
   }
 }
 
-static TCOD_ConsoleTile normalize_tile_for_drawing(TCOD_ConsoleTile tile) {
+static Console::Tile normalize_tile_for_drawing(Console::Tile tile) {
   if (tile.ch < 0) {
     tile.ch = 0; // Tile character is out-of-bounds.
   }
@@ -174,7 +174,6 @@ SDLData::SDLData(int columns, int rows, float fontSize, const char *title,
   int w, h;
   TTF_GetStringSize(font.get(), "@", 1, &w, &h);
   dims = {w, h};
-  std::cout << w << "\t" << h << "\n";
 
   SDL_PropertiesID window_props = SDL_CreateProperties();
   SDL_SetStringProperty(window_props, SDL_PROP_WINDOW_CREATE_TITLE_STRING,
@@ -295,7 +294,7 @@ void SDLData::accumulate(const Console &console) {
 void SDLData::resetCacheConsole(void) {
   if (cache_console) {
     for (auto &tile : *cache_console) {
-      tile = TCOD_ConsoleTile{-1, {}, {}};
+      tile = Console::Tile{-1, {}, {}};
     }
   }
 }

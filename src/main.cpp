@@ -8,7 +8,6 @@
 #endif
 
 #include <flecs.h>
-#include <libtcod.hpp>
 
 #include "defines.hpp"
 #include "engine.hpp"
@@ -16,7 +15,7 @@
 #include "module.hpp"
 #include "renderer.hpp"
 
-static constexpr auto clear_color = TCOD_ColorRGBA{0, 0, 0, 255};
+static constexpr auto clear_color = color::RGBA{0, 0, 0, 255};
 
 SDL_AppResult SDL_AppInit(void **data, [[maybe_unused]] int argc,
                           [[maybe_unused]] char **argv) {
