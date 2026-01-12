@@ -114,6 +114,17 @@ module::module(flecs::world ecs) {
         *data = value; // Assign new value to std::string
       });
 
+  // color.hpp
+  ecs.component<color::RGB>()
+      .member<uint8_t>("r")
+      .member<uint8_t>("g")
+      .member<uint8_t>("b");
+  ecs.component<color::RGBA>()
+      .member<uint8_t>("r")
+      .member<uint8_t>("g")
+      .member<uint8_t>("b")
+      .member<uint8_t>("a");
+
   // actor.hpp
   ecs.component<Position>().member<int>("x").member<int>("y");
   ecs.component<RenderOrder>();
@@ -151,17 +162,6 @@ module::module(flecs::world ecs) {
       .member("turns_remaining", &ConfusedAi::turns_remaining)
       .is_a<Ai>()
       .add(flecs::CanToggle);
-
-  // color.hpp
-  ecs.component<color::RGB>()
-      .member<uint8_t>("r")
-      .member<uint8_t>("g")
-      .member<uint8_t>("b");
-  ecs.component<color::RGBA>()
-      .member<uint8_t>("r")
-      .member<uint8_t>("g")
-      .member<uint8_t>("b")
-      .member<uint8_t>("a");
 
   // console.hpp
   ecs.component<Console>();

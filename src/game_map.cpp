@@ -2,6 +2,7 @@
 
 #include <cstddef>
 
+#include "color.hpp"
 #include "defines.hpp"
 #include "room_accretion.hpp"
 #include "scent.hpp"
@@ -67,24 +68,23 @@ static constexpr auto bloody_floor_dark =
     Console::Tile{'.', {122, 0, 0, 255}, {50, 50, 150, 255}};
 
 static constexpr auto wall_light =
-    Console::Tile{'#', {0, 0, 0, 255}, {130, 110, 50, 255}};
+    Console::Tile{'#', color::black, {130, 110, 50, 255}};
 static constexpr auto wall_dark =
-    Console::Tile{'#', {0, 0, 0, 255}, {0, 0, 100, 255}};
+    Console::Tile{'#', color::black, {0, 0, 100, 255}};
 
 static constexpr auto stairs_light =
-    Console::Tile{'>', {255, 255, 255, 255}, {200, 180, 50, 255}};
+    Console::Tile{'>', color::white, {200, 180, 50, 255}};
 static constexpr auto stairs_dark =
-    Console::Tile{'>', {255, 255, 255, 255}, {50, 50, 150, 255}};
+    Console::Tile{'>', color::white, {50, 50, 150, 255}};
 static constexpr auto stairs_sensed =
-    Console::Tile{'>', {255, 255, 255, 255}, {100, 100, 100, 255}};
+    Console::Tile{'>', color::white, {100, 100, 100, 255}};
 
-static constexpr auto shroud =
-    Console::Tile{' ', {255, 255, 255, 255}, {0, 0, 0, 255}};
+static constexpr auto shroud = Console::Tile{' ', color::white, color::black};
 
 static constexpr auto chasm_light =
-    Console::Tile{0x2591, {100, 100, 100, 255}, {50, 50, 50, 255}};
+    Console::Tile{' ', color::white, {100, 100, 100, 255}};
 static constexpr auto chasm_dark =
-    Console::Tile{0x2591, {100, 100, 100, 255}, {50, 50, 150, 255}};
+    Console::Tile{' ', color::white, {25, 25, 75, 255}};
 
 void GameMap::render(Console &console) const {
   for (auto y = 0; y < height; y++) {

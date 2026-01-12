@@ -66,9 +66,10 @@ constexpr auto darkerGreen = RGB{0, 0x7F, 0};
 constexpr auto blue = RGB{0, 0, 0xFF};
 constexpr auto yellow = RGB{0xFF, 0xFF, 0};
 constexpr auto orange = RGB{0xFF, 0x6E, 0};
+constexpr auto brown = RGB{0x6A, 0x4A, 0x3A};
+
 constexpr auto lightGrey = RGB{0x9F, 0x9F, 0x9F};
 constexpr auto darkGrey = RGB{0x3B, 0x3B, 0x3B};
-constexpr auto brown = RGB{0x6A, 0x4A, 0x3A};
 
 constexpr auto playerAtk = RGB{0xE0, 0xE0, 0xE0};
 constexpr auto enemyAtk = RGB{0xFF, 0x30, 0x30};
