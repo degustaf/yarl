@@ -1,6 +1,5 @@
 #include "renderer.hpp"
 
-#include <SDL3/SDL_render.h>
 #include <algorithm>
 #include <cassert>
 #include <cmath>
@@ -30,8 +29,8 @@ static SDL_ScaleMode get_sdl2_scale_mode_hint() {
 static void setup_cache_console(const std::array<int, 2> &consoleDims,
                                 std::unique_ptr<Console> &cache) {
   if (cache) {
-    assert(cache->get_width() != consoleDims[0]);
-    assert(cache->get_height() != consoleDims[1]);
+    assert(cache->get_width() == consoleDims[0]);
+    assert(cache->get_height() == consoleDims[1]);
   }
 
   if (!cache) {
@@ -78,9 +77,7 @@ static void render_texture_setup(SDL_Renderer *renderer,
       SDL_SetTextureScaleMode(target.get(), scale_mode);
   }
 
-  if (cache) {
-    setup_cache_console(console.get_dims(), cache);
-  }
+  setup_cache_console(console.get_dims(), cache);
 }
 
 static void render(const FontPtr &font, SDL_Renderer *renderer,

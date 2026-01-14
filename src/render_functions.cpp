@@ -70,6 +70,9 @@ void renderDungeonLevel(Console &console, int level,
 void renderNamesAtMouseLocation(Console &console, const std::array<int, 2> &xy,
                                 const std::array<int, 2> &mouse_loc,
                                 flecs::entity map, const GameMap &gameMap) {
+  if (!gameMap.isExplored(mouse_loc))
+    return;
+
   auto q =
       map.world()
           .query_builder<const Position, const Named>("module::namedPosition")
