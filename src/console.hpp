@@ -4,15 +4,47 @@
 
 #include <array>
 #include <cassert>
+#include <cstring>
 #include <memory>
 #include <optional>
 #include <string_view>
+
+#include <utf8proc.h>
 
 struct Console {
 
   enum class Alignment { LEFT, RIGHT, CENTER };
 
   struct Tile {
+    inline void encodeChar(int c) { ch = c; };
+
+    inline void copyChar(const Tile &other) { ch = other.ch; };
+
+    inline bool sameChar(const Tile &other) { return ch == other.ch; };
+
+    Console::Tile normalize_tile_for_drawing() const {
+      auto tile = *this;
+      if (tile.ch < 0) {
+        tile.encodeChar(0); // Tile character is out-of-bounds.
+      }
+      if (tile.fg.a == 0)
+        tile.encodeChar(0); // No foreground alpha.
+      if (tile.bg.r == tile.fg.r && tile.bg.g == tile.fg.g &&
+          tile.bg.b == tile.fg.b && tile.bg.a == 255 && tile.fg.a == 255) {
+        tile.encodeChar(0); // Foreground and background color match, so the
+                            // foreground glyph would be invisible.
+      }
+      if (tile.ch == 0) {
+        tile.fg.r = tile.fg.g = tile.fg.b = tile.fg.a = 0;
+        // Clear foreground color if the foreground glyph is skipped.
+      }
+      return tile;
+    }
+
+    inline constexpr bool operator==(const Tile &rhs) const {
+      return fg == rhs.fg && bg == rhs.bg && ch == rhs.ch;
+    }
+
     int ch;
     color::RGBA fg;
     color::RGBA bg;
@@ -36,8 +68,11 @@ struct Console {
     assert(0 <= xy[1] && xy[1] <= h);
     return tiles[(size_t)(w * xy[1] + xy[0])];
   }
-  [[nodiscard]] inline auto get_width() const noexcept -> int { return w; };
-  [[nodiscard]] inline auto get_height() const noexcept -> int { return h; };
+  [[nodiscard]] inline int get_width() const noexcept { return w; };
+  [[nodiscard]] inline int get_height() const noexcept { return h; };
+  [[nodiscard]] inline std::array<int, 2> get_dims() const noexcept {
+    return {w, h};
+  };
   [[nodiscard]] inline Tile *begin() noexcept { return tiles.get(); }
   [[nodiscard]] inline const Tile *begin() const noexcept {
     return tiles.get();

@@ -41,6 +41,10 @@ struct RGBA {
   uint8_t b;
   uint8_t a;
 
+  inline constexpr bool operator==(const RGBA &rhs) const {
+    return r == rhs.r && g == rhs.g && b == rhs.b && a == rhs.a;
+  };
+
   constexpr inline RGBA operator/(const uint8_t rhs) const {
     auto ret = *this;
     ret /= rhs;

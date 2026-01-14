@@ -5,6 +5,7 @@
 
 #include <filesystem>
 #include <memory>
+#include <unordered_map>
 
 #include "console.hpp"
 
@@ -40,7 +41,7 @@ private:
   static Transform
   cursor_transform_for_console_viewport(SDL_Renderer *renderer,
                                         const std::array<int, 2> &dims,
-                                        const Console &console);
+                                        const std::array<int, 2> &consoleDims);
 
   std::array<int, 2> dims;
   WindowPtr window;

@@ -140,7 +140,7 @@ void Renderable::render(Console &console, const Position &pos,
   }
   static constexpr uint8_t darknessFactor = 2;
   auto &tile = console.at(pos);
-  tile.ch = ch;
+  tile.encodeChar(ch);
   tile.fg = inFov ? fg : (fg / darknessFactor);
   if (bg) {
     tile.bg = inFov ? *bg : (*bg / darknessFactor);

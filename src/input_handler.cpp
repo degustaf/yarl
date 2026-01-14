@@ -17,7 +17,8 @@
 #include "scent.hpp"
 #include "string.hpp"
 
-static inline void makeHistoryHandler(EventHandler &e, flecs::world ecs) {
+inline void EventHandler::makeHistoryHandler(EventHandler &e,
+                                             flecs::world ecs) {
   e.keyDown = &EventHandler::HistoryKeyDown;
   e.click = &EventHandler::EmptyClick;
   e.on_render = &EventHandler::HistoryOnRender;
@@ -31,7 +32,8 @@ static inline void makeHistoryHandler(EventHandler &e, flecs::world ecs) {
 
 template <char const *TITLE,
           std::unique_ptr<Action> (EventHandler::*f)(flecs::entity)>
-static inline void makeInventoryHandler(EventHandler &e, flecs::world ecs) {
+inline void EventHandler::makeInventoryHandler(EventHandler &e,
+                                               flecs::world ecs) {
   e.keyDown = &EventHandler::InventoryKeyDown;
   e.click = &EventHandler::AskUserClick;
   e.on_render = &EventHandler::InventoryOnRender;
@@ -47,7 +49,7 @@ static inline void makeInventoryHandler(EventHandler &e, flecs::world ecs) {
             .build();
 }
 
-static void makeLookHandler(EventHandler &e, flecs::world ecs) {
+inline void EventHandler::makeLookHandler(EventHandler &e, flecs::world ecs) {
   e.keyDown = &EventHandler::SelectKeyDown;
   e.click = &EventHandler::SelectClick;
   e.on_render = &EventHandler::SelectOnRender;
@@ -60,7 +62,7 @@ static void makeLookHandler(EventHandler &e, flecs::world ecs) {
   assert(e.mouse_loc[1] >= 0);
 }
 
-static inline void makeLevelUp(EventHandler &e) {
+inline void EventHandler::makeLevelUp(EventHandler &e) {
   e.keyDown = &EventHandler::LevelUpKeyDown;
   e.click = &EventHandler::LevelUpClick;
   e.on_render = &EventHandler::LevelUpOnRender;
@@ -71,7 +73,7 @@ static inline void makeLevelUp(EventHandler &e) {
   e.title = "Level Up";
 }
 
-static inline void makeCharacterScreen(EventHandler &e) {
+inline void EventHandler::makeCharacterScreen(EventHandler &e) {
   e.keyDown = &EventHandler::AskUserKeyDown;
   e.click = &EventHandler::AskUserClick;
   e.on_render = &EventHandler::CharacterScreenOnRender;
@@ -852,7 +854,7 @@ void EventHandler::WinOnRender(flecs::world, Console &console, uint64_t time) {
                   std::nullopt, Console::Alignment::CENTER);
     console.print({x - 4, y + 1}, "You Win.", color::white, std::nullopt);
     auto &tile = console.at({x + 4, y + 1});
-    tile.ch = '.';
+    tile.encodeChar('.');
     tile.fg = color::RGB{level, level, level};
     break;
   }
@@ -861,7 +863,7 @@ void EventHandler::WinOnRender(flecs::world, Console &console, uint64_t time) {
                   std::nullopt, Console::Alignment::CENTER);
     console.print({x - 4, y + 1}, "You Win..", color::white, std::nullopt);
     auto &tile = console.at({x + 5, y + 1});
-    tile.ch = '.';
+    tile.encodeChar('.');
     tile.fg = color::RGB{level, level, level};
     break;
   }

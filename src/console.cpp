@@ -254,8 +254,8 @@ void Console::print(const std::array<int, 2> &xy, std::string_view str,
       *this,
       xy[0],
       xy[1],
-      get_width(),
-      get_height(),
+      w,
+      h,
       fg ? fg.value() : color::RGBA{255, 255, 255, 0},
       bg ? bg.value() : color::RGBA{255, 255, 255, 0},
       alignment,
@@ -354,16 +354,16 @@ static Console::Tile console_blit_cell_(const Console::Tile &src,
     out.fg = blit_lerp_(out.fg, src.bg, bg_alpha);
   } else if (out.ch == ' ') {
     // Destination is space, so use the glyph from source.
-    out.ch = src.ch;
+    out.copyChar(src);
     out.fg = blit_lerp_(out.bg, src.fg, fg_alpha);
-  } else if (out.ch == src.ch) {
+  } else if (out.sameChar(src)) {
     out.fg = blit_lerp_(out.fg, src.fg, fg_alpha);
   } else {
     /* Pick the glyph based on foreground_alpha. */
     if (fg_alpha < 0.5f) {
       out.fg = blit_lerp_(out.fg, out.bg, fg_alpha * 2);
     } else {
-      out.ch = src.ch;
+      out.copyChar(src);
       out.fg = blit_lerp_(out.bg, src.fg, (fg_alpha - 0.5f) * 2);
     }
   }
@@ -373,9 +373,9 @@ static Console::Tile console_blit_cell_(const Console::Tile &src,
 void Console::blit(const Console &source, const std::array<int, 2> &dest_xy,
                    std::array<int, 4> source_rect, float foreground_alpha,
                    float background_alpha) {
-  auto wSrc = source_rect[2] == 0 ? source.get_width() : source_rect[2];
+  auto wSrc = source_rect[2] == 0 ? source.w : source_rect[2];
   assert(wSrc > 0);
-  auto hSrc = source_rect[3] == 0 ? source.get_height() : source_rect[3];
+  auto hSrc = source_rect[3] == 0 ? source.h : source_rect[3];
   assert(hSrc > 0);
   assert(source_rect[0] + wSrc >= 0);
   assert(source_rect[1] + hSrc >= 0);
@@ -383,18 +383,18 @@ void Console::blit(const Console &source, const std::array<int, 2> &dest_xy,
   assert(source_rect[1] < h);
 
   auto minX = std::max(source_rect[0], source_rect[0] - dest_xy[0]);
-  auto maxX = std::min(std::min(source_rect[0] + wSrc, source.get_width()),
+  auto maxX = std::min(std::min(source_rect[0] + wSrc, source.w),
                        w + source_rect[0] - dest_xy[0]);
   auto minY = std::max(source_rect[1], source_rect[1] - dest_xy[1]);
-  auto maxY = std::min(std::min(source_rect[1] + hSrc, source.get_height()),
+  auto maxY = std::min(std::min(source_rect[1] + hSrc, source.h),
                        h + source_rect[1] - dest_xy[1]);
 
   for (int cx = minX; cx < maxX; ++cx) {
-    assert(0 <= cx && cx < source.get_width());
+    assert(0 <= cx && cx < source.w);
     int dx = cx - source_rect[0] + dest_xy[0];
     assert(0 <= dx && dx < w);
     for (int cy = minY; cy < maxY; ++cy) {
-      assert(0 <= cy && cy < source.get_height());
+      assert(0 <= cy && cy < source.h);
       int dy = cy - source_rect[1] + dest_xy[1];
       assert(0 <= dy && dy < h);
 
@@ -408,13 +408,13 @@ void Console::blit(const Console &source, const std::array<int, 2> &dest_xy,
 void Console::put_rgba(int x, int y, int ch, std::optional<color::RGBA> fg,
                        std::optional<color::RGBA> bg) {
   assert(0 <= x);
-  assert(x < get_width());
+  assert(x < w);
   assert(0 <= y);
-  assert(y < get_height());
+  assert(y < h);
 
   auto &tile = at({x, y});
   if (ch > 0) {
-    tile.ch = ch;
+    tile.encodeChar(ch);
   }
   if (fg) {
     tile.fg = *fg;

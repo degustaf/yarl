@@ -1,7 +1,9 @@
 vcpkg_installed
 build
+opt
 emscripten
 .cache
+perf.*
 
 *.sav
 

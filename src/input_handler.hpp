@@ -117,6 +117,7 @@ struct EventHandler {
       parentOnRender = nullptr;
   std::function<void(flecs::world, Console &)> childOnRender = nullptr;
 
+private:
   std::unique_ptr<Action> MainGameKeyDown(SDL_KeyboardEvent *key,
                                           flecs::world &);
   std::unique_ptr<Action> GameOverKeyDown(SDL_KeyboardEvent *key,
@@ -145,7 +146,6 @@ struct EventHandler {
   void InventoryOnRender(flecs::world ecs, Console &console, uint64_t time);
   void SelectOnRender(flecs::world ecs, Console &console, uint64_t time);
   void AreaTargetOnRender(flecs::world ecs, Console &console, uint64_t time);
-  void MainMenuOnRender(flecs::world ecs, Console &console, uint64_t time);
   void PopupOnRender(flecs::world ecs, Console &console, uint64_t time);
   void LevelUpOnRender(flecs::world ecs, Console &console, uint64_t time);
   void CharacterScreenOnRender(flecs::world ecs, Console &console,
@@ -153,6 +153,16 @@ struct EventHandler {
   void JumpOnRender(flecs::world ecs, Console &console, uint64_t time);
   void WinOnRender(flecs::world ecs, Console &console, uint64_t time);
 
+  template <char const *TITLE,
+            std::unique_ptr<Action> (EventHandler::*f)(flecs::entity)>
+  static inline void makeInventoryHandler(EventHandler &e, flecs::world ecs);
+  static inline void makeLookHandler(EventHandler &e, flecs::world ecs);
+  static inline void makeLevelUp(EventHandler &e);
+  static inline void makeCharacterScreen(EventHandler &e);
+  static inline void makeHistoryHandler(EventHandler &e, flecs::world ecs);
+
+public:
+  void MainMenuOnRender(flecs::world ecs, Console &console, uint64_t time);
   ActionResult MainGameHandleAction(flecs::world ecs, std::unique_ptr<Action>);
   ActionResult AskUserHandleAction(flecs::world ecs, std::unique_ptr<Action>);
   ActionResult MainMenuHandleAction(flecs::world ecs, std::unique_ptr<Action>);

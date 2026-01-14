@@ -1,8 +1,10 @@
 #include "renderer.hpp"
 
+#include <SDL3/SDL_render.h>
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <cstdint>
 #include <memory>
 #include <stdexcept>
 
@@ -25,18 +27,16 @@ static SDL_ScaleMode get_sdl2_scale_mode_hint() {
   return SDL_SCALEMODE_LINEAR;
 }
 
-static void setup_cache_console(const Console &console,
+static void setup_cache_console(const std::array<int, 2> &consoleDims,
                                 std::unique_ptr<Console> &cache) {
   if (cache) {
-    assert(cache->get_width() != console.get_width());
-    assert(cache->get_height() != console.get_height());
+    assert(cache->get_width() != consoleDims[0]);
+    assert(cache->get_height() != consoleDims[1]);
   }
 
   if (!cache) {
-    cache =
-        std::make_unique<Console>(console.get_width(), console.get_height());
-    for (auto &tile : *cache)
-      tile.ch = -1;
+    cache = std::make_unique<Console>(consoleDims[0], consoleDims[1]);
+    cache->clear();
   }
 }
 
@@ -79,26 +79,8 @@ static void render_texture_setup(SDL_Renderer *renderer,
   }
 
   if (cache) {
-    setup_cache_console(console, cache);
+    setup_cache_console(console.get_dims(), cache);
   }
-}
-
-static Console::Tile normalize_tile_for_drawing(Console::Tile tile) {
-  if (tile.ch < 0) {
-    tile.ch = 0; // Tile character is out-of-bounds.
-  }
-  if (tile.fg.a == 0)
-    tile.ch = 0; // No foreground alpha.
-  if (tile.bg.r == tile.fg.r && tile.bg.g == tile.fg.g &&
-      tile.bg.b == tile.fg.b && tile.bg.a == 255 && tile.fg.a == 255) {
-    tile.ch = 0; // Foreground and background color match, so the foreground
-                 // glyph would be invisible.
-  }
-  if (tile.ch == 0) {
-    tile.fg.r = tile.fg.g = tile.fg.b = tile.fg.a =
-        0; // Clear foreground color if the foreground glyph is skipped.
-  }
-  return tile;
 }
 
 static void render(const FontPtr &font, SDL_Renderer *renderer,
@@ -115,12 +97,13 @@ static void render(const FontPtr &font, SDL_Renderer *renderer,
 
   for (auto y = 0; y < console.get_height(); y++) {
     for (auto x = 0; x < console.get_width(); x++) {
-      const auto tile = normalize_tile_for_drawing(console.at({x, y}));
+      const auto tile = console.at({x, y}).normalize_tile_for_drawing();
+      SDL_Texture *texture = nullptr;
       SDL_Color fg = {tile.fg.r, tile.fg.g, tile.fg.b, tile.fg.a};
       SDL_Color bg = {tile.bg.r, tile.bg.g, tile.bg.b, tile.bg.a};
       auto surface =
-          TTF_RenderGlyph_Shaded(font.get(), (unsigned int)tile.ch, fg, bg);
-      auto texture = SDL_CreateTextureFromSurface(renderer, surface);
+          TTF_RenderGlyph_Shaded(font.get(), (uint32_t)tile.ch, fg, bg);
+      texture = SDL_CreateTextureFromSurface(renderer, surface);
       SDL_DestroySurface(surface);
       SDL_FRect dstRect{(float)(x * cell_width), (float)(y * cell_height),
                         (float)cell_width, (float)cell_height}; // x, y, w, h
@@ -261,21 +244,20 @@ static SDL_FRect get_destination_rect(struct SDL_Renderer *renderer, int width,
 static SDL_FRect
 get_destination_rect_for_console(SDL_Renderer *renderer,
                                  const std::array<int, 2> &dims,
-                                 const Console &console) {
-  return get_destination_rect(renderer, console.get_width() * dims[0],
-                              console.get_height() * dims[1]);
+                                 const std::array<int, 2> &consoleDims) {
+  return get_destination_rect(renderer, consoleDims[0] * dims[0],
+                              consoleDims[1] * dims[1]);
 }
 
-SDLData::Transform
-SDLData::cursor_transform_for_console_viewport(SDL_Renderer *renderer,
-                                               const std::array<int, 2> &dims,
-                                               const Console &console) {
-  auto dest = get_destination_rect_for_console(renderer, dims, console);
+SDLData::Transform SDLData::cursor_transform_for_console_viewport(
+    SDL_Renderer *renderer, const std::array<int, 2> &dims,
+    const std::array<int, 2> &consoleDims) {
+  auto dest = get_destination_rect_for_console(renderer, dims, consoleDims);
   return {
       dest.x,
       dest.y,
-      (float)console.get_width() / dest.w,
-      (float)console.get_height() / dest.h,
+      (float)consoleDims[0] / dest.w,
+      (float)consoleDims[1] / dest.h,
   };
 }
 
@@ -285,27 +267,26 @@ void SDLData::accumulate(const Console &console) {
   render_texture(font, _renderer.get(), console, cache_console,
                  cache_texture.get());
 
-  auto dest = get_destination_rect_for_console(_renderer.get(), dims, console);
-  cursor_transform =
-      cursor_transform_for_console_viewport(_renderer.get(), dims, console);
+  auto dest = get_destination_rect_for_console(_renderer.get(), dims,
+                                               console.get_dims());
+  cursor_transform = cursor_transform_for_console_viewport(
+      _renderer.get(), dims, console.get_dims());
   SDL_RenderTexture(_renderer.get(), cache_texture.get(), nullptr, &dest);
 }
 
 void SDLData::resetCacheConsole(void) {
   if (cache_console) {
-    for (auto &tile : *cache_console) {
-      tile = Console::Tile{-1, {}, {}};
-    }
+    cache_console->clear();
   }
 }
 
 void SDLData::convert_event_coordinates(SDL_Event &event) {
   switch (event.type) {
   case SDL_EVENT_MOUSE_MOTION: {
-    int tile_x = (int)event.motion.x;
-    int tile_y = (int)event.motion.y;
-    int previous_tile_x = (int)(event.motion.x - event.motion.xrel);
-    int previous_tile_y = (int)(event.motion.y - event.motion.yrel);
+    auto tile_x = (int)event.motion.x;
+    auto tile_y = (int)event.motion.y;
+    auto previous_tile_x = (int)(event.motion.x - event.motion.xrel);
+    auto previous_tile_y = (int)(event.motion.y - event.motion.yrel);
     pixel_to_tile(tile_x, tile_y);
     pixel_to_tile(previous_tile_x, previous_tile_y);
     event.motion.x = (float)tile_x;
@@ -315,8 +296,8 @@ void SDLData::convert_event_coordinates(SDL_Event &event) {
   } break;
   case SDL_EVENT_MOUSE_BUTTON_DOWN:
   case SDL_EVENT_MOUSE_BUTTON_UP: {
-    int x = (int)event.button.x;
-    int y = (int)event.button.y;
+    auto x = (int)event.button.x;
+    auto y = (int)event.button.y;
     pixel_to_tile(x, y);
     event.button.x = (float)x;
     event.button.y = (float)y;
