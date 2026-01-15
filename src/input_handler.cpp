@@ -94,10 +94,7 @@ std::unique_ptr<Action> EventHandler::dispatch(SDL_Event *event,
     return (this->*keyDown)(&event->key, ecs);
 
   case SDL_EVENT_MOUSE_MOTION:
-    mouse_loc[0] = (int)event->motion.x;
-    mouse_loc[1] = (int)event->motion.y;
-    assert(mouse_loc[0] >= 0);
-    assert(mouse_loc[1] >= 0);
+    mouse_loc = {(int)event->motion.x, (int)event->motion.y};
     return nullptr;
 
   case SDL_EVENT_MOUSE_BUTTON_DOWN:
@@ -572,13 +569,23 @@ std::unique_ptr<Action> EventHandler::EmptyClick(SDL_MouseButtonEvent *,
 }
 
 std::unique_ptr<Action>
-EventHandler::MainGameClick(SDL_MouseButtonEvent *button, flecs::world) {
-  if (commandBox[0] <= (int)button->x &&
-      (int)button->x < commandBox[0] + commandBox[2] &&
-      commandBox[1] <= (int)button->y &&
-      (int)button->y < commandBox[1] + commandBox[3]) {
+EventHandler::MainGameClick(SDL_MouseButtonEvent *button, flecs::world ecs) {
+  auto currentMap = ecs.lookup("currentMap").target<CurrentMap>();
+  auto &map = currentMap.get<GameMap>();
+  if (commandBox[0] <= button->x && button->x < commandBox[0] + commandBox[2] &&
+      commandBox[1] <= button->y && button->y < commandBox[1] + commandBox[3]) {
     commandsMenu();
     return nullptr;
+  } else if (map.inBounds((int)button->x, (int)button->y)) {
+    auto pos = ecs.lookup("player").get<Position>();
+    if (map.isExplored((int)button->x, (int)button->y)) {
+      if (pos.distanceSquared({(int)button->x, (int)button->y}) <= 2) {
+        return std::make_unique<BumpAction>((int)button->x - pos.x,
+                                            (int)button->y - pos.y, 1);
+      } else {
+        // TODO Add pathfinding action.
+      }
+    }
   }
   return nullptr;
 }
