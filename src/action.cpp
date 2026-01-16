@@ -109,7 +109,7 @@ ActionResult DoorAction::perform(flecs::entity e) const {
   assert(currentMap);
   auto mapEntity = currentMap.target<CurrentMap>();
 
-  auto q = ecs.query_builder<const Position>("module::blocksPosition2")
+  auto q = ecs.query_builder<const Position>("module::blocksPosition")
                .with(flecs::ChildOf, mapEntity)
                .with<Openable>()
                .build();

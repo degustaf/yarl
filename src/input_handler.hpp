@@ -2,6 +2,7 @@
 
 #include <SDL3/SDL.h>
 #include <flecs.h>
+#include <libtcod.h>
 
 #include <array>
 #include <cstdint>
@@ -13,6 +14,7 @@
 #include "actor.hpp"
 #include "blood.hpp"
 #include "console.hpp"
+#include "game_map.hpp"
 
 struct EventHandler {
   EventHandler(const std::array<int, 2> &dim)
@@ -116,8 +118,11 @@ struct EventHandler {
   std::function<void(EventHandler *, flecs::world, Console &, uint64_t)>
       parentOnRender = nullptr;
   std::function<void(flecs::world, Console &)> childOnRender = nullptr;
+  std::unique_ptr<PathCallback> pathCallback = nullptr;
+  std::unique_ptr<TCODPath> path = nullptr;
 
 private:
+  std::unique_ptr<Action> EmptyKeyDown(SDL_KeyboardEvent *key, flecs::world &);
   std::unique_ptr<Action> MainGameKeyDown(SDL_KeyboardEvent *key,
                                           flecs::world &);
   std::unique_ptr<Action> GameOverKeyDown(SDL_KeyboardEvent *key,
@@ -152,6 +157,7 @@ private:
                                uint64_t time);
   void JumpOnRender(flecs::world ecs, Console &console, uint64_t time);
   void WinOnRender(flecs::world ecs, Console &console, uint64_t time);
+  void PathfindOnRender(flecs::world ecs, Console &console, uint64_t time);
 
   template <char const *TITLE,
             std::unique_ptr<Action> (EventHandler::*f)(flecs::entity)>
@@ -160,6 +166,9 @@ private:
   static inline void makeLevelUp(EventHandler &e);
   static inline void makeCharacterScreen(EventHandler &e);
   static inline void makeHistoryHandler(EventHandler &e, flecs::world ecs);
+  static inline void makePathfinder(EventHandler &e, flecs::entity map,
+                                    std::array<int, 2> orig,
+                                    std::array<int, 2> dest);
 
 public:
   void MainMenuOnRender(flecs::world ecs, Console &console, uint64_t time);
