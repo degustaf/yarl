@@ -2,6 +2,7 @@
 
 #include <SDL3/SDL.h>
 #include <flecs.h>
+#include <libtcod.h>
 
 #include <array>
 #include <cstdint>
@@ -12,6 +13,7 @@
 #include "action.hpp"
 #include "actor.hpp"
 #include "blood.hpp"
+#include "game_map.hpp"
 
 struct EventHandler {
   EventHandler() { mainMenu(); };
@@ -93,7 +95,10 @@ struct EventHandler {
   std::function<void(EventHandler *, flecs::world, tcod::Console &, uint64_t)>
       parentOnRender = nullptr;
   std::function<void(flecs::world, tcod::Console &)> childOnRender = nullptr;
+  std::unique_ptr<PathCallback> pathCallback = nullptr;
+  std::unique_ptr<TCODPath> path = nullptr;
 
+  std::unique_ptr<Action> EmptyKeyDown(SDL_KeyboardEvent *key, flecs::world &);
   std::unique_ptr<Action> MainGameKeyDown(SDL_KeyboardEvent *key,
                                           flecs::world &);
   std::unique_ptr<Action> GameOverKeyDown(SDL_KeyboardEvent *key,
@@ -133,6 +138,8 @@ struct EventHandler {
                                uint64_t time);
   void JumpOnRender(flecs::world ecs, tcod::Console &console, uint64_t time);
   void WinOnRender(flecs::world ecs, tcod::Console &console, uint64_t time);
+  void PathfindOnRender(flecs::world ecs, tcod::Console &console,
+                        uint64_t time);
 
   ActionResult MainGameHandleAction(flecs::world ecs, std::unique_ptr<Action>);
   ActionResult AskUserHandleAction(flecs::world ecs, std::unique_ptr<Action>);

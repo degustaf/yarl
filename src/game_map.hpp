@@ -119,3 +119,12 @@ struct GameMap {
 private:
   TCODMap map;
 };
+
+struct PathCallback : ITCODPathCallback {
+  PathCallback(flecs::entity map) : map(map) {};
+
+  virtual float getWalkCost(int xFrom, int yFrom, int xTo, int yTo,
+                            void *) const override;
+
+  flecs::entity map;
+};

@@ -2,12 +2,10 @@
 
 #include <algorithm>
 #include <cassert>
-#include <libtcod/console_types.hpp>
+#include <memory>
 #include <optional>
 
-#include <libtcod.hpp>
-
-#include "ai.hpp"
+#include "action.hpp"
 #include "color.hpp"
 #include "consumable.hpp"
 #include "defines.hpp"
@@ -80,6 +78,25 @@ static inline void makeCharacterScreen(EventHandler &e) {
   e.loc_selected = nullptr;
 
   e.title = "Character Information";
+}
+
+static inline void makePathfinder(EventHandler &e, flecs::entity map,
+                                  std::array<int, 2> orig,
+                                  std::array<int, 2> dest) {
+  e.keyDown = &EventHandler::EmptyKeyDown;
+  e.click = &EventHandler::EmptyClick;
+  e.on_render = &EventHandler::PathfindOnRender;
+  e.handle_action = &EventHandler::MainGameHandleAction;
+  e.item_selected = nullptr;
+  e.loc_selected = nullptr;
+
+  auto &gameMap = map.get<GameMap>();
+  e.pathCallback = std::make_unique<PathCallback>(map);
+  auto path = std::make_unique<TCODPath>(
+      gameMap.getWidth(), gameMap.getHeight(), e.pathCallback.get(), nullptr);
+  path->compute(orig[0], orig[1], dest[0], dest[1]);
+
+  e.path = std::move(path);
 }
 
 std::unique_ptr<Action> EventHandler::dispatch(SDL_Event *event,
@@ -213,6 +230,11 @@ void EventHandler::commandsMenu(void) {
                          {(c.get_width() - COMMAND_MENU_WIDTH) / 2,
                           (c.get_height() - COMMAND_MENU_HEIGHT) / 2});
             });
+}
+
+std::unique_ptr<Action> EventHandler::EmptyKeyDown(SDL_KeyboardEvent *,
+                                                   flecs::world &) {
+  return nullptr;
 }
 
 std::unique_ptr<Action> EventHandler::MainGameKeyDown(SDL_KeyboardEvent *key,
@@ -577,7 +599,9 @@ EventHandler::MainGameClick(SDL_MouseButtonEvent *button, flecs::world ecs) {
         return std::make_unique<BumpAction>((int)button->x - pos.x,
                                             (int)button->y - pos.y, 1);
       } else {
-        // TODO Add pathfinding action.
+        makePathfinder(*this, currentMap, pos,
+                       {(int)button->x, (int)button->y});
+        return nullptr;
       }
     }
   }
@@ -910,6 +934,45 @@ void EventHandler::WinOnRender(flecs::world, tcod::Console &console,
   }
   }
   last_time = time;
+}
+
+void EventHandler::PathfindOnRender(flecs::world ecs, tcod::Console &console,
+                                    uint64_t time) {
+  if (path->isEmpty()) {
+    restoreMainGame();
+    MainGameOnRender(ecs, console, time);
+    return;
+  }
+  int x, y;
+  if (!path->walk(&x, &y, true)) {
+    restoreMainGame();
+    MainGameOnRender(ecs, console, time);
+    return;
+  }
+  auto player = ecs.entity("player");
+  auto pos = player.get<Position>();
+  std::unique_ptr<Action> act =
+      std::make_unique<BumpAction>(x - pos.x, y - pos.y, 1);
+  auto ret = (this->*handle_action)(ecs, std::move(act));
+  if (!ret) {
+    assert(ret.type == ActionResultType::Failure);
+    MainGameOnRender(ecs, console, time);
+    return;
+  }
+
+  auto map = ecs.lookup("currentMap").target<CurrentMap>();
+  auto &gm = map.get<GameMap>();
+  auto q = ecs.query_builder<const Position>()
+               .with<Fighter>()
+               .with(flecs::ChildOf, map)
+               .build();
+  auto seen = false;
+  q.each([&](auto &p) { seen |= gm.isInFov(p); });
+  if (seen) {
+    restoreMainGame();
+  }
+
+  MainGameOnRender(ecs, console, time);
 }
 
 ActionResult
