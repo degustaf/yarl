@@ -1,4 +1,3 @@
-#include <memory>
 #define SDL_MAIN_USE_CALLBACKS
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
@@ -65,7 +64,8 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
   auto ecs = *static_cast<flecs::world *>(appstate);
   auto &console = ecs.get_mut<tcod::Console>();
   console.clear();
-  ecs.get_mut<InputHandler>().on_render(ecs, console, SDL_GetTicks());
+  ecs.get_mut<std::unique_ptr<InputHandler>>()->on_render(ecs, console,
+                                                          SDL_GetTicks());
   ecs.get_mut<tcod::Context>().present(console);
 #if !defined NDEBUG
   ecs.progress();
@@ -75,9 +75,9 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
 SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
   auto &ecs = *static_cast<flecs::world *>(appstate);
-  auto &handler = ecs.get_mut<InputHandler>();
+  auto &handler = ecs.get_mut<std::unique_ptr<InputHandler>>();
   ecs.get_mut<tcod::Context>().convert_event_coordinates(*event);
-  return handler.handle_action(ecs, handler.dispatch(event, ecs));
+  return handler->handle_action(ecs, handler->dispatch(event, ecs));
 }
 
 static void delete_file(std::filesystem::path file) {
