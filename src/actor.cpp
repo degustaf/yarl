@@ -92,7 +92,7 @@ void Fighter::die(flecs::entity self) {
   auto &messageLog = ecs.lookup("messageLog").get_mut<MessageLog>();
   if (self == player) {
     messageLog.addMessage("You died!", color::playerDie);
-    ecs.get_mut<EventHandler>().gameOver();
+    make<GameOver>(ecs);
   } else {
     auto msg = stringf("%s is dead!", name.name.c_str());
     messageLog.addMessage(msg, color::enemyDie);
@@ -100,7 +100,7 @@ void Fighter::die(flecs::entity self) {
     if (xp)
       player.get_mut<Level>().add_xp(ecs, xp->given);
     if (win)
-      ecs.get_mut<EventHandler>().winGame();
+      make<WinScreen>(ecs);
   }
   name.name = "remains of " + name.name;
 }

@@ -4,6 +4,7 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <optional>
 
 #include "actor.hpp"
@@ -217,7 +218,8 @@ module::module(flecs::world ecs) {
       .member<std::vector<Scent>>("scent");
 
   // input_handler.hpp
-  ecs.component<EventHandler>();
+  ecs.component<InputHandler>();
+  ecs.component<std::unique_ptr<InputHandler>>();
 
   // inventory.hpp
   ecs.component<Inventory>().member<int>("capacity");

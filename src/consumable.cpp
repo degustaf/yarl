@@ -75,12 +75,13 @@ ActionResult LightningDamageConsumable::activate(flecs::entity item,
 }
 
 ActionResult ConfusionConsumable::activate(flecs::entity item) const {
-  auto &eventHandler = item.world().get_mut<EventHandler>();
-  eventHandler.makeTargetSelector(
+  auto ecs = item.world();
+  make<TargetSelector<false>>(
+      ecs,
       [item](auto xy) {
         return std::make_unique<TargetedItemAction>(item, xy);
       },
-      item.world(), false);
+      ecs);
 
   return {ActionResultType::Failure, "Select a target location.", 0.0f,
           color::needsTarget};
@@ -135,8 +136,8 @@ ActionResult ConfusionConsumable::selected(flecs::entity item,
 
 ActionResult FireballDamageConsumable::activate(flecs::entity item) const {
   auto ecs = item.world();
-  auto &eventHandler = ecs.get_mut<EventHandler>();
-  eventHandler.makeAreaTargetSelector(
+  make<AreaTargetSelector>(
+      ecs,
       [item](auto xy) {
         return std::make_unique<TargetedItemAction>(item, xy);
       },
@@ -248,7 +249,7 @@ ActionResult RopeConsumable::activate(flecs::entity item,
     }
   }
   if (usable) {
-    ecs.get_mut<EventHandler>().jumpConfirm(true, item);
+    make<JumpConfirm<true>>(ecs, item);
     return {ActionResultType::Failure, "", 0.0f};
   }
   return {ActionResultType::Failure, "There is no chasm to climb down here.",

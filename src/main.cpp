@@ -1,3 +1,4 @@
+#include <memory>
 #define SDL_MAIN_USE_CALLBACKS
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
@@ -40,7 +41,7 @@ SDL_AppResult SDL_AppInit(void **data, [[maybe_unused]] int argc,
   ecs->emplace<SDLData>(width, height, 15.0f, "Yet Another Roguelike",
                         "assets/CodeNewRoman.ttf");
   ecs->set<Console>(ecs->get_mut<SDLData>().new_console(width, height));
-  ecs->emplace<EventHandler>(std::array{width, height});
+  make<MainMenuInputHandler>(*ecs);
 
 #if !defined NDEBUG
   ecs->import <flecs::stats>();
@@ -52,9 +53,6 @@ SDL_AppResult SDL_AppInit(void **data, [[maybe_unused]] int argc,
     std::filesystem::create_directory(data_dir);
   }
 
-  assert(ecs->get<EventHandler>().mouse_loc[0] >= 0);
-  assert(ecs->get<EventHandler>().mouse_loc[1] >= 0);
-
   return SDL_APP_CONTINUE;
 }
 
@@ -62,10 +60,10 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
   auto ecs = *static_cast<flecs::world *>(appstate);
   auto &console = ecs.get_mut<Console>();
   console.clear();
-  auto &eventHandler = ecs.get_mut<EventHandler>();
-  assert(eventHandler.mouse_loc[0] >= 0);
-  assert(eventHandler.mouse_loc[1] >= 0);
-  (eventHandler.*(eventHandler.on_render))(ecs, console, SDL_GetTicks());
+
+  ecs.get_mut<std::unique_ptr<InputHandler>>()->on_render(ecs, console,
+                                                          SDL_GetTicks());
+
   auto &data = ecs.get_mut<SDLData>();
   auto renderer = data.renderer();
   SDL_SetRenderTarget(renderer, nullptr);
@@ -83,9 +81,9 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
 SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
   auto &ecs = *static_cast<flecs::world *>(appstate);
-  auto &eh = ecs.get_mut<EventHandler>();
+  auto &handler = ecs.get_mut<std::unique_ptr<InputHandler>>();
   ecs.get_mut<SDLData>().convert_event_coordinates(*event);
-  return (eh.*(eh.handle_action))(ecs, eh.dispatch(event, ecs));
+  return handler->handle_action(ecs, handler->dispatch(event, ecs));
 }
 
 static void delete_file(std::filesystem::path file) {
