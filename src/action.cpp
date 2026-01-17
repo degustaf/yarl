@@ -68,8 +68,7 @@ ActionResult MoveAction::perform(flecs::entity e) const {
       }
     } else if (map.isTransparent(pos + dxy)) {
       // We've found a chasm.
-      auto &eventHandler = e.world().get_mut<EventHandler>();
-      eventHandler.jumpConfirm(false, e.null());
+      make<JumpConfirm<false>>(e.world(), e.null());
       return {ActionResultType::Failure, "", 0.0f};
     }
   }
@@ -306,12 +305,12 @@ ActionResult RangedTargetAction::perform(flecs::entity e) const {
     auto range = weapon.try_get<Ranged>();
     if (range) {
       auto ecs = e.world();
-      auto &eventHandler = ecs.get_mut<EventHandler>();
-      eventHandler.makeTargetSelector(
+      make<TargetSelector<true>>(
+          ecs,
           [weapon](auto xy) {
             return std::make_unique<TargetedItemAction>(weapon, xy);
           },
-          ecs, true);
+          ecs);
       return {ActionResultType::Failure, "", 0.0f};
     }
     auto msg = tcod::stringf("Your %s isn't a ranged weapon.",

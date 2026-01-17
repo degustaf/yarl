@@ -1,172 +1,14 @@
 #include "input_handler.hpp"
 
-#include <algorithm>
-#include <cassert>
-#include <memory>
-#include <optional>
-
-#include "action.hpp"
-#include "color.hpp"
 #include "consumable.hpp"
 #include "defines.hpp"
 #include "engine.hpp"
-#include "game_map.hpp"
 #include "inventory.hpp"
 #include "level.hpp"
 #include "message_log.hpp"
 #include "render_functions.hpp"
-#include "scent.hpp"
-
-static inline void makeHistoryHandler(EventHandler &e, flecs::world ecs) {
-  e.keyDown = &EventHandler::HistoryKeyDown;
-  e.click = &EventHandler::EmptyClick;
-  e.on_render = &EventHandler::HistoryOnRender;
-  e.handle_action = &EventHandler::MainGameHandleAction;
-  e.item_selected = nullptr;
-  e.loc_selected = nullptr;
-
-  e.log_length = ecs.lookup("messageLog").get<MessageLog>().size();
-  e.cursor = e.log_length - 1;
-}
-
-template <char const *TITLE,
-          std::unique_ptr<Action> (EventHandler::*f)(flecs::entity)>
-static inline void makeInventoryHandler(EventHandler &e, flecs::world ecs) {
-  e.keyDown = &EventHandler::InventoryKeyDown;
-  e.click = &EventHandler::AskUserClick;
-  e.on_render = &EventHandler::InventoryOnRender;
-  e.handle_action = &EventHandler::AskUserHandleAction;
-  e.item_selected = f;
-  e.loc_selected = nullptr;
-
-  e.title = TITLE;
-  e.q = ecs.query_builder<const Named>("module::playerItem")
-            .with<ContainedBy>(ecs.lookup("player"))
-            .with<Item>()
-            .cached()
-            .build();
-}
-
-static void makeLookHandler(EventHandler &e, flecs::world ecs) {
-  e.keyDown = &EventHandler::SelectKeyDown;
-  e.click = &EventHandler::SelectClick;
-  e.on_render = &EventHandler::SelectOnRender;
-  e.handle_action = &EventHandler::AskUserHandleAction;
-  e.item_selected = nullptr;
-  e.loc_selected = &EventHandler::LookSelectedLoc;
-
-  e.mouse_loc = ecs.lookup("player").get<Position>();
-}
-
-static inline void makeLevelUp(EventHandler &e) {
-  e.keyDown = &EventHandler::LevelUpKeyDown;
-  e.click = &EventHandler::LevelUpClick;
-  e.on_render = &EventHandler::LevelUpOnRender;
-  e.handle_action = &EventHandler::AskUserHandleAction;
-  e.item_selected = nullptr;
-  e.loc_selected = nullptr;
-
-  e.title = "Level Up";
-}
-
-static inline void makeCharacterScreen(EventHandler &e) {
-  e.keyDown = &EventHandler::AskUserKeyDown;
-  e.click = &EventHandler::AskUserClick;
-  e.on_render = &EventHandler::CharacterScreenOnRender;
-  e.handle_action = &EventHandler::AskUserHandleAction;
-  e.item_selected = nullptr;
-  e.loc_selected = nullptr;
-
-  e.title = "Character Information";
-}
-
-static inline void makePathfinder(EventHandler &e, flecs::entity map,
-                                  std::array<int, 2> orig,
-                                  std::array<int, 2> dest) {
-  e.keyDown = &EventHandler::EmptyKeyDown;
-  e.click = &EventHandler::EmptyClick;
-  e.on_render = &EventHandler::PathfindOnRender;
-  e.handle_action = &EventHandler::MainGameHandleAction;
-  e.item_selected = nullptr;
-  e.loc_selected = nullptr;
-
-  auto &gameMap = map.get<GameMap>();
-  e.pathCallback = std::make_unique<PathCallback>(map);
-  auto path = std::make_unique<TCODPath>(
-      gameMap.getWidth(), gameMap.getHeight(), e.pathCallback.get(), nullptr);
-  path->compute(orig[0], orig[1], dest[0], dest[1]);
-
-  e.path = std::move(path);
-}
-
-std::unique_ptr<Action> EventHandler::dispatch(SDL_Event *event,
-                                               flecs::world &ecs) {
-  switch (event->type) {
-  case SDL_EVENT_QUIT:
-    return std::make_unique<ExitAction>();
-
-  case SDL_EVENT_KEY_DOWN:
-    return (this->*keyDown)(&event->key, ecs);
-
-  case SDL_EVENT_MOUSE_MOTION:
-    mouse_loc = {(int)event->motion.x, (int)event->motion.y};
-    return nullptr;
-
-  case SDL_EVENT_MOUSE_BUTTON_DOWN:
-    return (this->*click)(&event->button, ecs);
-
-  default:
-    return nullptr;
-  }
-}
-
-void EventHandler::restoreMainGame() {
-  keyDown = &EventHandler::MainGameKeyDown;
-  click = &EventHandler::MainGameClick;
-  on_render = &EventHandler::MainGameOnRender;
-  handle_action = &EventHandler::MainGameHandleAction;
-  item_selected = nullptr;
-  loc_selected = nullptr;
-}
-
-void EventHandler::jumpConfirm(bool useRope, flecs::entity item) {
-  keyDown = &EventHandler::JumpKeyDown;
-  click = &EventHandler::AskUserClick;
-  on_render = &EventHandler::JumpOnRender;
-  handle_action = &EventHandler::AskUserHandleAction;
-  item_selected = nullptr;
-  loc_selected = nullptr;
-
-  this->useRope = useRope;
-  this->item = item;
-}
-
-void EventHandler::mainMenu(void) {
-  keyDown = &EventHandler::MainMenuKeyDown;
-  click = &EventHandler::EmptyClick;
-  on_render = &EventHandler::MainMenuOnRender;
-  handle_action = &EventHandler::MainMenuHandleAction;
-  item_selected = nullptr;
-  loc_selected = nullptr;
-}
-
-void EventHandler::gameOver(void) {
-  keyDown = &EventHandler::GameOverKeyDown;
-  click = &EventHandler::EmptyClick;
-  on_render = &EventHandler::MainGameOnRender;
-  handle_action = &EventHandler::MainGameHandleAction;
-  item_selected = nullptr;
-  loc_selected = nullptr;
-}
-
-void EventHandler::winGame(void) {
-  keyDown = &EventHandler::GameOverKeyDown;
-  click = &EventHandler::EmptyClick;
-  on_render = &EventHandler::WinOnRender;
-  handle_action = &EventHandler::MainMenuHandleAction;
-  item_selected = nullptr;
-  loc_selected = nullptr;
-}
+#include <array>
+#include <memory>
 
 static constexpr auto COMMAND_MENU_WIDTH = 50;
 static constexpr auto COMMAND_MENU_HEIGHT = 28;
@@ -219,292 +61,65 @@ static tcod::Console buildCommandMenu(void) {
   return con;
 }
 
-void EventHandler::commandsMenu(void) {
+static void commandsMenu(flecs::world ecs, InputHandler &handler) {
   static auto menuConsole = buildCommandMenu();
-  makePopup([](auto e) { e->restoreMainGame(); },
-            [](auto e, auto world, auto &c, auto ts) {
-              e->MainGameOnRender(world, c, ts);
-            },
-            [](auto, tcod::Console &c) {
-              tcod::blit(c, menuConsole,
-                         {(c.get_width() - COMMAND_MENU_WIDTH) / 2,
-                          (c.get_height() - COMMAND_MENU_HEIGHT) / 2});
-            });
+  auto f = [](auto, tcod::Console &c) {
+    tcod::blit(c, menuConsole,
+               {(c.get_width() - COMMAND_MENU_WIDTH) / 2,
+                (c.get_height() - COMMAND_MENU_HEIGHT) / 2});
+  };
+
+  make<PopupInputHandler<MainGameInputHandler, decltype(f)>>(ecs, handler, f);
 }
 
-std::unique_ptr<Action> EventHandler::EmptyKeyDown(SDL_KeyboardEvent *,
-                                                   flecs::world &) {
-  return nullptr;
-}
+std::unique_ptr<Action> InputHandler::dispatch(SDL_Event *event,
+                                               flecs::world &ecs) {
+  switch (event->type) {
+  case SDL_EVENT_QUIT:
+    return std::make_unique<ExitAction>();
 
-std::unique_ptr<Action> EventHandler::MainGameKeyDown(SDL_KeyboardEvent *key,
-                                                      flecs::world &ecs) {
-  auto speed = 1;
-  if (key->mod & SDL_KMOD_SHIFT)
-    speed *= 2;
-  if (key->mod & SDL_KMOD_CTRL)
-    speed *= 3;
-  switch (key->scancode) {
-  case SDL_SCANCODE_UP:
-  case SDL_SCANCODE_KP_8:
-  case SDL_SCANCODE_K:
-    return std::make_unique<BumpAction>(0, -1, speed);
-  case SDL_SCANCODE_DOWN:
-  case SDL_SCANCODE_KP_2:
-  case SDL_SCANCODE_J:
-    return std::make_unique<BumpAction>(0, 1, speed);
-  case SDL_SCANCODE_LEFT:
-  case SDL_SCANCODE_KP_4:
-  case SDL_SCANCODE_H:
-    return std::make_unique<BumpAction>(-1, 0, speed);
-  case SDL_SCANCODE_RIGHT:
-  case SDL_SCANCODE_KP_6:
-  case SDL_SCANCODE_L:
-    return std::make_unique<BumpAction>(1, 0, speed);
-  case SDL_SCANCODE_HOME:
-  case SDL_SCANCODE_KP_7:
-  case SDL_SCANCODE_Y:
-    return std::make_unique<BumpAction>(-1, -1, speed);
-  case SDL_SCANCODE_END:
-  case SDL_SCANCODE_KP_1:
-  case SDL_SCANCODE_B:
-    return std::make_unique<BumpAction>(-1, 1, speed);
-  case SDL_SCANCODE_PAGEUP:
-  case SDL_SCANCODE_KP_9:
-  case SDL_SCANCODE_U:
-    return std::make_unique<BumpAction>(1, -1, speed);
-  case SDL_SCANCODE_PAGEDOWN:
-  case SDL_SCANCODE_KP_3:
-  case SDL_SCANCODE_N:
-    return std::make_unique<BumpAction>(1, 1, speed);
+  case SDL_EVENT_KEY_DOWN:
+    return keyDown(event->key, ecs);
 
-  case SDL_SCANCODE_PERIOD:
-    if (key->mod & SDL_KMOD_SHIFT) {
-      return std::make_unique<TakeStairsAction>();
-    }
-    // Intentional fallthrough
-  case SDL_SCANCODE_KP_5:
-  case SDL_SCANCODE_CLEAR:
-    return std::make_unique<WaitAction>();
-
-  case SDL_SCANCODE_C:
-    commandsMenu();
-    return nullptr;
-  case SDL_SCANCODE_D: {
-    static constexpr char DROP_TITLE[] = "┤Select an item to drop├";
-    makeInventoryHandler<DROP_TITLE, &EventHandler::DropItemSelected>(*this,
-                                                                      ecs);
-    return nullptr;
-  }
-  case SDL_SCANCODE_F:
-    return std::make_unique<RangedTargetAction>();
-  case SDL_SCANCODE_G:
-    return std::make_unique<PickupAction>();
-  case SDL_SCANCODE_I: {
-    static constexpr char USE_TITLE[] = "┤Select an item to use├";
-    makeInventoryHandler<USE_TITLE, &EventHandler::UseItemSelected>(*this, ecs);
-    return nullptr;
-  }
-  case SDL_SCANCODE_O:
-    return std::make_unique<DoorAction>();
-  case SDL_SCANCODE_V:
-    makeHistoryHandler(*this, ecs);
-    return nullptr;
-  case SDL_SCANCODE_X:
-    makeCharacterScreen(*this);
-    return nullptr;
-  case SDL_SCANCODE_SLASH:
-    makeLookHandler(*this, ecs);
+  case SDL_EVENT_MOUSE_MOTION:
+    mouse_loc = {(int)event->motion.x, (int)event->motion.y};
     return nullptr;
 
-  case SDL_SCANCODE_ESCAPE:
-    mainMenu();
-    return nullptr;
+  case SDL_EVENT_MOUSE_BUTTON_DOWN:
+    return click(event->button, ecs);
 
   default:
     return nullptr;
   }
 }
 
-std::unique_ptr<Action> EventHandler::GameOverKeyDown(SDL_KeyboardEvent *key,
-                                                      flecs::world &) {
-  switch (key->scancode) {
-  case SDL_SCANCODE_ESCAPE: {
-    mainMenu();
-    return nullptr;
+ActionResult InputHandler::handle_action(flecs::world ecs,
+                                         std::unique_ptr<Action> action) {
+  if (action) {
+    auto ret = action->perform(ecs.entity());
+    assert(ret.msg.size() == 0);
+    assert(!ret);
+    return ret;
   }
-
-  default:
-    return nullptr;
-  }
+  return {ActionResultType::Failure, "", 0.0f};
 }
 
-std::unique_ptr<Action> EventHandler::HistoryKeyDown(SDL_KeyboardEvent *key,
-                                                     flecs::world &) {
-  switch (key->scancode) {
-  case SDL_SCANCODE_UP:
-    if (cursor == 0) {
-      cursor = log_length - 1;
-    } else {
-      cursor--;
-    }
-    return nullptr;
-  case SDL_SCANCODE_DOWN:
-    if (cursor == log_length - 1) {
-      cursor = 0;
-    } else {
-      cursor++;
-    }
-    return nullptr;
-  case SDL_SCANCODE_PAGEUP:
-    cursor = cursor < 10 ? 0 : cursor - 10;
-    return nullptr;
-  case SDL_SCANCODE_PAGEDOWN:
-    cursor = std::min(cursor + 10, log_length - 1);
-    return nullptr;
-  case SDL_SCANCODE_HOME:
-    cursor = 0;
-    return nullptr;
-  case SDL_SCANCODE_END:
-    cursor = log_length - 1;
-    return nullptr;
-
-  default:
-    restoreMainGame();
-    return nullptr;
-  }
-}
-
-std::unique_ptr<Action> EventHandler::AskUserKeyDown(SDL_KeyboardEvent *key,
-                                                     flecs::world &) {
-  switch (key->scancode) {
-  case SDL_SCANCODE_LSHIFT:
-  case SDL_SCANCODE_RSHIFT:
-  case SDL_SCANCODE_LCTRL:
-  case SDL_SCANCODE_RCTRL:
-  case SDL_SCANCODE_LALT:
-  case SDL_SCANCODE_RALT:
-    return nullptr;
-  default:
-    restoreMainGame();
-    return nullptr;
-  }
-}
-
-std::unique_ptr<Action> EventHandler::InventoryKeyDown(SDL_KeyboardEvent *key,
-                                                       flecs::world &ecs) {
-  auto idx = key->scancode - SDL_SCANCODE_A;
-  if (0 <= idx && idx < q.count()) {
-    return (this->*item_selected)(q.page(idx, 1).first());
-  }
-  return AskUserKeyDown(key, ecs);
-}
-
-std::unique_ptr<Action> EventHandler::SelectKeyDown(SDL_KeyboardEvent *key,
-                                                    flecs::world &ecs) {
-  auto dxy = std::array<int, 2>{0, 0};
-
-  switch (key->scancode) {
-  case SDL_SCANCODE_LSHIFT:
-  case SDL_SCANCODE_RSHIFT:
-  case SDL_SCANCODE_LCTRL:
-  case SDL_SCANCODE_RCTRL:
-  case SDL_SCANCODE_LALT:
-  case SDL_SCANCODE_RALT:
-    return nullptr;
-
-  case SDL_SCANCODE_UP:
-  case SDL_SCANCODE_KP_8:
-  case SDL_SCANCODE_K:
-    dxy = {0, -1};
-    break;
-  case SDL_SCANCODE_DOWN:
-  case SDL_SCANCODE_KP_2:
-  case SDL_SCANCODE_J:
-    dxy = {0, 1};
-    break;
-  case SDL_SCANCODE_LEFT:
-  case SDL_SCANCODE_KP_4:
-  case SDL_SCANCODE_H:
-    dxy = {-1, 0};
-    break;
-  case SDL_SCANCODE_RIGHT:
-  case SDL_SCANCODE_KP_6:
-  case SDL_SCANCODE_L:
-    dxy = {1, 0};
-    break;
-  case SDL_SCANCODE_HOME:
-  case SDL_SCANCODE_KP_7:
-  case SDL_SCANCODE_Y:
-    dxy = {-1, -1};
-    break;
-  case SDL_SCANCODE_END:
-  case SDL_SCANCODE_KP_1:
-  case SDL_SCANCODE_B:
-    dxy = {-1, 1};
-    break;
-  case SDL_SCANCODE_PAGEUP:
-  case SDL_SCANCODE_KP_9:
-  case SDL_SCANCODE_U:
-    dxy = {1, -1};
-    break;
-  case SDL_SCANCODE_PAGEDOWN:
-  case SDL_SCANCODE_KP_3:
-  case SDL_SCANCODE_N:
-    dxy = {1, 1};
-    break;
-
-  case SDL_SCANCODE_RETURN:
-  case SDL_SCANCODE_RETURN2:
-  case SDL_SCANCODE_KP_ENTER:
-    return (this->*loc_selected)(mouse_loc);
-
-  case SDL_SCANCODE_F:
-    if (useF) {
-      return (this->*loc_selected)(mouse_loc);
-    }
-    // Intentional fallthrough
-
-  default:
-    restoreMainGame();
-    return nullptr;
-  }
-
-  auto modifier = 1;
-  if (key->mod & SDL_KMOD_SHIFT) {
-    modifier *= 5;
-  }
-  if (key->mod & SDL_KMOD_CTRL) {
-    modifier *= 10;
-  }
-  if (key->mod & SDL_KMOD_ALT) {
-    modifier *= 20;
-  }
-
-  auto currentMap = ecs.lookup("currentMap").target<CurrentMap>();
-  auto &map = currentMap.get<GameMap>();
-  mouse_loc[0] =
-      std::clamp(mouse_loc[0] + dxy[0] * modifier, 0, map.getWidth());
-  mouse_loc[1] =
-      std::clamp(mouse_loc[1] + dxy[1] * modifier, 0, map.getHeight());
-  return nullptr;
-}
-
-std::unique_ptr<Action> EventHandler::MainMenuKeyDown(SDL_KeyboardEvent *key,
-                                                      flecs::world &ecs) {
-  switch (key->scancode) {
+std::unique_ptr<Action> MainMenuInputHandler::keyDown(SDL_KeyboardEvent &key,
+                                                      flecs::world ecs) {
+  switch (key.scancode) {
   case SDL_SCANCODE_Q:
   case SDL_SCANCODE_ESCAPE:
     return std::make_unique<ExitAction>();
   case SDL_SCANCODE_C:
+    // This could cause the unique_ptr managing this's lifetime to deallocate
     if (Engine::load(ecs, data_dir / saveFilename, *this)) {
-      restoreMainGame();
+      make<MainGameInputHandler>(ecs);
     }
     break;
   case SDL_SCANCODE_N: {
     Engine::clear_game_data(ecs);
     Engine::new_game(ecs);
-    restoreMainGame();
+    make<MainGameInputHandler>(ecs);
     break;
   }
 
@@ -515,124 +130,33 @@ std::unique_ptr<Action> EventHandler::MainMenuKeyDown(SDL_KeyboardEvent *key,
   return nullptr;
 }
 
-std::unique_ptr<Action> EventHandler::PopupKeyDown(SDL_KeyboardEvent *key,
-                                                   flecs::world &) {
-  switch (key->scancode) {
-  case SDL_SCANCODE_ESCAPE:
-  case SDL_SCANCODE_RETURN:
-  case SDL_SCANCODE_RETURN2:
-  case SDL_SCANCODE_KP_ENTER:
-    parent(this);
-    break;
-  default:
-    break;
-  }
-  return nullptr;
-}
+void MainMenuInputHandler::on_render(flecs::world, tcod::Console &console,
+                                     uint64_t) {
+  static constexpr auto ImageWidth = 100;
+  // static const auto background_image = TCODImage("assets/teeth.png");
+  // assert(background_image.getSize()[0] == ImageWidth);
+  // tcod::draw_quartergraphics(console, background_image);
 
-std::unique_ptr<Action> EventHandler::LevelUpKeyDown(SDL_KeyboardEvent *key,
-                                                     flecs::world &ecs) {
-  auto player = ecs.lookup("player");
-  auto &level = player.get_mut<Level>();
-  auto msg = "";
-  switch (key->scancode) {
-  case SDL_SCANCODE_LSHIFT:
-  case SDL_SCANCODE_RSHIFT:
-  case SDL_SCANCODE_LCTRL:
-  case SDL_SCANCODE_RCTRL:
-  case SDL_SCANCODE_LALT:
-  case SDL_SCANCODE_RALT:
-    return nullptr;
-  case SDL_SCANCODE_A:
-    msg = level.increase_max_hp(player);
-    break;
-  case SDL_SCANCODE_B:
-    msg = level.increase_power(player);
-    break;
-  case SDL_SCANCODE_C:
-    msg = level.increase_defense(player);
-    break;
-  default:
-    return std::make_unique<MessageAction>("Invalid entry.", color::invalid);
-  }
-  restoreMainGame();
-  return std::make_unique<MessageAction>(msg);
-}
+  const auto printY = (ImageWidth / 2 + console.get_width()) / 2;
+  tcod::print(console, {printY, console.get_height() / 2 - 4},
+              "The Fiend in Facility 14", color::menu_title, std::nullopt,
+              TCOD_CENTER);
+  tcod::print(console, {printY, console.get_height() - 2}, "By degustaf",
+              color::menu_title, std::nullopt, TCOD_CENTER);
 
-std::unique_ptr<Action> EventHandler::JumpKeyDown(SDL_KeyboardEvent *key,
-                                                  flecs::world &ecs) {
-  switch (key->scancode) {
-  case SDL_SCANCODE_Y:
-    if (useRope)
-      item.destruct();
-    return std::make_unique<JumpAction>(useRope);
-  case SDL_SCANCODE_J:
-    if (useRope) {
-      return std::make_unique<JumpAction>(false);
-    }
-    break;
-  default:
-    break;
+  static const auto choices =
+      std::array{"[N] Play a new game     ", "[C] Continue last game  ",
+                 "[Q] Quit                "};
+  for (auto i = 0; i < (int)choices.size(); i++) {
+    tcod::print(console, {printY, console.get_height() / 2 - 2 + i}, choices[i],
+                color::menu_text, color::black, TCOD_CENTER);
   }
-  return AskUserKeyDown(key, ecs);
 }
 
 static auto constexpr commandBox = std::array{62, 45, 12, 3};
 
-std::unique_ptr<Action> EventHandler::EmptyClick(SDL_MouseButtonEvent *,
-                                                 flecs::world) {
-  return nullptr;
-}
-
-std::unique_ptr<Action>
-EventHandler::MainGameClick(SDL_MouseButtonEvent *button, flecs::world ecs) {
-  auto currentMap = ecs.lookup("currentMap").target<CurrentMap>();
-  auto &map = currentMap.get<GameMap>();
-  if (commandBox[0] <= button->x && button->x < commandBox[0] + commandBox[2] &&
-      commandBox[1] <= button->y && button->y < commandBox[1] + commandBox[3]) {
-    commandsMenu();
-    return nullptr;
-  } else if (map.inBounds((int)button->x, (int)button->y)) {
-    auto pos = ecs.lookup("player").get<Position>();
-    if (map.isExplored((int)button->x, (int)button->y)) {
-      if (pos.distanceSquared({(int)button->x, (int)button->y}) <= 2) {
-        return std::make_unique<BumpAction>((int)button->x - pos.x,
-                                            (int)button->y - pos.y, 1);
-      } else {
-        makePathfinder(*this, currentMap, pos,
-                       {(int)button->x, (int)button->y});
-        return nullptr;
-      }
-    }
-  }
-  return nullptr;
-}
-
-std::unique_ptr<Action> EventHandler::AskUserClick(SDL_MouseButtonEvent *,
-                                                   flecs::world) {
-  restoreMainGame();
-  return nullptr;
-}
-
-std::unique_ptr<Action> EventHandler::SelectClick(SDL_MouseButtonEvent *button,
-                                                  flecs::world ecs) {
-  auto currentMap = ecs.lookup("currentMap").target<CurrentMap>();
-  auto &map = currentMap.get<GameMap>();
-  if (map.inBounds((int)button->x, (int)button->y)) {
-    if (button->button == SDL_BUTTON_LEFT) {
-      return (this->*loc_selected)({(int)button->x, (int)button->y});
-    }
-  }
-  return AskUserClick(button, ecs);
-}
-
-std::unique_ptr<Action> EventHandler::LevelUpClick(SDL_MouseButtonEvent *,
-                                                   flecs::world) {
-  return nullptr;
-}
-
-void EventHandler::MainGameOnRender(flecs::world ecs, tcod::Console &console,
-                                    uint64_t) {
+void MainHandler::on_render(flecs::world ecs, tcod::Console &console,
+                            uint64_t) {
   auto map = ecs.lookup("currentMap").target<CurrentMap>();
   auto &gMap = map.get_mut<GameMap>();
   gMap.render(console);
@@ -669,31 +193,203 @@ void EventHandler::MainGameOnRender(flecs::world ecs, tcod::Console &console,
   renderCommandButton(console, commandBox);
 }
 
-void EventHandler::HistoryOnRender(flecs::world ecs, tcod::Console &console,
-                                   uint64_t time) {
-  MainGameOnRender(ecs, console, time);
-  auto logConsole =
-      tcod::Console(console.get_width() - 6, console.get_height() - 6);
-  tcod::draw_frame(logConsole,
-                   {0, 0, logConsole.get_width(), logConsole.get_height()},
-                   DECORATION, std::nullopt, std::nullopt);
-  tcod::print_rect(logConsole, {0, 0, logConsole.get_width(), 1},
-                   "┤Message history├", std::nullopt, std::nullopt,
-                   TCOD_CENTER);
-  ecs.lookup("messageLog")
-      .get<MessageLog>()
-      .render(logConsole, 1, 1, logConsole.get_width() - 2,
-              logConsole.get_height() - 2, cursor);
-  tcod::blit(console, logConsole, {3, 3});
+ActionResult MainHandler::handle_action(flecs::world ecs,
+                                        std::unique_ptr<Action> action) {
+  if (action) {
+    auto player = ecs.entity("player");
+    auto ret = action->perform(player);
+    auto &log = ecs.lookup("messageLog").get_mut<MessageLog>();
+    if (ret.msg.size() > 0) {
+      log.addMessage(ret.msg, ret.fg);
+    }
+    auto &scent = player.get_mut<Scent>();
+    if (ret) {
+      auto map = ecs.lookup("currentMap").target<CurrentMap>();
+      auto &gameMap = map.get_mut<GameMap>();
+      gameMap.update_fov(player);
+      Engine::handle_enemy_turns(ecs);
+      scent += {ScentType::player, ret.exertion};
+      gameMap.update_scent(map);
+      auto scentMessage = gameMap.detectScent(player);
+      if (scentMessage.size() > 0) {
+        log.addMessage(scentMessage);
+      }
+    }
+    // if (player.has<TrackerConsumable>()) {
+    //   auto &t = player.get_mut<TrackerConsumable>();
+    //   t.turns--;
+    //   if (t.turns < 0) {
+    //     player.remove<TrackerConsumable>();
+    //   }
+    // }
+    if (player.get<Level>().requires_level_up()) {
+      make<LevelupHandler>(ecs);
+    } else if (scent.power > 100) {
+      auto &warning = player.get_mut<ScentWarning>();
+      if (!warning.warned) {
+        auto f = [](auto, auto &c) {
+          tcod::print(c, {c.get_width() / 2, c.get_height() / 2 - 1},
+                      "Be careful...", color::red, color::black, TCOD_CENTER);
+          tcod::print(c, {c.get_width() / 2, c.get_height() / 2 + 1},
+                      "The Fiend can track you by your scent.", color::white,
+                      color::black, TCOD_CENTER);
+        };
+        make<PopupInputHandler<MainGameInputHandler, decltype(f)>>(ecs, *this,
+                                                                   f);
+        warning.warned = true;
+      }
+    }
+    return ret;
+  }
+  return {ActionResultType::Failure, "", 0.0f};
+}
+
+std::unique_ptr<Action> MainGameInputHandler::keyDown(SDL_KeyboardEvent &key,
+                                                      flecs::world ecs) {
+  auto speed = 1;
+  if (key.mod & SDL_KMOD_SHIFT)
+    speed *= 2;
+  if (key.mod & SDL_KMOD_CTRL)
+    speed *= 3;
+  switch (key.scancode) {
+  case SDL_SCANCODE_UP:
+  case SDL_SCANCODE_KP_8:
+  case SDL_SCANCODE_K:
+    return std::make_unique<BumpAction>(0, -1, speed);
+  case SDL_SCANCODE_DOWN:
+  case SDL_SCANCODE_KP_2:
+  case SDL_SCANCODE_J:
+    return std::make_unique<BumpAction>(0, 1, speed);
+  case SDL_SCANCODE_LEFT:
+  case SDL_SCANCODE_KP_4:
+  case SDL_SCANCODE_H:
+    return std::make_unique<BumpAction>(-1, 0, speed);
+  case SDL_SCANCODE_RIGHT:
+  case SDL_SCANCODE_KP_6:
+  case SDL_SCANCODE_L:
+    return std::make_unique<BumpAction>(1, 0, speed);
+  case SDL_SCANCODE_HOME:
+  case SDL_SCANCODE_KP_7:
+  case SDL_SCANCODE_Y:
+    return std::make_unique<BumpAction>(-1, -1, speed);
+  case SDL_SCANCODE_END:
+  case SDL_SCANCODE_KP_1:
+  case SDL_SCANCODE_B:
+    return std::make_unique<BumpAction>(-1, 1, speed);
+  case SDL_SCANCODE_PAGEUP:
+  case SDL_SCANCODE_KP_9:
+  case SDL_SCANCODE_U:
+    return std::make_unique<BumpAction>(1, -1, speed);
+  case SDL_SCANCODE_PAGEDOWN:
+  case SDL_SCANCODE_KP_3:
+  case SDL_SCANCODE_N:
+    return std::make_unique<BumpAction>(1, 1, speed);
+
+  case SDL_SCANCODE_PERIOD:
+    if (key.mod & SDL_KMOD_SHIFT) {
+      return std::make_unique<TakeStairsAction>();
+    }
+    // Intentional fallthrough
+  case SDL_SCANCODE_KP_5:
+  case SDL_SCANCODE_CLEAR:
+    return std::make_unique<WaitAction>();
+
+  case SDL_SCANCODE_C:
+    commandsMenu(ecs, *this);
+    return nullptr;
+  case SDL_SCANCODE_D: {
+    make<DropItemInputHandler>(ecs, "┤Select an item to drop├", ecs);
+    return nullptr;
+  }
+  case SDL_SCANCODE_F:
+    return std::make_unique<RangedTargetAction>();
+  case SDL_SCANCODE_G:
+    return std::make_unique<PickupAction>();
+  case SDL_SCANCODE_I: {
+    make<DropItemInputHandler>(ecs, "┤Select an item to use├", ecs);
+    return nullptr;
+  }
+  case SDL_SCANCODE_O:
+    return std::make_unique<DoorAction>();
+  case SDL_SCANCODE_V:
+    make<HistoryInputHandler>(ecs, ecs);
+    return nullptr;
+  case SDL_SCANCODE_X:
+    make<CharacterScreenInputHandler>(ecs);
+    return nullptr;
+  case SDL_SCANCODE_SLASH:
+    make<LookHandler>(ecs, ecs);
+    return nullptr;
+
+  case SDL_SCANCODE_ESCAPE:
+    make<MainMenuInputHandler>(ecs);
+    return nullptr;
+
+  default:
+    return nullptr;
+  }
+}
+
+std::unique_ptr<Action>
+MainGameInputHandler::click(SDL_MouseButtonEvent &button, flecs::world ecs) {
+  auto currentMap = ecs.lookup("currentMap").target<CurrentMap>();
+  auto &map = currentMap.get<GameMap>();
+  if (commandBox[0] <= button.x && button.x < commandBox[0] + commandBox[2] &&
+      commandBox[1] <= button.y && button.y < commandBox[1] + commandBox[3]) {
+    commandsMenu(ecs, *this);
+    return nullptr;
+  } else if (map.inBounds((int)button.x, (int)button.y)) {
+    auto pos = ecs.lookup("player").get<Position>();
+    if (map.isExplored((int)button.x, (int)button.y)) {
+      if (pos.distanceSquared({(int)button.x, (int)button.y}) <= 2) {
+        return std::make_unique<BumpAction>((int)button.x - pos.x,
+                                            (int)button.y - pos.y, 1);
+      } else {
+        make<PathFinder>(ecs, currentMap, pos,
+                         std::array{(int)button.x, (int)button.y});
+        return nullptr;
+      }
+    }
+  }
+  return nullptr;
+}
+
+std::unique_ptr<Action> AskUserInputHandler::click(SDL_MouseButtonEvent &,
+                                                   flecs::world ecs) {
+  make<MainGameInputHandler>(ecs);
+  return nullptr;
+}
+
+ActionResult
+AskUserInputHandler::handle_action(flecs::world ecs,
+                                   std::unique_ptr<Action> action) {
+  auto ret = MainHandler::handle_action(ecs, std::move(action));
+  if (ret) {
+    if (ecs.get<std::unique_ptr<InputHandler>>().get() == this) {
+      // If not, we've already updated the input handler we're using.
+      // Don't override that.
+      make<MainGameInputHandler>(ecs);
+    }
+  }
+  return ret;
+}
+
+std::unique_ptr<Action> InventoryInputHandler::keyDown(SDL_KeyboardEvent &key,
+                                                       flecs::world ecs) {
+  auto idx = key.scancode - SDL_SCANCODE_A;
+  if (0 <= idx && idx < q.count()) {
+    return item_selected(q.page(idx, 1).first());
+  }
+  return AskUserInputHandler::keyDown(key, ecs);
 }
 
 static int menuXLocation(flecs::entity player) {
   return player.get<Position>().x <= 30 ? 40 : 0;
 }
 
-void EventHandler::InventoryOnRender(flecs::world ecs, tcod::Console &console,
-                                     uint64_t time) {
-  MainGameOnRender(ecs, console, time);
+void InventoryInputHandler::on_render(flecs::world ecs, tcod::Console &console,
+                                      uint64_t time) {
+  MainHandler::on_render(ecs, console, time);
   auto count = q.count();
   auto x = menuXLocation(ecs.lookup("player"));
 
@@ -715,65 +411,64 @@ void EventHandler::InventoryOnRender(flecs::world ecs, tcod::Console &console,
   }
 }
 
-void EventHandler::SelectOnRender(flecs::world ecs, tcod::Console &console,
-                                  uint64_t time) {
-  MainGameOnRender(ecs, console, time);
-  auto &tile = console.at(mouse_loc);
-  tile.bg = color::white;
+std::unique_ptr<Action>
+DropItemInputHandler::item_selected(flecs::entity item) {
+  return std::make_unique<DropItemAction>(item);
 }
 
-void EventHandler::AreaTargetOnRender(flecs::world ecs, tcod::Console &console,
-                                      uint64_t time) {
-  SelectOnRender(ecs, console, time);
-  tcod::draw_frame(console,
-                   {mouse_loc[0] - radius - 1, mouse_loc[1] - radius - 1,
-                    radius * radius, radius * radius},
-                   DECORATION, color::red, std::nullopt);
-}
-
-void EventHandler::MainMenuOnRender(flecs::world, tcod::Console &console,
-                                    uint64_t) {
-  static constexpr auto ImageWidth = 100;
-  // static const auto background_image = TCODImage("assets/teeth.png");
-  // assert(background_image.getSize()[0] == ImageWidth);
-  // tcod::draw_quartergraphics(console, background_image);
-
-  const auto printY = (ImageWidth / 2 + console.get_width()) / 2;
-  tcod::print(console, {printY, console.get_height() / 2 - 4},
-              "The Fiend in Facility 14", color::menu_title, std::nullopt,
-              TCOD_CENTER);
-  tcod::print(console, {printY, console.get_height() - 2}, "By degustaf",
-              color::menu_title, std::nullopt, TCOD_CENTER);
-
-  static const auto choices =
-      std::array{"[N] Play a new game     ", "[C] Continue last game  ",
-                 "[Q] Quit                "};
-  for (auto i = 0; i < (int)choices.size(); i++) {
-    tcod::print(console, {printY, console.get_height() / 2 - 2 + i}, choices[i],
-                color::menu_text, color::black, TCOD_CENTER);
+std::unique_ptr<Action> UseItemInputHandler::item_selected(flecs::entity item) {
+  if (isConsumable(item)) {
+    return std::make_unique<ItemAction>(item);
   }
-}
-
-void EventHandler::PopupOnRender(flecs::world ecs, tcod::Console &console,
-                                 uint64_t time) {
-  parentOnRender(this, ecs, console, time);
-  for (auto &tile : console) {
-    tile.fg /= 8;
-    tile.bg /= 8;
+  if (item.has<Equippable>()) {
+    return std::make_unique<EquipAction>(item);
   }
-
-  childOnRender(ecs, console);
+  return nullptr;
 }
 
-void EventHandler::LevelUpOnRender(flecs::world ecs, tcod::Console &console,
-                                   uint64_t time) {
-  MainGameOnRender(ecs, console, time);
+std::unique_ptr<Action> LevelupHandler::keyDown(SDL_KeyboardEvent &key,
+                                                flecs::world ecs) {
+  auto player = ecs.lookup("player");
+  auto &level = player.get_mut<Level>();
+  auto msg = "";
+  switch (key.scancode) {
+  case SDL_SCANCODE_LSHIFT:
+  case SDL_SCANCODE_RSHIFT:
+  case SDL_SCANCODE_LCTRL:
+  case SDL_SCANCODE_RCTRL:
+  case SDL_SCANCODE_LALT:
+  case SDL_SCANCODE_RALT:
+    return nullptr;
+  case SDL_SCANCODE_A:
+    msg = level.increase_max_hp(player);
+    break;
+  case SDL_SCANCODE_B:
+    msg = level.increase_power(player);
+    break;
+  case SDL_SCANCODE_C:
+    msg = level.increase_defense(player);
+    break;
+  default:
+    return std::make_unique<MessageAction>("Invalid entry.", color::invalid);
+  }
+  make<MainGameInputHandler>(ecs);
+  return std::make_unique<MessageAction>(msg);
+}
+
+std::unique_ptr<Action> LevelupHandler::click(SDL_MouseButtonEvent &,
+                                              flecs::world) {
+  return nullptr;
+}
+
+void LevelupHandler::on_render(flecs::world ecs, tcod::Console &console,
+                               uint64_t time) {
+  MainHandler::on_render(ecs, console, time);
   auto player = ecs.lookup("player");
   auto x = menuXLocation(player);
   tcod::draw_frame(console, {x, 0, 35, 8}, DECORATION, color::white,
                    color::black);
-  tcod::print_rect(console, {x, 0, 35, 1}, title, std::nullopt, std::nullopt,
-                   TCOD_CENTER);
+  tcod::print_rect(console, {x, 0, 35, 1}, "Level Up", std::nullopt,
+                   std::nullopt, TCOD_CENTER);
   tcod::print(console, {x + 1, 1}, "Congratulations! You level up!",
               std::nullopt, std::nullopt);
   tcod::print(console, {x + 1, 2}, "Select an attribute to increase.",
@@ -790,12 +485,51 @@ void EventHandler::LevelUpOnRender(flecs::world ecs, tcod::Console &console,
   tcod::print(console, {x + 1, 6}, msg, std::nullopt, std::nullopt);
 }
 
-void EventHandler::CharacterScreenOnRender(flecs::world ecs,
-                                           tcod::Console &console,
-                                           uint64_t time) {
-  MainGameOnRender(ecs, console, time);
+std::unique_ptr<Action> HistoryInputHandler::keyDown(SDL_KeyboardEvent &key,
+                                                     flecs::world ecs) {
+  switch (key.scancode) {
+  case SDL_SCANCODE_UP:
+    if (cursor == 0) {
+      cursor = log_length - 1;
+    } else {
+      cursor--;
+    }
+    return nullptr;
+  case SDL_SCANCODE_DOWN:
+    if (cursor == log_length - 1) {
+      cursor = 0;
+    } else {
+      cursor++;
+    }
+    return nullptr;
+  case SDL_SCANCODE_PAGEUP:
+    cursor = cursor < 10 ? 0 : cursor - 10;
+    return nullptr;
+  case SDL_SCANCODE_PAGEDOWN:
+    cursor = std::min(cursor + 10, log_length - 1);
+    return nullptr;
+  case SDL_SCANCODE_HOME:
+    cursor = 0;
+    return nullptr;
+  case SDL_SCANCODE_END:
+    cursor = log_length - 1;
+    return nullptr;
+
+  default:
+    make<MainGameInputHandler>(ecs);
+    return nullptr;
+  }
+}
+
+void HistoryInputHandler::on_render(flecs::world, tcod::Console &, uint64_t) {}
+
+void CharacterScreenInputHandler::on_render(flecs::world ecs,
+                                            tcod::Console &console,
+                                            uint64_t time) {
+  MainHandler::on_render(ecs, console, time);
   auto player = ecs.lookup("player");
   auto x = menuXLocation(player);
+  auto title = std::string{"Character Information"};
   tcod::draw_frame(console, {x, 0, (int)title.size() + 4, 5}, DECORATION,
                    color::white, color::black);
   tcod::print_rect(console, {x, 0, (int)title.size() + 4, 1}, title,
@@ -817,34 +551,74 @@ void EventHandler::CharacterScreenOnRender(flecs::world ecs,
   msg = tcod::stringf("Defense: %d", fighter.defense(player));
   tcod::print(console, {x + 1, 3}, msg, std::nullopt, std::nullopt);
 }
+std::unique_ptr<Action> LookHandler::loc_selected(flecs::world ecs,
+                                                  std::array<int, 2>) {
+  make<MainGameInputHandler>(ecs);
+  return nullptr;
+}
 
-void EventHandler::JumpOnRender(flecs::world ecs, tcod::Console &console,
-                                uint64_t time) {
-  MainGameOnRender(ecs, console, time);
-  for (auto &tile : console) {
-    tile.fg /= 8;
-    tile.bg /= 8;
+void AreaTargetSelector::on_render(flecs::world ecs, tcod::Console &console,
+                                   uint64_t time) {
+  SelectInputHandler<true>::on_render(ecs, console, time);
+  tcod::draw_frame(console,
+                   {mouse_loc[0] - radius - 1, mouse_loc[1] - radius - 1,
+                    radius * radius, radius * radius},
+                   DECORATION, color::red, std::nullopt);
+}
+
+void PathFinder::on_render(flecs::world ecs, tcod::Console &console,
+                           uint64_t time) {
+  if (path->isEmpty()) {
+    MainHandler::on_render(ecs, console, time);
+    make<MainGameInputHandler>(ecs);
+    return;
+  }
+  int x, y;
+  if (!path->walk(&x, &y, true)) {
+    make<MainGameInputHandler>(ecs);
+    MainHandler::on_render(ecs, console, time);
+    return;
+  }
+  auto player = ecs.entity("player");
+  auto pos = player.get<Position>();
+  std::unique_ptr<Action> act =
+      std::make_unique<BumpAction>(x - pos.x, y - pos.y, 1);
+  auto ret = handle_action(ecs, std::move(act));
+  if (!ret) {
+    assert(ret.type == ActionResultType::Failure);
+    MainHandler::on_render(ecs, console, time);
+    return;
   }
 
-  if (useRope) {
-    tcod::print(console, {console.get_width() / 2, console.get_height() / 2},
-                "Are you sure you want to climb into the chasm?", color::white,
-                color::black, TCOD_CENTER);
-    tcod::print(
-        console, {console.get_width() / 2, console.get_height() / 2 + 2},
-        "(Y)es     (N)o     (J)ump", color::red, color::black, TCOD_CENTER);
-  } else {
-    tcod::print(console, {console.get_width() / 2, console.get_height() / 2},
-                "Are you sure you want to jump into the chasm?", color::white,
-                color::black, TCOD_CENTER);
-    tcod::print(console,
-                {console.get_width() / 2, console.get_height() / 2 + 2},
-                "(Y)es     (N)o", color::red, color::black, TCOD_CENTER);
+  auto map = ecs.lookup("currentMap").target<CurrentMap>();
+  auto &gm = map.get<GameMap>();
+  auto q = ecs.query_builder<const Position>()
+               .with<Fighter>()
+               .with(flecs::ChildOf, map)
+               .build();
+  auto seen = false;
+  q.each([&](auto &p) { seen |= gm.isInFov(p); });
+  if (seen) {
+    make<MainGameInputHandler>(ecs);
+  }
+
+  MainHandler::on_render(ecs, console, time);
+}
+
+std::unique_ptr<Action> GameOver::keyDown(SDL_KeyboardEvent &key,
+                                          flecs::world ecs) {
+  switch (key.scancode) {
+  case SDL_SCANCODE_ESCAPE: {
+    make<MainMenuInputHandler>(ecs);
+    return nullptr;
+  }
+
+  default:
+    return nullptr;
   }
 }
 
-void EventHandler::WinOnRender(flecs::world, tcod::Console &console,
-                               uint64_t time) {
+void WinScreen::on_render(flecs::world, tcod::Console &console, uint64_t time) {
   static auto start_time = time;
   static auto last_time = time;
   auto x = console.get_width() / 2;
@@ -934,146 +708,4 @@ void EventHandler::WinOnRender(flecs::world, tcod::Console &console,
   }
   }
   last_time = time;
-}
-
-void EventHandler::PathfindOnRender(flecs::world ecs, tcod::Console &console,
-                                    uint64_t time) {
-  if (path->isEmpty()) {
-    restoreMainGame();
-    MainGameOnRender(ecs, console, time);
-    return;
-  }
-  int x, y;
-  if (!path->walk(&x, &y, true)) {
-    restoreMainGame();
-    MainGameOnRender(ecs, console, time);
-    return;
-  }
-  auto player = ecs.entity("player");
-  auto pos = player.get<Position>();
-  std::unique_ptr<Action> act =
-      std::make_unique<BumpAction>(x - pos.x, y - pos.y, 1);
-  auto ret = (this->*handle_action)(ecs, std::move(act));
-  if (!ret) {
-    assert(ret.type == ActionResultType::Failure);
-    MainGameOnRender(ecs, console, time);
-    return;
-  }
-
-  auto map = ecs.lookup("currentMap").target<CurrentMap>();
-  auto &gm = map.get<GameMap>();
-  auto q = ecs.query_builder<const Position>()
-               .with<Fighter>()
-               .with(flecs::ChildOf, map)
-               .build();
-  auto seen = false;
-  q.each([&](auto &p) { seen |= gm.isInFov(p); });
-  if (seen) {
-    restoreMainGame();
-  }
-
-  MainGameOnRender(ecs, console, time);
-}
-
-ActionResult
-EventHandler::MainGameHandleAction(flecs::world ecs,
-                                   std::unique_ptr<Action> action) {
-  if (action) {
-    auto player = ecs.entity("player");
-    auto ret = action->perform(player);
-    auto &log = ecs.lookup("messageLog").get_mut<MessageLog>();
-    if (ret.msg.size() > 0) {
-      log.addMessage(ret.msg, ret.fg);
-    }
-    auto &scent = player.get_mut<Scent>();
-    if (ret) {
-      auto map = ecs.lookup("currentMap").target<CurrentMap>();
-      auto &gameMap = map.get_mut<GameMap>();
-      gameMap.update_fov(player);
-      Engine::handle_enemy_turns(ecs);
-      scent += {ScentType::player, ret.exertion};
-      gameMap.update_scent(map);
-      auto scentMessage = gameMap.detectScent(player);
-      if (scentMessage.size() > 0) {
-        log.addMessage(scentMessage);
-      }
-    }
-    // if (player.has<TrackerConsumable>()) {
-    //   auto &t = player.get_mut<TrackerConsumable>();
-    //   t.turns--;
-    //   if (t.turns < 0) {
-    //     player.remove<TrackerConsumable>();
-    //   }
-    // }
-    if (player.get<Level>().requires_level_up()) {
-      makeLevelUp(*this);
-    } else if (scent.power > 100) {
-      auto &warning = player.get_mut<ScentWarning>();
-      if (!warning.warned) {
-        makePopup([](auto e) { e->restoreMainGame(); },
-                  [](auto e, auto world, auto &c, auto ts) {
-                    e->MainGameOnRender(world, c, ts);
-                  },
-                  [](auto, auto &c) {
-                    tcod::print(c, {c.get_width() / 2, c.get_height() / 2 - 1},
-                                "Be careful...", color::red, color::black,
-                                TCOD_CENTER);
-                    tcod::print(c, {c.get_width() / 2, c.get_height() / 2 + 1},
-                                "The Fiend can track you by your scent.",
-                                color::white, color::black, TCOD_CENTER);
-                  });
-        warning.warned = true;
-      }
-    }
-    return ret;
-  }
-  return {ActionResultType::Failure, "", 0.0f};
-}
-
-ActionResult
-EventHandler::MainMenuHandleAction(flecs::world ecs,
-                                   std::unique_ptr<Action> action) {
-  if (action) {
-    auto ret = action->perform(ecs.entity());
-    assert(ret.msg.size() == 0);
-    assert(!ret);
-    return ret;
-  }
-  return {ActionResultType::Failure, "", 0.0f};
-}
-
-ActionResult EventHandler::AskUserHandleAction(flecs::world ecs,
-                                               std::unique_ptr<Action> action) {
-  auto ret = MainGameHandleAction(ecs, std::move(action));
-  if (ret && handle_action == &EventHandler::AskUserHandleAction) {
-    // if handle_action != AskUserHandleAction, we've already updated which
-    // version of the event handler we're using. Don't override that.
-    restoreMainGame();
-  }
-  return ret;
-}
-
-std::unique_ptr<Action> EventHandler::DropItemSelected(flecs::entity item) {
-  return std::make_unique<DropItemAction>(item);
-}
-
-std::unique_ptr<Action> EventHandler::UseItemSelected(flecs::entity item) {
-  if (isConsumable(item)) {
-    return std::make_unique<ItemAction>(item);
-  }
-  if (item.has<Equippable>()) {
-    return std::make_unique<EquipAction>(item);
-  }
-  return nullptr;
-}
-
-std::unique_ptr<Action> EventHandler::LookSelectedLoc(std::array<int, 2>) {
-  restoreMainGame();
-  return nullptr;
-}
-
-std::unique_ptr<Action>
-EventHandler::SingleTargetSelectedLoc(std::array<int, 2> xy) {
-  restoreMainGame();
-  return callback(xy);
 }

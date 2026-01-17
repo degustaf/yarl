@@ -1,12 +1,5 @@
 #include "engine.hpp"
 
-#include <cstdint>
-#include <fstream>
-#include <limits>
-#include <optional>
-#include <sstream>
-#include <string>
-
 #include <libtcod.hpp>
 
 #include "actor.hpp"
@@ -54,63 +47,6 @@ void Engine::handle_enemy_turns(flecs::world ecs) {
 void Engine::save_as(flecs::world ecs, const std::filesystem::path &file_name) {
   auto output = std::ofstream(file_name);
   output << ecs.to_json();
-}
-
-bool Engine::load(flecs::world ecs, const std::filesystem::path &file_name,
-                  EventHandler &eventHandler) {
-  auto input = std::ifstream(file_name);
-  if (input.fail()) {
-    eventHandler.makePopup([](auto e) { e->mainMenu(); },
-                           [](auto e, auto world, auto &c, auto ts) {
-                             e->MainMenuOnRender(world, c, ts);
-                           },
-                           [](auto, auto &c) {
-                             tcod::print(
-                                 c, {c.get_width() / 2, c.get_height() / 2},
-                                 "No saved game to load.", color::white,
-                                 color::black, TCOD_CENTER);
-                           });
-    return false;
-  }
-
-  auto buffer = std::stringstream();
-  buffer << input.rdbuf();
-  if (ecs.from_json(buffer.str().c_str()) == nullptr) {
-    eventHandler.makePopup([](auto e) { e->mainMenu(); },
-                           [](auto e, auto world, auto &c, auto ts) {
-                             e->MainMenuOnRender(world, c, ts);
-                           },
-                           [](auto, auto &c) {
-                             tcod::print(
-                                 c, {c.get_width() / 2, c.get_height() / 2},
-                                 "Failed to load save.", color::white,
-                                 color::black, TCOD_CENTER);
-                           });
-    return false;
-  }
-
-  auto currentmap = ecs.lookup("currentMap");
-  if (currentmap == currentmap.null()) {
-    eventHandler.makePopup([](auto e) { e->mainMenu(); },
-                           [](auto e, auto world, auto &c, auto ts) {
-                             e->MainMenuOnRender(world, c, ts);
-                           },
-                           [](auto, auto &c) {
-                             tcod::print(
-                                 c, {c.get_width() / 2, c.get_height() / 2},
-                                 "Failed to load save.", color::white,
-                                 color::black, TCOD_CENTER);
-                           });
-    return false;
-  }
-  auto map = currentmap.target<CurrentMap>();
-  auto &gamemap = map.get_mut<GameMap>();
-  gamemap.init();
-  auto player = ecs.lookup("player");
-  roomAccretion::generateDungeon(map, gamemap, player, false);
-  gamemap.update_fov(player);
-
-  return true;
 }
 
 void Engine::new_game(flecs::world ecs) {

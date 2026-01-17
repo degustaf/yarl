@@ -1,3 +1,4 @@
+#include <memory>
 #define SDL_MAIN_USE_CALLBACKS
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
@@ -50,7 +51,7 @@ SDL_AppResult SDL_AppInit(void **data, [[maybe_unused]] int argc,
   ecs->set<tcod::Context>(tcod::Context(params));
   ecs->set<tcod::Console>(
       ecs->get_mut<tcod::Context>().new_console(width, height));
-  ecs->add<EventHandler>();
+  make<MainMenuInputHandler>(*ecs);
 
 #if !defined NDEBUG
   ecs->import <flecs::stats>();
@@ -64,8 +65,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
   auto ecs = *static_cast<flecs::world *>(appstate);
   auto &console = ecs.get_mut<tcod::Console>();
   console.clear();
-  auto &eventHandler = ecs.get_mut<EventHandler>();
-  (eventHandler.*(eventHandler.on_render))(ecs, console, SDL_GetTicks());
+  ecs.get_mut<InputHandler>().on_render(ecs, console, SDL_GetTicks());
   ecs.get_mut<tcod::Context>().present(console);
 #if !defined NDEBUG
   ecs.progress();
@@ -75,9 +75,9 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
 SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
   auto &ecs = *static_cast<flecs::world *>(appstate);
-  auto &eh = ecs.get_mut<EventHandler>();
+  auto &handler = ecs.get_mut<InputHandler>();
   ecs.get_mut<tcod::Context>().convert_event_coordinates(*event);
-  return (eh.*(eh.handle_action))(ecs, eh.dispatch(event, ecs));
+  return handler.handle_action(ecs, handler.dispatch(event, ecs));
 }
 
 static void delete_file(std::filesystem::path file) {
