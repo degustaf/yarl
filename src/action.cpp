@@ -67,7 +67,8 @@ ActionResult MoveAction::perform(flecs::entity e) const {
       }
     } else if (map.isTransparent(pos + dxy)) {
       // We've found a chasm.
-      make<JumpConfirm<false>>(e.world(), e.null());
+      auto ecs = e.world();
+      make<JumpConfirm<false>>(ecs, e.null());
       return {ActionResultType::Failure, "", 0.0f};
     }
   }

@@ -49,6 +49,48 @@ void Engine::save_as(flecs::world ecs, const std::filesystem::path &file_name) {
   output << ecs.to_json();
 }
 
+bool Engine::load(flecs::world ecs, const std::filesystem::path &file_name,
+                  MainMenuInputHandler &handler) {
+  auto input = std::ifstream(file_name);
+  if (input.fail()) {
+    auto f = [](auto, auto &c) {
+      c.print({c.get_width() / 2, c.get_height() / 2}, "No saved game to load.",
+              color::white, color::black, Console::Alignment::CENTER);
+    };
+    makePopup<decltype(f)>(ecs, f, handler);
+    return false;
+  }
+
+  auto buffer = std::stringstream();
+  buffer << input.rdbuf();
+  if (ecs.from_json(buffer.str().c_str()) == nullptr) {
+    auto f = [](auto, auto &c) {
+      c.print({c.get_width() / 2, c.get_height() / 2}, "Failed to load save.",
+              color::white, color::black, Console::Alignment::CENTER);
+    };
+    makePopup<decltype(f)>(ecs, f, handler);
+    return false;
+  }
+
+  auto currentmap = ecs.lookup("currentMap");
+  if (currentmap == currentmap.null()) {
+    auto f = [](auto, auto &c) {
+      c.print({c.get_width() / 2, c.get_height() / 2}, "Failed to load save.",
+              color::white, color::black, Console::Alignment::CENTER);
+    };
+    makePopup<decltype(f)>(ecs, f, handler);
+    return false;
+  }
+  auto map = currentmap.target<CurrentMap>();
+  auto &gamemap = map.get_mut<GameMap>();
+  gamemap.init();
+  auto player = ecs.lookup("player");
+  roomAccretion::generateDungeon(map, gamemap, player, false);
+  gamemap.update_fov(player);
+
+  return true;
+}
+
 void Engine::new_game(flecs::world ecs, int map_width, int map_height) {
   auto seed = (uint32_t)TCODRandom::getInstance()->getInt(
       0, (int)std::numeric_limits<int32_t>::max());

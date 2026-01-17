@@ -1,6 +1,7 @@
 #include "actor.hpp"
 
 #include <algorithm>
+#include <memory>
 
 #include "ai.hpp"
 #include "game_map.hpp"

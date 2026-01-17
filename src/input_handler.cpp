@@ -75,7 +75,9 @@ static void commandsMenu(flecs::world ecs, InputHandler &handler) {
                          (c.get_height() - COMMAND_MENU_HEIGHT) / 2});
   };
 
-  make<PopupInputHandler<MainGameInputHandler, decltype(f)>>(ecs, handler, f);
+  ecs.set<std::unique_ptr<InputHandler>>(
+      std::make_unique<PopupInputHandler<MainGameInputHandler, decltype(f)>>(
+          f, handler));
 }
 
 std::unique_ptr<Action> InputHandler::dispatch(SDL_Event *event,
@@ -109,11 +111,6 @@ ActionResult InputHandler::handle_action(flecs::world ecs,
   }
   return {ActionResultType::Failure, "", 0.0f};
 }
-
-auto BAR_WIDTH = 1;
-auto HUD_HEIGHT = 1;
-std::array<int, 2> dim = {1, 1};
-auto COMMAND_BUTTON_WIDTH = 1;
 
 std::unique_ptr<Action> MainMenuInputHandler::keyDown(SDL_KeyboardEvent &key,
                                                       flecs::world ecs) {
@@ -164,8 +161,6 @@ void MainMenuInputHandler::on_render(flecs::world, Console &console, uint64_t) {
                   color::menu_text, color::black, Console::Alignment::CENTER);
   }
 }
-
-static auto constexpr commandBox = std::array{62, 45, 12, 3};
 
 void MainHandler::on_render(flecs::world ecs, Console &console, uint64_t) {
   auto map = ecs.lookup("currentMap").target<CurrentMap>();
@@ -253,8 +248,10 @@ ActionResult MainHandler::handle_action(flecs::world ecs,
                   "The Fiend can track you by your scent.", color::white,
                   color::black, Console::Alignment::CENTER);
         };
-        make<PopupInputHandler<MainGameInputHandler, decltype(f)>>(ecs, *this,
-                                                                   f);
+        ecs.set<std::unique_ptr<InputHandler>>(
+            std::make_unique<
+                PopupInputHandler<MainGameInputHandler, decltype(f)>>(f,
+                                                                      *this));
         warning.warned = true;
       }
     }
@@ -353,8 +350,10 @@ std::unique_ptr<Action>
 MainGameInputHandler::click(SDL_MouseButtonEvent &button, flecs::world ecs) {
   auto currentMap = ecs.lookup("currentMap").target<CurrentMap>();
   auto &map = currentMap.get<GameMap>();
-  if (commandBox[0] <= button.x && button.x < commandBox[0] + commandBox[2] &&
-      commandBox[1] <= button.y && button.y < commandBox[1] + commandBox[3]) {
+  if (commandBox[0] <= (int)button.x &&
+      (int)button.x < commandBox[0] + commandBox[2] &&
+      commandBox[1] <= (int)button.y &&
+      (int)button.y < commandBox[1] + commandBox[3]) {
     commandsMenu(ecs, *this);
     return nullptr;
   } else if (map.inBounds((int)button.x, (int)button.y)) {

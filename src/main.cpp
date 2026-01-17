@@ -41,7 +41,8 @@ SDL_AppResult SDL_AppInit(void **data, [[maybe_unused]] int argc,
   ecs->emplace<SDLData>(width, height, 15.0f, "Yet Another Roguelike",
                         "assets/CodeNewRoman.ttf");
   ecs->set<Console>(ecs->get_mut<SDLData>().new_console(width, height));
-  make<MainMenuInputHandler>(*ecs);
+  ecs->set<std::unique_ptr<InputHandler>>(
+      std::make_unique<MainMenuInputHandler>(std::array{width, height}));
 
 #if !defined NDEBUG
   ecs->import <flecs::stats>();
