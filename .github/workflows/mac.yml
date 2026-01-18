@@ -2,8 +2,6 @@ name: Mac
 
 on:
   push:
-    branches:
-      - main
   workflow_dispatch:
 
 defaults:
@@ -12,7 +10,7 @@ defaults:
 
 jobs:
   CMake-Mac:
-    runs-on: macos-13
+    runs-on: macos-15
 
     env:
       CMAKE_BUILD_DIR: build
