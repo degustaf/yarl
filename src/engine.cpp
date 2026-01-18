@@ -2,9 +2,14 @@
 
 #include <libtcod.hpp>
 
+#include <filesystem>
+#include <fstream>
+#include <sstream>
+
 #include "actor.hpp"
 #include "ai.hpp"
 #include "game_map.hpp"
+#include "input_handler.hpp"
 #include "inventory.hpp"
 #include "level.hpp"
 #include "message_log.hpp"
