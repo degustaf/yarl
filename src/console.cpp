@@ -140,8 +140,8 @@ struct PrintParams {
       return 0;
     }
     FormattedPrinter printer = {
-        (const unsigned char *)str.begin(),
-        (const unsigned char *)str.end(),
+        (const unsigned char *)(const char *)str.begin(),
+        (const unsigned char *)(const char *)str.end(),
         fg,
         bg,
         fg,
