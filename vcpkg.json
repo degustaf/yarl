@@ -13,6 +13,11 @@
       "version>=": "3.2.22"
     },
     {
+      "name": "sdl3-image",
+      "features": [ "png" ],
+      "version>=": "3.2.4"
+    },
+    {
       "name": "sdl3-ttf",
       "version>=": "3.2.2"
     },

@@ -1,13 +1,16 @@
 #include "renderer.hpp"
 
+#include <SDL3/SDL_render.h>
 #include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <cstdint>
+#include <iostream>
 #include <memory>
 #include <stdexcept>
 
 #include <SDL3/SDL.h>
+#include <SDL3_image/SDL_image.h>
 #include <SDL3_ttf/SDL_ttf.h>
 
 static constexpr auto integer_scaling = false;
@@ -81,7 +84,8 @@ static void render_texture_setup(SDL_Renderer *renderer,
 }
 
 static void render(const FontPtr &font, SDL_Renderer *renderer,
-                   const Console &console, std::unique_ptr<Console> &cache) {
+                   const Console &console, std::unique_ptr<Console> &cache,
+                   SDL_Texture *img) {
   if (cache) {
     assert(cache->get_width() == console.get_width());
     assert(cache->get_height() == console.get_height());
@@ -108,18 +112,25 @@ static void render(const FontPtr &font, SDL_Renderer *renderer,
       SDL_DestroyTexture(texture);
     }
   }
+
+  if (img) {
+    float w, h;
+    SDL_GetTextureSize(img, &w, &h);
+    SDL_FRect dstRect{0, 0, (float)target_height * w / h, (float)target_height};
+    SDL_RenderTexture(renderer, img, NULL, &dstRect);
+  }
 }
 
 static void render_texture(const FontPtr &font, SDL_Renderer *renderer,
                            const Console &console,
-                           std::unique_ptr<Console> &cache,
-                           struct SDL_Texture *target) {
+                           std::unique_ptr<Console> &cache, SDL_Texture *target,
+                           SDL_Texture *img) {
   if (!target) {
-    return render(font, renderer, console, cache);
+    return render(font, renderer, console, cache, img);
   }
   auto old_target = SDL_GetRenderTarget(renderer);
   SDL_SetRenderTarget(renderer, target);
-  render(font, renderer, console, cache);
+  render(font, renderer, console, cache, img);
   SDL_SetRenderTarget(renderer, old_target);
 }
 
@@ -137,7 +148,8 @@ SDLData::SDLData(int columns, int rows, float fontSize, const char *title,
                  const std::filesystem::path &fontPath)
     : dims({0, 0}), window(nullptr, nullptr), _renderer(nullptr, nullptr),
       font(nullptr, nullptr), cache_console(nullptr),
-      cache_texture(nullptr, nullptr), cursor_transform({0, 0, 1, 1}) {
+      cache_texture(nullptr, nullptr), cover_texture(nullptr, nullptr),
+      cursor_transform({0, 0, 1, 1}) {
 
   assert(columns > 0);
   assert(rows > 0);
@@ -194,6 +206,19 @@ SDLData::SDLData(int columns, int rows, float fontSize, const char *title,
 
   SDL_DestroyProperties(renderer_props);
   SDL_DestroyProperties(window_props);
+}
+
+SDLData::SDLData(int columns, int rows, float fontSize, const char *title,
+                 const std::filesystem::path &fontPath,
+                 const std::filesystem::path &imgPath)
+    : SDLData(columns, rows, fontSize, title, fontPath) {
+  auto surface = IMG_Load(imgPath.string().c_str());
+  if (surface == nullptr) {
+    std::cout << SDL_GetError() << "\n";
+  }
+  cover_texture =
+      TexturePtr(SDL_CreateTextureFromSurface(_renderer.get(), surface),
+                 SDL_DestroyTexture);
 }
 
 Console SDLData::new_console(int width, int height) {
@@ -258,11 +283,11 @@ SDLData::Transform SDLData::cursor_transform_for_console_viewport(
   };
 }
 
-void SDLData::accumulate(const Console &console) {
+void SDLData::accumulate(const Console &console, bool img) {
   render_texture_setup(_renderer.get(), dims, console, cache_console,
                        cache_texture);
   render_texture(font, _renderer.get(), console, cache_console,
-                 cache_texture.get());
+                 cache_texture.get(), img ? cover_texture.get() : nullptr);
 
   auto dest = get_destination_rect_for_console(_renderer.get(), dims,
                                                console.get_dims());

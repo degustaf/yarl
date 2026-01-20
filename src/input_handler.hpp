@@ -36,6 +36,7 @@ struct InputHandler {
   };
   virtual ActionResult handle_action(flecs::world, std::unique_ptr<Action>);
   virtual void on_render(flecs::world, Console &, uint64_t) = 0;
+  virtual bool renderImg() const { return false; };
 
   static constexpr auto BAR_WIDTH = 20;
   static constexpr auto HUD_HEIGHT = 5;
@@ -72,6 +73,7 @@ struct MainMenuInputHandler : InputHandler {
   virtual std::unique_ptr<Action> keyDown(SDL_KeyboardEvent &,
                                           flecs::world) override;
   virtual void on_render(flecs::world, Console &, uint64_t) override;
+  virtual bool renderImg() const override { return true; };
 };
 
 struct MainHandler : InputHandler {

@@ -19,9 +19,12 @@ public:
   SDLData() = delete;
   SDLData(int columns, int rows, float fontSize, const char *title,
           const std::filesystem::path &fontPath);
+  SDLData(int columns, int rows, float fontSize, const char *title,
+          const std::filesystem::path &fontPath,
+          const std::filesystem::path &imgPath);
 
   Console new_console(int width, int height);
-  void accumulate(const struct Console &console);
+  void accumulate(const struct Console &console, bool img);
   struct SDL_Renderer *renderer() { return _renderer.get(); };
   void convert_event_coordinates(SDL_Event &event);
   void resetCacheConsole(void);
@@ -48,6 +51,7 @@ private:
   FontPtr font;
   std::unique_ptr<Console> cache_console;
   TexturePtr cache_texture;
+  TexturePtr cover_texture;
   uint32_t sdl_subsystems; // Which subsystems where initialzed by this context.
   Transform cursor_transform;
 };

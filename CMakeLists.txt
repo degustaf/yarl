@@ -41,10 +41,19 @@ if (MSVC)
 endif()
 
 add_compile_definitions(FLECS_CPP_NO_AUTO_REGISTRATION)
+set(SDLIMAGE_PNG_LIBPNG ON)
 
 find_package(SDL3 CONFIG REQUIRED)
 find_package(libtcod CONFIG REQUIRED)
 find_package(flecs)
 find_package(SDL3_ttf CONFIG REQUIRED)
+find_package(SDL3_image CONFIG REQUIRED)
 find_package(utf8proc)
-target_link_libraries(${PROJECT_NAME} PRIVATE SDL3::SDL3 SDL3_ttf::SDL3_ttf libtcod::libtcod flecs::flecs_static utf8proc::utf8proc)
+target_link_libraries(${PROJECT_NAME}
+	PRIVATE SDL3::SDL3
+	SDL3_ttf::SDL3_ttf
+	SDL3_image::SDL3_image
+	libtcod::libtcod
+	flecs::flecs_static
+	utf8proc::utf8proc
+)

@@ -1,4 +1,3 @@
-#include <memory>
 #define SDL_MAIN_USE_CALLBACKS
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
@@ -39,7 +38,8 @@ SDL_AppResult SDL_AppInit(void **data, [[maybe_unused]] int argc,
   *data = ecs;
   ecs->import <module>();
   ecs->emplace<SDLData>(width, height, 15.0f, "Yet Another Roguelike",
-                        "assets/CodeNewRoman.ttf");
+                        "assets/CodeNewRoman.ttf",
+                        "assets/death_on_the_pale_horse.png");
   ecs->set<Console>(ecs->get_mut<SDLData>().new_console(width, height));
   ecs->set<std::unique_ptr<InputHandler>>(
       std::make_unique<MainMenuInputHandler>(std::array{width, height}));
@@ -62,8 +62,8 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
   auto &console = ecs.get_mut<Console>();
   console.clear();
 
-  ecs.get_mut<std::unique_ptr<InputHandler>>()->on_render(ecs, console,
-                                                          SDL_GetTicks());
+  auto &handler = ecs.get_mut<std::unique_ptr<InputHandler>>();
+  handler->on_render(ecs, console, SDL_GetTicks());
 
   auto &data = ecs.get_mut<SDLData>();
   auto renderer = data.renderer();
@@ -71,7 +71,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
   SDL_SetRenderDrawColor(renderer, clear_color.r, clear_color.g, clear_color.b,
                          clear_color.a);
   SDL_RenderClear(renderer);
-  data.accumulate(console);
+  data.accumulate(console, handler->renderImg());
   SDL_RenderPresent(renderer);
 
 #if !defined NDEBUG
