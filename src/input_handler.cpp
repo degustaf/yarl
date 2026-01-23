@@ -20,6 +20,10 @@
 static constexpr auto COMMAND_MENU_WIDTH = 70;
 static constexpr auto COMMAND_MENU_HEIGHT = 28;
 
+static char key(SDL_Scancode c) {
+  return *SDL_GetKeyName(SDL_GetKeyFromScancode(c, SDL_KMOD_NONE, true));
+}
+
 static Console buildCommandMenu(void) {
   auto con = Console(COMMAND_MENU_WIDTH, COMMAND_MENU_HEIGHT);
   con.clear();
@@ -30,11 +34,24 @@ static Console buildCommandMenu(void) {
             std::nullopt);
 
   // vim directions
-  con.print({3, 3}, "y k u", color::white, std::nullopt);
-  con.print({4, 4}, "\\|/", color::white, std::nullopt);
-  con.print({3, 5}, "h-*-l", color::white, std::nullopt);
-  con.print({4, 6}, "/|\\", color::white, std::nullopt);
-  con.print({3, 7}, "b j n", color::white, std::nullopt);
+  auto y = 3;
+  con.print({3, y}, "y k u", color::white, std::nullopt);
+  con.at({3, y}).ch = key(SDL_SCANCODE_Y);
+  con.at({5, y}).ch = key(SDL_SCANCODE_K);
+  con.at({7, y}).ch = key(SDL_SCANCODE_U);
+  y++;
+  con.print({4, y}, "\\|/", color::white, std::nullopt);
+  y++;
+  con.print({3, y}, "h-*-l", color::white, std::nullopt);
+  con.at({3, y}).ch = key(SDL_SCANCODE_H);
+  con.at({7, y}).ch = key(SDL_SCANCODE_L);
+  y++;
+  con.print({4, y}, "/|\\", color::white, std::nullopt);
+  y++;
+  con.print({3, y}, "b j n", color::white, std::nullopt);
+  con.at({3, y}).ch = key(SDL_SCANCODE_B);
+  con.at({5, y}).ch = key(SDL_SCANCODE_J);
+  con.at({7, y}).ch = key(SDL_SCANCODE_N);
 
   // numpad directions.
   con.print({10, 2}, "numpad", color::white, std::nullopt);
@@ -44,7 +61,7 @@ static Console buildCommandMenu(void) {
   con.print({11, 6}, "/|\\", color::white, std::nullopt);
   con.print({10, 7}, "1 2 3", color::white, std::nullopt);
 
-  auto y = 9;
+  y = 9;
 
   con.print({2, y++}, "Hold <shift> to move 2 spaces", color::white,
             std::nullopt);
@@ -52,18 +69,31 @@ static Console buildCommandMenu(void) {
             std::nullopt);
   y++;
   con.print({2, y++}, "5: wait", color::white, std::nullopt);
-  con.print({2, y++}, ".: wait", color::white, std::nullopt);
-  con.print({2, y++}, ">: Take elevator", color::white, std::nullopt);
-  con.print({2, y++}, "C: This menu", color::white, std::nullopt);
-  con.print({2, y++}, "D: Drop an item", color::white, std::nullopt);
-  con.print({2, y++}, "F: Fire a weapon", color::white, std::nullopt);
-  con.print({2, y++}, "G: Pick up an item", color::white, std::nullopt);
-  con.print({2, y++}, "I: Inventory", color::white, std::nullopt);
-  con.print({2, y++}, "V: View game log", color::white, std::nullopt);
-  con.print({2, y++}, "X: View character information", color::white,
+  con.print({2, y}, ".: wait", color::white, std::nullopt);
+  con.at({2, y++}).ch = key(SDL_SCANCODE_PERIOD);
+  con.print({2, y}, ">: Take elevator", color::white, std::nullopt);
+  con.at({2, y++}).ch = key(SDL_SCANCODE_COMMA);
+  con.print({2, y}, "C: This menu", color::white, std::nullopt);
+  con.at({2, y++}).ch = key(SDL_SCANCODE_C);
+  con.print({2, y}, "D: Drop an item", color::white, std::nullopt);
+  con.at({2, y++}).ch = key(SDL_SCANCODE_D);
+  con.print({2, y}, "F: Fire a weapon", color::white, std::nullopt);
+  con.at({2, y++}).ch = key(SDL_SCANCODE_F);
+  con.print({2, y}, "G: Pick up an item", color::white, std::nullopt);
+  con.at({2, y++}).ch = key(SDL_SCANCODE_G);
+  con.print({2, y}, "I: Inventory", color::white, std::nullopt);
+  con.at({2, y++}).ch = key(SDL_SCANCODE_I);
+  con.print({2, y}, "V: View game log", color::white, std::nullopt);
+  con.at({2, y++}).ch = key(SDL_SCANCODE_V);
+  con.print({2, y}, "X: View character information", color::white,
             std::nullopt);
-  con.print({2, y++}, "/: Look around map", color::white, std::nullopt);
-  con.print({2, y++}, "Esc: exit menu", color::white, std::nullopt);
+  con.at({2, y++}).ch = key(SDL_SCANCODE_X);
+  con.print({2, y}, "/: Look around map", color::white, std::nullopt);
+  con.at({2, y++}).ch = key(SDL_SCANCODE_SLASH);
+  auto str =
+      stringf("%s: Exit menu", SDL_GetKeyName(SDL_GetKeyFromScancode(
+                                   SDL_SCANCODE_ESCAPE, SDL_KMOD_NONE, true)));
+  con.print({2, y}, str, color::white, std::nullopt);
 
   return con;
 }
@@ -154,13 +184,18 @@ void MainMenuInputHandler::on_render(flecs::world, Console &console, uint64_t) {
                 color::menu_title, std::nullopt, Console::Alignment::CENTER);
 
   static const auto choices =
-      std::array{"[N] Play a new game     ", "[C] Continue last game  ",
-                 "[Q] Quit                "};
+      std::array{"[%c] Play a new game     ", "[%c] Continue last game  ",
+                 "[%c] Quit                "};
+  static const auto keys =
+      std::array{key(SDL_SCANCODE_N), key(SDL_SCANCODE_C), key(SDL_SCANCODE_Q)};
   for (auto i = 0; i < (int)choices.size(); i++) {
-    console.print({printY, console.get_height() / 2 - 2 + i}, choices[i],
+    auto str = tcod::stringf(choices[i], keys[i]);
+    console.print({printY, console.get_height() / 2 - 2 + i}, str,
                   color::menu_text, color::black, Console::Alignment::CENTER);
   }
 }
+
+static auto constexpr commandBox = std::array{62, 45, 13, 3};
 
 void MainHandler::on_render(flecs::world ecs, Console &console, uint64_t) {
   auto map = ecs.lookup("currentMap").target<CurrentMap>();
@@ -301,11 +336,10 @@ std::unique_ptr<Action> MainGameInputHandler::keyDown(SDL_KeyboardEvent &key,
   case SDL_SCANCODE_N:
     return std::make_unique<BumpAction>(1, 1, speed);
 
+  case SDL_SCANCODE_COMMA:
+    return std::make_unique<TakeStairsAction>();
+
   case SDL_SCANCODE_PERIOD:
-    if (key.mod & SDL_KMOD_SHIFT) {
-      return std::make_unique<TakeStairsAction>();
-    }
-    // Intentional fallthrough
   case SDL_SCANCODE_KP_5:
   case SDL_SCANCODE_CLEAR:
     return std::make_unique<WaitAction>();
@@ -372,6 +406,22 @@ MainGameInputHandler::click(SDL_MouseButtonEvent &button, flecs::world ecs) {
   return nullptr;
 }
 
+std::unique_ptr<Action> AskUserInputHandler::keyDown(SDL_KeyboardEvent &key,
+                                                     flecs::world ecs) {
+  switch (key.scancode) {
+  case SDL_SCANCODE_LSHIFT:
+  case SDL_SCANCODE_RSHIFT:
+  case SDL_SCANCODE_LCTRL:
+  case SDL_SCANCODE_RCTRL:
+  case SDL_SCANCODE_LALT:
+  case SDL_SCANCODE_RALT:
+    return nullptr;
+  default:
+    make<MainGameInputHandler>(ecs);
+    return nullptr;
+  }
+}
+
 std::unique_ptr<Action> AskUserInputHandler::click(SDL_MouseButtonEvent &,
                                                    flecs::world ecs) {
   make<MainGameInputHandler>(ecs);
@@ -394,8 +444,8 @@ AskUserInputHandler::handle_action(flecs::world ecs,
 
 std::unique_ptr<Action> InventoryInputHandler::keyDown(SDL_KeyboardEvent &key,
                                                        flecs::world ecs) {
-  auto idx = key.scancode - SDL_SCANCODE_A;
-  if (0 <= idx && idx < q.count()) {
+  auto idx = key.key - SDLK_A;
+  if (0 <= (int)idx && (int)idx < q.count()) {
     return item_selected(q.page(idx, 1).first());
   }
   return AskUserInputHandler::keyDown(key, ecs);
@@ -490,12 +540,14 @@ void LevelupHandler::on_render(flecs::world ecs, Console &console,
                 std::nullopt);
 
   auto fighter = player.get<Fighter>();
-  auto msg = stringf("a) Constitution (+20 HP, from %d)", fighter.max_hp);
+  auto msg = stringf("%c) Constitution (+20 HP, from %d)", key(SDL_SCANCODE_A),
+                     fighter.max_hp);
   console.print({x + 1, 4}, msg, std::nullopt, std::nullopt);
-  msg =
-      stringf("b) Strength (+1 attack, from %d)", fighter.power(player, false));
+  msg = stringf("%c) Strength (+1 attack, from %d)", key(SDL_SCANCODE_B),
+                fighter.power(player, false));
   console.print({x + 1, 5}, msg, std::nullopt, std::nullopt);
-  msg = stringf("c) Agility (+1 defense, from %d)", fighter.defense(player));
+  msg = stringf("%c) Agility (+1 defense, from %d)", key(SDL_SCANCODE_C),
+                fighter.defense(player));
   console.print({x + 1, 6}, msg, std::nullopt, std::nullopt);
 }
 

@@ -145,6 +145,8 @@ struct AskUserInputHandler : MainHandler {
 
   virtual ~AskUserInputHandler() = default;
 
+  virtual std::unique_ptr<Action> keyDown(SDL_KeyboardEvent &,
+                                          flecs::world) override;
   virtual std::unique_ptr<Action> click(SDL_MouseButtonEvent &,
                                         flecs::world) override;
   virtual ActionResult handle_action(flecs::world,

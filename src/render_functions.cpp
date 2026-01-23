@@ -1,5 +1,6 @@
 #include "render_functions.hpp"
 
+#include <SDL3/SDL.h>
 #include <optional>
 #include <string>
 
@@ -98,6 +99,9 @@ void renderNamesAtMouseLocation(Console &console, const std::array<int, 2> &xy,
 
 void renderCommandButton(Console &console, const std::array<int, 4> &xywh) {
   console.draw_frame(xywh, DECORATION, color::menu_border, color::darkGrey);
-  console.print({xywh[0] + 1, xywh[1] + 1}, "(C)ommands", std::nullopt,
-                std::nullopt);
+  auto key = *SDL_GetKeyName(
+      SDL_GetKeyFromScancode(SDL_SCANCODE_C, SDL_KMOD_NONE, true));
+  auto str = key == 'C' ? "(C)ommands" : tcod::stringf("(%c)Commands", key);
+  assert(str.size() + 2 <= (size_t)xywh[2]);
+  console.print({xywh[0] + 1, xywh[1] + 1}, str, std::nullopt, std::nullopt);
 }
