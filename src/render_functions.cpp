@@ -1,6 +1,6 @@
 #include "render_functions.hpp"
 
-#include <libtcod/console_printing.hpp>
+#include <SDL3/SDL.h>
 #include <optional>
 #include <string>
 
@@ -99,6 +99,10 @@ void renderCommandButton(tcod::Console &console,
                          const std::array<int, 4> &xywh) {
   tcod::draw_frame(console, xywh, DECORATION, color::menu_border,
                    color::darkGrey);
-  tcod::print(console, {xywh[0] + 1, xywh[1] + 1}, "(C)ommands", std::nullopt,
+  auto key = *SDL_GetKeyName(
+      SDL_GetKeyFromScancode(SDL_SCANCODE_C, SDL_KMOD_NONE, true));
+  auto str = key == 'C' ? "(C)ommands" : tcod::stringf("(%c)Commands", key);
+  assert(str.size() + 2 <= (size_t)xywh[2]);
+  tcod::print(console, {xywh[0] + 1, xywh[1] + 1}, str, std::nullopt,
               std::nullopt);
 }

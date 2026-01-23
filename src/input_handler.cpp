@@ -1,5 +1,13 @@
 #include "input_handler.hpp"
 
+#include <algorithm>
+#include <array>
+#include <cassert>
+#include <memory>
+#include <optional>
+
+#include "action.hpp"
+#include "color.hpp"
 #include "consumable.hpp"
 #include "defines.hpp"
 #include "engine.hpp"
@@ -7,11 +15,13 @@
 #include "level.hpp"
 #include "message_log.hpp"
 #include "render_functions.hpp"
-#include <array>
-#include <memory>
 
 static constexpr auto COMMAND_MENU_WIDTH = 50;
 static constexpr auto COMMAND_MENU_HEIGHT = 28;
+
+static char key(SDL_Scancode c) {
+  return *SDL_GetKeyName(SDL_GetKeyFromScancode(c, SDL_KMOD_NONE, true));
+}
 
 static tcod::Console buildCommandMenu(void) {
   auto con = tcod::Console(COMMAND_MENU_WIDTH, COMMAND_MENU_HEIGHT);
@@ -23,11 +33,24 @@ static tcod::Console buildCommandMenu(void) {
               std::nullopt);
 
   // vim directions
-  tcod::print(con, {3, 3}, "y k u", color::white, std::nullopt);
-  tcod::print(con, {4, 4}, "\\|/", color::white, std::nullopt);
-  tcod::print(con, {3, 5}, "h-*-l", color::white, std::nullopt);
-  tcod::print(con, {4, 6}, "/|\\", color::white, std::nullopt);
-  tcod::print(con, {3, 7}, "b j n", color::white, std::nullopt);
+  auto y = 3;
+  tcod::print(con, {3, y}, "y k u", color::white, std::nullopt);
+  con.at({3, y}).ch = key(SDL_SCANCODE_Y);
+  con.at({5, y}).ch = key(SDL_SCANCODE_K);
+  con.at({7, y}).ch = key(SDL_SCANCODE_U);
+  y++;
+  tcod::print(con, {4, y}, "\\|/", color::white, std::nullopt);
+  y++;
+  tcod::print(con, {3, y}, "h-*-l", color::white, std::nullopt);
+  con.at({3, y}).ch = key(SDL_SCANCODE_H);
+  con.at({7, y}).ch = key(SDL_SCANCODE_L);
+  y++;
+  tcod::print(con, {4, y}, "/|\\", color::white, std::nullopt);
+  y++;
+  tcod::print(con, {3, y}, "b j n", color::white, std::nullopt);
+  con.at({3, y}).ch = key(SDL_SCANCODE_B);
+  con.at({5, y}).ch = key(SDL_SCANCODE_J);
+  con.at({7, y}).ch = key(SDL_SCANCODE_N);
 
   // numpad directions.
   tcod::print(con, {10, 2}, "numpad", color::white, std::nullopt);
@@ -37,7 +60,7 @@ static tcod::Console buildCommandMenu(void) {
   tcod::print(con, {11, 6}, "/|\\", color::white, std::nullopt);
   tcod::print(con, {10, 7}, "1 2 3", color::white, std::nullopt);
 
-  auto y = 9;
+  y = 9;
 
   tcod::print(con, {2, y++}, "Hold <shift> to move 2 spaces", color::white,
               std::nullopt);
@@ -45,18 +68,31 @@ static tcod::Console buildCommandMenu(void) {
               std::nullopt);
   y++;
   tcod::print(con, {2, y++}, "5: wait", color::white, std::nullopt);
-  tcod::print(con, {2, y++}, ".: wait", color::white, std::nullopt);
-  tcod::print(con, {2, y++}, ">: Take elevator", color::white, std::nullopt);
-  tcod::print(con, {2, y++}, "C: This menu", color::white, std::nullopt);
-  tcod::print(con, {2, y++}, "D: Drop an item", color::white, std::nullopt);
-  tcod::print(con, {2, y++}, "F: Fire a weapon", color::white, std::nullopt);
-  tcod::print(con, {2, y++}, "G: Pick up an item", color::white, std::nullopt);
-  tcod::print(con, {2, y++}, "I: Inventory", color::white, std::nullopt);
-  tcod::print(con, {2, y++}, "V: View game log", color::white, std::nullopt);
-  tcod::print(con, {2, y++}, "X: View character information", color::white,
+  tcod::print(con, {2, y}, ".: wait", color::white, std::nullopt);
+  con.at({2, y++}).ch = key(SDL_SCANCODE_PERIOD);
+  tcod::print(con, {2, y}, ">: Take elevator", color::white, std::nullopt);
+  con.at({2, y++}).ch = key(SDL_SCANCODE_COMMA);
+  tcod::print(con, {2, y}, "C: This menu", color::white, std::nullopt);
+  con.at({2, y++}).ch = key(SDL_SCANCODE_C);
+  tcod::print(con, {2, y}, "D: Drop an item", color::white, std::nullopt);
+  con.at({2, y++}).ch = key(SDL_SCANCODE_D);
+  tcod::print(con, {2, y}, "F: Fire a weapon", color::white, std::nullopt);
+  con.at({2, y++}).ch = key(SDL_SCANCODE_F);
+  tcod::print(con, {2, y}, "G: Pick up an item", color::white, std::nullopt);
+  con.at({2, y++}).ch = key(SDL_SCANCODE_G);
+  tcod::print(con, {2, y}, "I: Inventory", color::white, std::nullopt);
+  con.at({2, y++}).ch = key(SDL_SCANCODE_I);
+  tcod::print(con, {2, y}, "V: View game log", color::white, std::nullopt);
+  con.at({2, y++}).ch = key(SDL_SCANCODE_V);
+  tcod::print(con, {2, y}, "X: View character information", color::white,
               std::nullopt);
-  tcod::print(con, {2, y++}, "/: Look around map", color::white, std::nullopt);
-  tcod::print(con, {2, y++}, "Esc: exit menu", color::white, std::nullopt);
+  con.at({2, y++}).ch = key(SDL_SCANCODE_X);
+  tcod::print(con, {2, y}, "/: Look around map", color::white, std::nullopt);
+  con.at({2, y++}).ch = key(SDL_SCANCODE_SLASH);
+  auto str = tcod::stringf("%s: Exit menu",
+                           SDL_GetKeyName(SDL_GetKeyFromScancode(
+                               SDL_SCANCODE_ESCAPE, SDL_KMOD_NONE, true)));
+  tcod::print(con, {2, y}, str, color::white, std::nullopt);
 
   return con;
 }
@@ -145,15 +181,18 @@ void MainMenuInputHandler::on_render(flecs::world, tcod::Console &console,
               color::menu_title, std::nullopt, TCOD_CENTER);
 
   static const auto choices =
-      std::array{"[N] Play a new game     ", "[C] Continue last game  ",
-                 "[Q] Quit                "};
+      std::array{"[%c] Play a new game     ", "[%c] Continue last game  ",
+                 "[%c] Quit                "};
+  static const auto keys =
+      std::array{key(SDL_SCANCODE_N), key(SDL_SCANCODE_C), key(SDL_SCANCODE_Q)};
   for (auto i = 0; i < (int)choices.size(); i++) {
-    tcod::print(console, {printY, console.get_height() / 2 - 2 + i}, choices[i],
+    auto str = tcod::stringf(choices[i], keys[i]);
+    tcod::print(console, {printY, console.get_height() / 2 - 2 + i}, str,
                 color::menu_text, color::black, TCOD_CENTER);
   }
 }
 
-static auto constexpr commandBox = std::array{62, 45, 12, 3};
+static auto constexpr commandBox = std::array{62, 45, 13, 3};
 
 void MainHandler::on_render(flecs::world ecs, tcod::Console &console,
                             uint64_t) {
@@ -285,11 +324,10 @@ std::unique_ptr<Action> MainGameInputHandler::keyDown(SDL_KeyboardEvent &key,
   case SDL_SCANCODE_N:
     return std::make_unique<BumpAction>(1, 1, speed);
 
+  case SDL_SCANCODE_COMMA:
+    return std::make_unique<TakeStairsAction>();
+
   case SDL_SCANCODE_PERIOD:
-    if (key.mod & SDL_KMOD_SHIFT) {
-      return std::make_unique<TakeStairsAction>();
-    }
-    // Intentional fallthrough
   case SDL_SCANCODE_KP_5:
   case SDL_SCANCODE_CLEAR:
     return std::make_unique<WaitAction>();
@@ -354,6 +392,22 @@ MainGameInputHandler::click(SDL_MouseButtonEvent &button, flecs::world ecs) {
   return nullptr;
 }
 
+std::unique_ptr<Action> AskUserInputHandler::keyDown(SDL_KeyboardEvent &key,
+                                                     flecs::world ecs) {
+  switch (key.scancode) {
+  case SDL_SCANCODE_LSHIFT:
+  case SDL_SCANCODE_RSHIFT:
+  case SDL_SCANCODE_LCTRL:
+  case SDL_SCANCODE_RCTRL:
+  case SDL_SCANCODE_LALT:
+  case SDL_SCANCODE_RALT:
+    return nullptr;
+  default:
+    make<MainGameInputHandler>(ecs);
+    return nullptr;
+  }
+}
+
 std::unique_ptr<Action> AskUserInputHandler::click(SDL_MouseButtonEvent &,
                                                    flecs::world ecs) {
   make<MainGameInputHandler>(ecs);
@@ -376,8 +430,8 @@ AskUserInputHandler::handle_action(flecs::world ecs,
 
 std::unique_ptr<Action> InventoryInputHandler::keyDown(SDL_KeyboardEvent &key,
                                                        flecs::world ecs) {
-  auto idx = key.scancode - SDL_SCANCODE_A;
-  if (0 <= idx && idx < q.count()) {
+  auto idx = key.key - SDLK_A;
+  if (0 <= (int)idx && (int)idx < q.count()) {
     return item_selected(q.page(idx, 1).first());
   }
   return AskUserInputHandler::keyDown(key, ecs);
@@ -475,12 +529,13 @@ void LevelupHandler::on_render(flecs::world ecs, tcod::Console &console,
               std::nullopt, std::nullopt);
 
   auto fighter = player.get<Fighter>();
-  auto msg = tcod::stringf("a) Constitution (+20 HP, from %d)", fighter.max_hp);
+  auto msg = tcod::stringf("%c) Constitution (+20 HP, from %d)",
+                           key(SDL_SCANCODE_A), fighter.max_hp);
   tcod::print(console, {x + 1, 4}, msg, std::nullopt, std::nullopt);
-  msg = tcod::stringf("b) Strength (+1 attack, from %d)",
+  msg = tcod::stringf("%c) Strength (+1 attack, from %d)", key(SDL_SCANCODE_B),
                       fighter.power(player, false));
   tcod::print(console, {x + 1, 5}, msg, std::nullopt, std::nullopt);
-  msg = tcod::stringf("c) Agility (+1 defense, from %d)",
+  msg = tcod::stringf("%c) Agility (+1 defense, from %d)", key(SDL_SCANCODE_C),
                       fighter.defense(player));
   tcod::print(console, {x + 1, 6}, msg, std::nullopt, std::nullopt);
 }
