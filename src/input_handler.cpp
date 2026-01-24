@@ -195,8 +195,6 @@ void MainMenuInputHandler::on_render(flecs::world, Console &console, uint64_t) {
   }
 }
 
-static auto constexpr commandBox = std::array{62, 45, 13, 3};
-
 void MainHandler::on_render(flecs::world ecs, Console &console, uint64_t) {
   auto map = ecs.lookup("currentMap").target<CurrentMap>();
   auto &gMap = map.get_mut<GameMap>();
