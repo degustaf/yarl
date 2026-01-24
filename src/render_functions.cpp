@@ -64,7 +64,7 @@ void renderSmell(Console &console, flecs::entity player, int x, int y,
 
 void renderDungeonLevel(Console &console, int level,
                         std::array<int, 2> location) {
-  auto msg = stringf("'\U0001F389'Dungeon level: %d", level);
+  auto msg = stringf("Dungeon level: %d", level);
   console.print(location, msg, std::nullopt, std::nullopt);
 }
 

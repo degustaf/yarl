@@ -1,6 +1,5 @@
 #include "renderer.hpp"
 
-#include <SDL3/SDL_render.h>
 #include <algorithm>
 #include <cassert>
 #include <cmath>
@@ -8,10 +7,12 @@
 #include <iostream>
 #include <memory>
 #include <stdexcept>
+#include <unordered_map>
 
 #include <SDL3/SDL.h>
 #include <SDL3_image/SDL_image.h>
 #include <SDL3_ttf/SDL_ttf.h>
+#include <utf8proc.h>
 
 static constexpr auto integer_scaling = false;
 static constexpr auto keep_aspect = false;
@@ -83,9 +84,11 @@ static void render_texture_setup(SDL_Renderer *renderer,
   setup_cache_console(console.get_dims(), cache);
 }
 
-static void render(const FontPtr &font, SDL_Renderer *renderer,
-                   const Console &console, std::unique_ptr<Console> &cache,
-                   SDL_Texture *img) {
+static void
+render(const FontPtr &font, SDL_Renderer *renderer, const Console &console,
+       std::unique_ptr<Console> &cache, SDL_Texture *img,
+       const TextEnginePtr &engine,
+       std::unordered_map<int, TextPtr, SDLData::hash> &cachedGlyphs) {
   if (cache) {
     assert(cache->get_width() == console.get_width());
     assert(cache->get_height() == console.get_height());
@@ -99,17 +102,33 @@ static void render(const FontPtr &font, SDL_Renderer *renderer,
   for (auto y = 0; y < console.get_height(); y++) {
     for (auto x = 0; x < console.get_width(); x++) {
       const auto tile = console.at({x, y}).normalize_tile_for_drawing();
-      SDL_Texture *texture = nullptr;
-      SDL_Color fg = {tile.fg.r, tile.fg.g, tile.fg.b, tile.fg.a};
-      SDL_Color bg = {tile.bg.r, tile.bg.g, tile.bg.b, tile.bg.a};
-      auto surface =
-          TTF_RenderGlyph_Shaded(font.get(), (uint32_t)tile.ch, fg, bg);
-      texture = SDL_CreateTextureFromSurface(renderer, surface);
-      SDL_DestroySurface(surface);
+
       SDL_FRect dstRect{(float)(x * cell_width), (float)(y * cell_height),
                         (float)cell_width, (float)cell_height}; // x, y, w, h
-      SDL_RenderTexture(renderer, texture, NULL, &dstRect);
-      SDL_DestroyTexture(texture);
+      SDL_SetRenderDrawColor(renderer, tile.bg.r, tile.bg.g, tile.bg.b,
+                             tile.bg.a);
+      SDL_RenderFillRect(renderer, &dstRect);
+
+      if (cachedGlyphs.find(tile.ch) == cachedGlyphs.end()) {
+        auto ch = tile.ch;
+        if (!TTF_FontHasGlyph(font.get(), (unsigned int)tile.ch)) {
+#ifndef NDEBUG
+          std::cerr << "Font does not support unicode character '" << tile.ch
+                    << "'\n";
+#endif
+          ch = ' ';
+        }
+        uint8_t buffer[4];
+        auto len = (size_t)utf8proc_encode_char(ch, buffer);
+        cachedGlyphs.emplace(tile.ch,
+                             TextPtr(TTF_CreateText(engine.get(), font.get(),
+                                                    (char *)buffer, len),
+                                     &TTF_DestroyText));
+      }
+      auto &text = cachedGlyphs.find(tile.ch)->second;
+      TTF_SetTextColor(text.get(), tile.fg.r, tile.fg.g, tile.fg.b, tile.fg.a);
+      TTF_DrawRendererText(text.get(), (float)(x * cell_width),
+                           (float)(y * cell_height));
     }
   }
 
@@ -121,16 +140,18 @@ static void render(const FontPtr &font, SDL_Renderer *renderer,
   }
 }
 
-static void render_texture(const FontPtr &font, SDL_Renderer *renderer,
-                           const Console &console,
-                           std::unique_ptr<Console> &cache, SDL_Texture *target,
-                           SDL_Texture *img) {
+static void
+render_texture(const FontPtr &font, SDL_Renderer *renderer,
+               const Console &console, std::unique_ptr<Console> &cache,
+               SDL_Texture *target, SDL_Texture *img,
+               const TextEnginePtr &engine,
+               std::unordered_map<int, TextPtr, SDLData::hash> &cachedGlyphs) {
   if (!target) {
-    return render(font, renderer, console, cache, img);
+    return render(font, renderer, console, cache, img, engine, cachedGlyphs);
   }
   auto old_target = SDL_GetRenderTarget(renderer);
   SDL_SetRenderTarget(renderer, target);
-  render(font, renderer, console, cache, img);
+  render(font, renderer, console, cache, img, engine, cachedGlyphs);
   SDL_SetRenderTarget(renderer, old_target);
 }
 
@@ -147,9 +168,9 @@ static bool handle_event(void *userdata, SDL_Event *event) {
 SDLData::SDLData(int columns, int rows, float fontSize, const char *title,
                  const std::filesystem::path &fontPath)
     : dims({0, 0}), window(nullptr, nullptr), _renderer(nullptr, nullptr),
-      font(nullptr, nullptr), cache_console(nullptr),
+      font(nullptr, nullptr), engine(nullptr, nullptr), cache_console(nullptr),
       cache_texture(nullptr, nullptr), cover_texture(nullptr, nullptr),
-      cursor_transform({0, 0, 1, 1}) {
+      cachedGlyphs(256), cursor_transform({0, 0, 1, 1}) {
 
   assert(columns > 0);
   assert(rows > 0);
@@ -195,14 +216,17 @@ SDLData::SDLData(int columns, int rows, float fontSize, const char *title,
                         SDL_PROP_RENDERER_CREATE_PRESENT_VSYNC_NUMBER, 1);
   SDL_SetPointerProperty(renderer_props,
                          SDL_PROP_RENDERER_CREATE_WINDOW_POINTER, window.get());
-  _renderer = decltype(_renderer)(
-      SDL_CreateRendererWithProperties(renderer_props), SDL_DestroyRenderer);
+  _renderer = RendererPtr(SDL_CreateRendererWithProperties(renderer_props),
+                          SDL_DestroyRenderer);
   SDL_SetPointerProperty(renderer_props,
                          SDL_PROP_RENDERER_CREATE_WINDOW_POINTER, NULL);
   if (!_renderer) {
     throw ::std::runtime_error(std::string("Could not create SDL renderer:\n") +
                                SDL_GetError());
   }
+
+  engine = TextEnginePtr(TTF_CreateRendererTextEngine(_renderer.get()),
+                         &TTF_DestroyRendererTextEngine);
 
   SDL_DestroyProperties(renderer_props);
   SDL_DestroyProperties(window_props);
@@ -287,7 +311,8 @@ void SDLData::accumulate(const Console &console, bool img) {
   render_texture_setup(_renderer.get(), dims, console, cache_console,
                        cache_texture);
   render_texture(font, _renderer.get(), console, cache_console,
-                 cache_texture.get(), img ? cover_texture.get() : nullptr);
+                 cache_texture.get(), img ? cover_texture.get() : nullptr,
+                 engine, cachedGlyphs);
 
   auto dest = get_destination_rect_for_console(_renderer.get(), dims,
                                                console.get_dims());
