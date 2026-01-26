@@ -623,8 +623,18 @@ std::unique_ptr<Action> HistoryInputHandler::keyDown(SDL_KeyboardEvent &key,
   }
 }
 
-void HistoryInputHandler::on_render(flecs::world, Console &, uint64_t) {
-  // TODO
+void HistoryInputHandler::on_render(flecs::world ecs, Console &console,
+                                    uint64_t time) {
+  MainHandler::on_render(ecs, console, time);
+  auto logConsole = Console(console.get_width() - 6, console.get_height() - 6);
+  logConsole.draw_frame({0, 0, logConsole.get_width(), logConsole.get_height()},
+                        DECORATION, std::nullopt, std::nullopt);
+  logConsole.print_rect({0, 0, logConsole.get_width(), 1}, "┤Message history├");
+  ecs.lookup("messageLog")
+      .get<MessageLog>()
+      .render(logConsole, 1, 1, logConsole.get_width() - 2,
+              logConsole.get_height() - 2, cursor);
+  console.blit(logConsole, {3, 3});
 }
 
 void CharacterScreenInputHandler::on_render(flecs::world ecs, Console &console,
