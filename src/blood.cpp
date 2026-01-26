@@ -16,7 +16,8 @@ void BloodDrop::render(Console &console, int y_offset) const {
   double integer = 0.0;
   double frac = modf(y_, &integer);
   auto ch = y_ < 0.5 ? '`' : y_ < 1.0 ? 0xBF : frac < 0.5 ? '`' : '.';
-  auto &tile = console.at({x, y_offset + (int)integer});
+  auto &tile =
+      console.at({console.get_width() / 2 + x_offset, y_offset + (int)integer});
   tile.encodeChar(ch);
   tile.fg = color::red;
 }

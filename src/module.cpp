@@ -9,6 +9,7 @@
 
 #include "actor.hpp"
 #include "ai.hpp"
+#include "blood.hpp"
 #include "color.hpp"
 #include "console.hpp"
 #include "consumable.hpp"
@@ -128,6 +129,7 @@ module::module(flecs::world ecs) {
 
   // actor.hpp
   ecs.component<Position>().member<int>("x").member<int>("y");
+  ecs.component<FPosition>();
   ecs.component<MoveAnimation>();
   ecs.component<RenderOrder>();
   ecs.component<std::optional<color::RGB>>().opaque(
@@ -164,6 +166,9 @@ module::module(flecs::world ecs) {
       .member("turns_remaining", &ConfusedAi::turns_remaining)
       .is_a<Ai>()
       .add(flecs::CanToggle);
+
+  // blood.hpp
+  ecs.component<BloodDrop>();
 
   // console.hpp
   ecs.component<Console>();

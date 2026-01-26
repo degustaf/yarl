@@ -63,7 +63,8 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
   console.clear();
 
   auto &handler = ecs.get_mut<std::unique_ptr<InputHandler>>();
-  handler->on_render(ecs, console, SDL_GetTicks());
+  handler->animate(ecs, SDL_GetTicks());
+  handler->on_render(ecs, console);
 
   auto &data = ecs.get_mut<SDLData>();
   auto renderer = data.renderer();

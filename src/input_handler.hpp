@@ -13,7 +13,6 @@
 
 #include "action.hpp"
 #include "actor.hpp"
-#include "blood.hpp"
 #include "console.hpp"
 #include "game_map.hpp"
 #include "inventory.hpp"
@@ -35,7 +34,8 @@ struct InputHandler {
     return nullptr;
   };
   virtual ActionResult handle_action(flecs::world, std::unique_ptr<Action>);
-  virtual void on_render(flecs::world, Console &, uint64_t t) { time = t; };
+  virtual void animate(flecs::world, uint64_t t) { time = t; };
+  virtual void on_render(flecs::world, Console &) = 0;
   virtual bool renderImg() const { return false; };
 
   static constexpr auto BAR_WIDTH = 20;
@@ -73,7 +73,7 @@ struct MainMenuInputHandler : InputHandler {
 
   virtual std::unique_ptr<Action> keyDown(SDL_KeyboardEvent &,
                                           flecs::world) override;
-  virtual void on_render(flecs::world, Console &, uint64_t) override;
+  virtual void on_render(flecs::world, Console &) override;
   virtual bool renderImg() const override { return true; };
 };
 
@@ -81,7 +81,7 @@ struct MainHandler : InputHandler {
   MainHandler(const InputHandler &h) : InputHandler(h) {};
   virtual ~MainHandler() = default;
 
-  virtual void on_render(flecs::world, Console &, uint64_t) override;
+  virtual void on_render(flecs::world, Console &) override;
   virtual ActionResult handle_action(flecs::world,
                                      std::unique_ptr<Action>) override;
 };
@@ -94,7 +94,7 @@ struct MainGameInputHandler : MainHandler {
                                           flecs::world) override;
   virtual std::unique_ptr<Action> click(SDL_MouseButtonEvent &,
                                         flecs::world) override;
-  virtual void on_render(flecs::world, Console &, uint64_t) override;
+  virtual void animate(flecs::world, uint64_t t) override;
 };
 
 template <typename T, typename F,
@@ -119,9 +119,8 @@ struct PopupInputHandler : InputHandler {
     return nullptr;
   };
 
-  virtual void on_render(flecs::world ecs, Console &console,
-                         uint64_t t) override {
-    parent.on_render(ecs, console, t);
+  virtual void on_render(flecs::world ecs, Console &console) override {
+    parent.on_render(ecs, console);
     for (auto &tile : console) {
       tile.fg /= 8;
       tile.bg /= 8;
@@ -144,7 +143,6 @@ inline void makePopup(flecs::world ecs, F childOnRendor,
 
 struct AskUserInputHandler : MainHandler {
   AskUserInputHandler(const InputHandler &handler) : MainHandler(handler) {};
-
   virtual ~AskUserInputHandler() = default;
 
   virtual std::unique_ptr<Action> keyDown(SDL_KeyboardEvent &,
@@ -164,12 +162,11 @@ struct InventoryInputHandler : AskUserInputHandler {
               .with<Item>()
               .cached()
               .build()) {};
-
   virtual ~InventoryInputHandler() = default;
 
   virtual std::unique_ptr<Action> keyDown(SDL_KeyboardEvent &,
                                           flecs::world) override;
-  virtual void on_render(flecs::world, Console &, uint64_t) override;
+  virtual void on_render(flecs::world, Console &) override;
   virtual std::unique_ptr<Action> item_selected(flecs::entity item) = 0;
 
   std::string title;
@@ -190,7 +187,6 @@ struct UseItemInputHandler : InventoryInputHandler {
   UseItemInputHandler(const std::string &title, flecs::world ecs,
                       const InputHandler &handler)
       : InventoryInputHandler(title, ecs, handler) {};
-
   virtual ~UseItemInputHandler() = default;
 
   virtual std::unique_ptr<Action> item_selected(flecs::entity item) override;
@@ -198,14 +194,13 @@ struct UseItemInputHandler : InventoryInputHandler {
 
 struct LevelupHandler : AskUserInputHandler {
   LevelupHandler(const InputHandler &handler) : AskUserInputHandler(handler) {};
-
   virtual ~LevelupHandler() = default;
 
   virtual std::unique_ptr<Action> keyDown(SDL_KeyboardEvent &,
                                           flecs::world) override;
   virtual std::unique_ptr<Action> click(SDL_MouseButtonEvent &,
                                         flecs::world) override;
-  virtual void on_render(flecs::world, Console &, uint64_t) override;
+  virtual void on_render(flecs::world, Console &) override;
 };
 
 struct HistoryInputHandler : MainHandler {
@@ -219,7 +214,7 @@ struct HistoryInputHandler : MainHandler {
 
   virtual std::unique_ptr<Action> keyDown(SDL_KeyboardEvent &,
                                           flecs::world) override;
-  virtual void on_render(flecs::world, Console &, uint64_t) override;
+  virtual void on_render(flecs::world, Console &) override;
 
   size_t cursor;
   size_t log_length;
@@ -228,10 +223,9 @@ struct HistoryInputHandler : MainHandler {
 struct CharacterScreenInputHandler : AskUserInputHandler {
   CharacterScreenInputHandler(const InputHandler &handler)
       : AskUserInputHandler(handler) {};
-
   virtual ~CharacterScreenInputHandler() = default;
 
-  virtual void on_render(flecs::world, Console &, uint64_t) override;
+  virtual void on_render(flecs::world, Console &) override;
 };
 
 template <bool useF> struct SelectInputHandler : AskUserInputHandler {
@@ -342,8 +336,8 @@ template <bool useF> struct SelectInputHandler : AskUserInputHandler {
     return AskUserInputHandler::click(button, ecs);
   }
 
-  void on_render(flecs::world ecs, Console &console, uint64_t time) {
-    AskUserInputHandler::on_render(ecs, console, time);
+  void on_render(flecs::world ecs, Console &console) {
+    AskUserInputHandler::on_render(ecs, console);
     auto &tile = console.at(mouse_loc);
     tile.bg = color::white;
   }
@@ -386,7 +380,7 @@ struct AreaTargetSelector : TargetSelector<true> {
 
   virtual ~AreaTargetSelector() = default;
 
-  virtual void on_render(flecs::world, Console &, uint64_t) override;
+  virtual void on_render(flecs::world, Console &) override;
 
   int radius;
 };
@@ -404,7 +398,7 @@ struct PathFinder : MainHandler {
 
   virtual ~PathFinder() = default;
 
-  virtual void on_render(flecs::world, Console &, uint64_t) override;
+  virtual void on_render(flecs::world, Console &) override;
 
   std::unique_ptr<PathCallback> pathCallback = nullptr;
   std::unique_ptr<TCODPath> path = nullptr;
@@ -433,9 +427,8 @@ template <bool useRope> struct JumpConfirm : AskUserInputHandler {
     return AskUserInputHandler::keyDown(key, ecs);
   }
 
-  virtual void on_render(flecs::world ecs, Console &console,
-                         uint64_t time) override {
-    AskUserInputHandler::on_render(ecs, console, time);
+  virtual void on_render(flecs::world ecs, Console &console) override {
+    AskUserInputHandler::on_render(ecs, console);
     for (auto &tile : console) {
       tile.fg /= 8;
       tile.bg /= 8;
@@ -463,7 +456,6 @@ template <bool useRope> struct JumpConfirm : AskUserInputHandler {
 
 struct GameOver : MainHandler {
   GameOver(const InputHandler &handler) : MainHandler(handler) {};
-
   virtual ~GameOver() = default;
 
   virtual std::unique_ptr<Action> keyDown(SDL_KeyboardEvent &,
@@ -475,9 +467,7 @@ struct WinScreen : GameOver {
       : GameOver(handler), start_time(handler.time) {};
 
   virtual ~WinScreen() = default;
-
-  virtual void on_render(flecs::world, Console &, uint64_t) override;
-
-  std::vector<BloodDrop> drops = std::vector<BloodDrop>();
+  virtual void animate(flecs::world, uint64_t t) override;
+  virtual void on_render(flecs::world, Console &) override;
   uint64_t start_time;
 };
