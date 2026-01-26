@@ -62,7 +62,12 @@ ActionResult MoveAction::perform(flecs::entity e) const {
   if (map.inBounds(pos + dxy)) {
     if (map.isWalkable(pos + dxy)) {
       if (GameMap::get_blocking_entity(mapEntity, pos + dxy) == e.null()) {
+        e.world().defer_begin();
+        if (!e.has<MoveAnimation>()) {
+          e.set<MoveAnimation>(pos);
+        }
         pos.move(dxy);
+        e.world().defer_end();
         return {ActionResultType::Success, "", 1.0f};
       }
     } else if (map.isTransparent(pos + dxy)) {

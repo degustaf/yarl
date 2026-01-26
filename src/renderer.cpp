@@ -132,6 +132,16 @@ render(const FontPtr &font, SDL_Renderer *renderer, const Console &console,
     }
   }
 
+  for (auto &og : console.chars) {
+    // The character was at some location, before the animation started. It's
+    // glyph should be in the cache.
+    assert(cachedGlyphs.find(og.ch) != cachedGlyphs.end());
+    auto &text = cachedGlyphs.find(og.ch)->second;
+    TTF_SetTextColor(text.get(), og.fg.r, og.fg.g, og.fg.b, og.fg.a);
+    TTF_DrawRendererText(text.get(), og.x * (float)cell_width,
+                         og.y * (float)cell_height);
+  }
+
   if (img) {
     float w, h;
     SDL_GetTextureSize(img, &w, &h);

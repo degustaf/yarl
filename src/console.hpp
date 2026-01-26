@@ -8,6 +8,7 @@
 #include <memory>
 #include <optional>
 #include <string_view>
+#include <vector>
 
 #include <utf8proc.h>
 
@@ -50,6 +51,13 @@ struct Console {
     color::RGBA bg;
   };
 
+  struct offGrid {
+    int ch;
+    color::RGBA fg;
+    float x;
+    float y;
+  };
+
   Console() = default;
   Console(int w, int h)
       : w(w), h(h), elements(w * h), fg(color::white), bg(color::black),
@@ -85,6 +93,11 @@ struct Console {
   void clear(const Tile &tile = {' ', color::white, color::black}) noexcept {
     for (auto &it : *this)
       it = tile;
+    chars.clear();
+  }
+
+  void addOffGrid(int ch, color::RGBA fg, std::array<float, 2> pos) {
+    chars.push_back({ch, fg, pos[0], pos[1]});
   }
 
   void print(const std::array<int, 2> &xy, std::string_view str,
@@ -115,4 +128,7 @@ private:
   color::RGBA bg;
   std::optional<color::RGBA> key_color;
   std::unique_ptr<Tile[]> tiles;
+
+public:
+  std::vector<offGrid> chars;
 };

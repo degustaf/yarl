@@ -19,6 +19,7 @@
     },
     {
       "name": "sdl3-ttf",
+      "features": [ "harfbuzz" ],
       "version>=": "3.2.2"
     },
     {

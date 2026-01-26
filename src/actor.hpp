@@ -42,6 +42,19 @@ struct Position {
   int y;
 };
 
+struct MoveAnimation {
+  MoveAnimation() : MoveAnimation(0, 0) {};
+  MoveAnimation(float x, float y) : x(x), y(y) {};
+  MoveAnimation(float x, float y, float speed) : x(x), y(y), speed(speed) {};
+  MoveAnimation(const Position &p) : x((float)p.x), y((float)p.y) {};
+
+  operator std::array<float, 2>() const { return {x, y}; };
+
+  float x;
+  float y;
+  float speed = 0.02f;
+};
+
 enum class RenderOrder /*: uint8_t*/ {
   Corpse,
   Item,
@@ -57,6 +70,7 @@ struct Renderable {
   bool fovOnly = true;
 
   void render(Console &console, const Position &pos, bool inFov) const;
+  void render(Console &console, const MoveAnimation &pos, bool inFov) const;
 };
 
 struct Named {

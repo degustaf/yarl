@@ -1,7 +1,7 @@
 #include "actor.hpp"
 
 #include <algorithm>
-#include <memory>
+#include <cassert>
 
 #include "ai.hpp"
 #include "game_map.hpp"
@@ -134,18 +134,27 @@ int Fighter::power(flecs::entity self, bool ranged) const {
   return power;
 }
 
+static constexpr uint8_t darknessFactor = 2;
+
 void Renderable::render(Console &console, const Position &pos,
                         bool inFov) const {
   if (fovOnly && !inFov) {
     return;
   }
-  static constexpr uint8_t darknessFactor = 2;
   auto &tile = console.at(pos);
   tile.encodeChar(ch);
   tile.fg = inFov ? fg : (fg / darknessFactor);
   if (bg) {
     tile.bg = inFov ? *bg : (*bg / darknessFactor);
   }
+}
+
+void Renderable::render(Console &console, const MoveAnimation &pos,
+                        bool inFov) const {
+  if (fovOnly && !inFov) {
+    return;
+  }
+  console.addOffGrid(ch, inFov ? fg : (fg / darknessFactor), pos);
 }
 
 void Regenerator::update(flecs::entity self) {

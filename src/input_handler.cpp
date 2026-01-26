@@ -3,10 +3,12 @@
 #include <algorithm>
 #include <array>
 #include <cassert>
+#include <cmath>
 #include <memory>
 #include <optional>
 
 #include "action.hpp"
+#include "actor.hpp"
 #include "color.hpp"
 #include "console.hpp"
 #include "consumable.hpp"
@@ -170,7 +172,8 @@ std::unique_ptr<Action> MainMenuInputHandler::keyDown(SDL_KeyboardEvent &key,
   return nullptr;
 }
 
-void MainMenuInputHandler::on_render(flecs::world, Console &console, uint64_t) {
+void MainMenuInputHandler::on_render(flecs::world ecs, Console &console,
+                                     uint64_t t) {
   static constexpr auto ImageWidth = 100;
   // static const auto background_image = TCODImage("assets/teeth.png");
   // assert(background_image.getSize()[0] == ImageWidth);
@@ -193,9 +196,11 @@ void MainMenuInputHandler::on_render(flecs::world, Console &console, uint64_t) {
     console.print({printY, console.get_height() / 2 - 2 + i}, str,
                   color::menu_text, color::black, Console::Alignment::CENTER);
   }
+
+  InputHandler::on_render(ecs, console, t);
 }
 
-void MainHandler::on_render(flecs::world ecs, Console &console, uint64_t) {
+void MainHandler::on_render(flecs::world ecs, Console &console, uint64_t t) {
   auto map = ecs.lookup("currentMap").target<CurrentMap>();
   auto &gMap = map.get_mut<GameMap>();
   gMap.render(console);
@@ -207,26 +212,39 @@ void MainHandler::on_render(flecs::world ecs, Console &console, uint64_t) {
               HUD_HEIGHT);
 
   auto q =
-      ecs.query_builder<const Position, const Renderable, const Openable *>(
-             "module::renderable")
+      ecs.query_builder<const Position, const MoveAnimation *, const Renderable,
+                        const Openable *>("module::renderable")
           .with(flecs::ChildOf, map)
           .order_by<const Renderable>([](auto, auto r1, auto, auto r2) {
             return static_cast<int>(r1->layer) - static_cast<int>(r2->layer);
           })
           .build();
 
-  q.each([&](auto p, auto r, auto openable) {
+  q.each([&](auto p, auto ma, auto r, auto openable) {
     if (gMap.isInFov(p)) {
-      r.render(console, p, true);
+      if (ma) {
+        r.render(console, *ma, true);
+      } else {
+        r.render(console, p, true);
+      }
     } else if (gMap.isSensed(p) && openable) {
+      assert(ma == nullptr);
       r.render(console, p, true);
     } else if (gMap.isExplored(p)) {
-      r.render(console, p, false);
+      if (ma) {
+        r.render(console, *ma, false);
+      } else {
+        r.render(console, p, false);
+      }
     }
   });
 
   auto player = ecs.lookup("player");
-  player.get<Renderable>().render(console, player.get<Position>(), true);
+  if (player.has<MoveAnimation>()) {
+    player.get<Renderable>().render(console, player.get<MoveAnimation>(), true);
+  } else {
+    player.get<Renderable>().render(console, player.get<Position>(), true);
+  }
 
   auto fighter = player.get<Fighter>();
   renderBar(console, fighter.hp(), fighter.max_hp, 0, dim[1] - HUD_HEIGHT,
@@ -238,6 +256,8 @@ void MainHandler::on_render(flecs::world ecs, Console &console, uint64_t) {
   renderNamesAtMouseLocation(console, {BAR_WIDTH + 1, dim[1] - HUD_HEIGHT - 1},
                              mouse_loc, map, gMap);
   renderCommandButton(console, commandBox);
+
+  InputHandler::on_render(ecs, console, t);
 }
 
 ActionResult MainHandler::handle_action(flecs::world ecs,
@@ -404,6 +424,24 @@ MainGameInputHandler::click(SDL_MouseButtonEvent &button, flecs::world ecs) {
   return nullptr;
 }
 
+void MainGameInputHandler::on_render(flecs::world ecs, Console &console,
+                                     uint64_t t) {
+  auto q = ecs.query<const Position, MoveAnimation>();
+  auto dt = (float)(t - time);
+  assert(!ecs.is_deferred());
+  ecs.defer_begin();
+  q.each([dt](flecs::entity e, const Position &p, MoveAnimation &am) {
+    am.x += ((float)p.x - am.x) * (1 - std::exp(-am.speed * dt));
+    am.y += ((float)p.y - am.y) * (1 - std::exp(-am.speed * dt));
+    if (am.x == (float)p.x && am.y == (float)p.y) {
+      e.remove<MoveAnimation>();
+    }
+  });
+  ecs.defer_end();
+
+  MainHandler::on_render(ecs, console, t);
+}
+
 std::unique_ptr<Action> AskUserInputHandler::keyDown(SDL_KeyboardEvent &key,
                                                      flecs::world ecs) {
   switch (key.scancode) {
@@ -455,7 +493,7 @@ static int menuXLocation(flecs::entity player) {
 
 void InventoryInputHandler::on_render(flecs::world ecs, Console &console,
                                       uint64_t time) {
-  MainHandler::on_render(ecs, console, time);
+  AskUserInputHandler::on_render(ecs, console, time);
   auto count = q.count();
   auto x = menuXLocation(ecs.lookup("player"));
 
@@ -527,7 +565,7 @@ std::unique_ptr<Action> LevelupHandler::click(SDL_MouseButtonEvent &,
 
 void LevelupHandler::on_render(flecs::world ecs, Console &console,
                                uint64_t time) {
-  MainHandler::on_render(ecs, console, time);
+  AskUserInputHandler::on_render(ecs, console, time);
   auto player = ecs.lookup("player");
   auto x = menuXLocation(player);
   console.draw_frame({x, 0, 35, 8}, DECORATION, color::white, color::black);
@@ -585,11 +623,13 @@ std::unique_ptr<Action> HistoryInputHandler::keyDown(SDL_KeyboardEvent &key,
   }
 }
 
-void HistoryInputHandler::on_render(flecs::world, Console &, uint64_t) {}
+void HistoryInputHandler::on_render(flecs::world, Console &, uint64_t) {
+  // TODO
+}
 
 void CharacterScreenInputHandler::on_render(flecs::world ecs, Console &console,
                                             uint64_t time) {
-  MainHandler::on_render(ecs, console, time);
+  AskUserInputHandler::on_render(ecs, console, time);
   auto player = ecs.lookup("player");
   auto x = menuXLocation(player);
   auto title = std::string{"Character Information"};
@@ -622,7 +662,7 @@ std::unique_ptr<Action> LookHandler::loc_selected(flecs::world ecs,
 
 void AreaTargetSelector::on_render(flecs::world ecs, Console &console,
                                    uint64_t time) {
-  SelectInputHandler<true>::on_render(ecs, console, time);
+  TargetSelector<true>::on_render(ecs, console, time);
   console.draw_frame({mouse_loc[0] - radius - 1, mouse_loc[1] - radius - 1,
                       radius * radius, radius * radius},
                      DECORATION, color::red, std::nullopt);
@@ -679,13 +719,11 @@ std::unique_ptr<Action> GameOver::keyDown(SDL_KeyboardEvent &key,
   }
 }
 
-void WinScreen::on_render(flecs::world, Console &console, uint64_t time) {
-  static auto start_time = time;
-  static auto last_time = time;
+void WinScreen::on_render(flecs::world ecs, Console &console, uint64_t t) {
   auto x = console.get_width() / 2;
   auto y = console.get_height() / 2;
-  auto time_ms = time - start_time;
-  auto ts = time - last_time;
+  auto time_ms = t - start_time;
+  auto ts = t - time;
   auto level = (uint8_t)((time_ms >> 2) & 0xff);
 
   switch (time_ms >> 10) {
@@ -763,5 +801,5 @@ void WinScreen::on_render(flecs::world, Console &console, uint64_t time) {
     break;
   }
   }
-  last_time = time;
+  GameOver::on_render(ecs, console, t);
 }

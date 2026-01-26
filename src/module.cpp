@@ -128,6 +128,7 @@ module::module(flecs::world ecs) {
 
   // actor.hpp
   ecs.component<Position>().member<int>("x").member<int>("y");
+  ecs.component<MoveAnimation>();
   ecs.component<RenderOrder>();
   ecs.component<std::optional<color::RGB>>().opaque(
       std_optional_support<color::RGB>);

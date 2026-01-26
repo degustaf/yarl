@@ -35,7 +35,7 @@ struct InputHandler {
     return nullptr;
   };
   virtual ActionResult handle_action(flecs::world, std::unique_ptr<Action>);
-  virtual void on_render(flecs::world, Console &, uint64_t) = 0;
+  virtual void on_render(flecs::world, Console &, uint64_t t) { time = t; };
   virtual bool renderImg() const { return false; };
 
   static constexpr auto BAR_WIDTH = 20;
@@ -45,6 +45,7 @@ struct InputHandler {
   std::array<int, 2> mouse_loc = {0, 0};
   std::array<int, 2> dim;
   std::array<int, 4> commandBox;
+  uint64_t time;
 
 protected:
   template <typename T> inline void make(flecs::world ecs) {
@@ -93,6 +94,7 @@ struct MainGameInputHandler : MainHandler {
                                           flecs::world) override;
   virtual std::unique_ptr<Action> click(SDL_MouseButtonEvent &,
                                         flecs::world) override;
+  virtual void on_render(flecs::world, Console &, uint64_t) override;
 };
 
 template <typename T, typename F,
@@ -118,8 +120,8 @@ struct PopupInputHandler : InputHandler {
   };
 
   virtual void on_render(flecs::world ecs, Console &console,
-                         uint64_t time) override {
-    parent.on_render(ecs, console, time);
+                         uint64_t t) override {
+    parent.on_render(ecs, console, t);
     for (auto &tile : console) {
       tile.fg /= 8;
       tile.bg /= 8;
@@ -341,7 +343,7 @@ template <bool useF> struct SelectInputHandler : AskUserInputHandler {
   }
 
   void on_render(flecs::world ecs, Console &console, uint64_t time) {
-    MainHandler::on_render(ecs, console, time);
+    AskUserInputHandler::on_render(ecs, console, time);
     auto &tile = console.at(mouse_loc);
     tile.bg = color::white;
   }
@@ -433,7 +435,7 @@ template <bool useRope> struct JumpConfirm : AskUserInputHandler {
 
   virtual void on_render(flecs::world ecs, Console &console,
                          uint64_t time) override {
-    MainHandler::on_render(ecs, console, time);
+    AskUserInputHandler::on_render(ecs, console, time);
     for (auto &tile : console) {
       tile.fg /= 8;
       tile.bg /= 8;
@@ -469,11 +471,13 @@ struct GameOver : MainHandler {
 };
 
 struct WinScreen : GameOver {
-  WinScreen(const InputHandler &handler) : GameOver(handler) {};
+  WinScreen(const InputHandler &handler)
+      : GameOver(handler), start_time(handler.time) {};
 
   virtual ~WinScreen() = default;
 
   virtual void on_render(flecs::world, Console &, uint64_t) override;
 
   std::vector<BloodDrop> drops = std::vector<BloodDrop>();
+  uint64_t start_time;
 };
