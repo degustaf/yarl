@@ -1,3 +1,4 @@
+#include <SDL3/SDL_timer.h>
 #define SDL_MAIN_USE_CALLBACKS
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
@@ -64,8 +65,10 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
   auto ecs = *static_cast<flecs::world *>(appstate);
   auto &console = ecs.get_mut<tcod::Console>();
   console.clear();
-  ecs.get_mut<std::unique_ptr<InputHandler>>()->on_render(ecs, console,
-                                                          SDL_GetTicks());
+
+  auto &handler = ecs.get_mut<std::unique_ptr<InputHandler>>();
+  handler->animate(ecs, SDL_GetTicks());
+  handler->on_render(ecs, console);
   ecs.get_mut<tcod::Context>().present(console);
 #if !defined NDEBUG
   ecs.progress();

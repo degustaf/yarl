@@ -9,37 +9,40 @@
 #include <string>
 #include <vector>
 
-struct Position {
-  Position() : x(0), y(0){};
-  Position(int x, int y) : x(x), y(y){};
-  Position(std::array<int, 2> xy) : x(xy[0]), y(xy[1]){};
-  Position(int xy[2]) : x(xy[0]), y(xy[1]){};
-  operator std::array<int, 2>() const { return {x, y}; };
+template <typename T> struct Pos {
+  Pos() : x(0), y(0) {};
+  Pos(T x, T y) : x(x), y(y) {};
+  Pos(std::array<T, 2> xy) : x(xy[0]), y(xy[1]) {};
+  Pos(T xy[2]) : x(xy[0]), y(xy[1]) {};
+  operator std::array<T, 2>() const { return {x, y}; };
   operator std::array<size_t, 2>() const { return {(size_t)x, (size_t)y}; };
-  inline Position operator+(const std::array<int, 2> &dxy) const {
+  inline Pos operator+(const std::array<T, 2> &dxy) const {
     return {x + dxy[0], y + dxy[1]};
   };
-  inline Position operator+(const int (&dxy)[2]) const {
+  inline Pos operator+(const T (&dxy)[2]) const {
     return {x + dxy[0], y + dxy[1]};
   };
-  inline bool operator==(const Position &rhs) const {
+  inline bool operator==(const Pos &rhs) const {
     return x == rhs.x && y == rhs.y;
   };
 
-  int distanceSquared(const Position &other) const {
+  T distanceSquared(const Pos &other) const {
     auto dx = x - other.x;
     auto dy = y - other.y;
     return dx * dx + dy * dy;
   };
 
-  void move(std::array<int, 2> dxy) {
+  void move(std::array<T, 2> dxy) {
     x += dxy[0];
     y += dxy[1];
   };
 
-  int x;
-  int y;
+  T x;
+  T y;
 };
+
+using Position = Pos<int>;
+using FPosition = Pos<float>;
 
 enum class RenderOrder /*: uint8_t*/ {
   Corpse,
@@ -70,9 +73,9 @@ struct Fountain {};
 void toggleDoor(flecs::entity door);
 
 struct Fighter {
-  Fighter() : Fighter(0, 0, 0){};
+  Fighter() : Fighter(0, 0, 0) {};
   Fighter(int hp, int defense, int power)
-      : max_hp(hp), _hp(hp), base_defense(defense), base_power(power){};
+      : max_hp(hp), _hp(hp), base_defense(defense), base_power(power) {};
 
   int hp(void) const { return _hp; }
   void set_hp(int value, flecs::entity self);

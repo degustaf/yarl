@@ -63,7 +63,7 @@ bool Engine::load(flecs::world ecs, const std::filesystem::path &file_name,
                   "No saved game to load.", color::white, color::black,
                   TCOD_CENTER);
     };
-    make<PopupInputHandler<MainMenuInputHandler, decltype(f)>>(ecs, handler, f);
+    makePopup<decltype(f)>(ecs, f, handler);
     return false;
   }
 
@@ -75,7 +75,7 @@ bool Engine::load(flecs::world ecs, const std::filesystem::path &file_name,
                   "Failed to load save.", color::white, color::black,
                   TCOD_CENTER);
     };
-    make<PopupInputHandler<MainMenuInputHandler, decltype(f)>>(ecs, handler, f);
+    makePopup<decltype(f)>(ecs, f, handler);
     return false;
   }
 
@@ -86,7 +86,7 @@ bool Engine::load(flecs::world ecs, const std::filesystem::path &file_name,
                   "Failed to load save.", color::white, color::black,
                   TCOD_CENTER);
     };
-    make<PopupInputHandler<MainMenuInputHandler, decltype(f)>>(ecs, handler, f);
+    makePopup<decltype(f)>(ecs, f, handler);
     return false;
   }
   auto map = currentmap.target<CurrentMap>();
