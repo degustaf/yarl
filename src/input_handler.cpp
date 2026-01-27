@@ -627,10 +627,17 @@ std::unique_ptr<Action> LookHandler::loc_selected(flecs::world ecs,
 
 void AreaTargetSelector::on_render(flecs::world ecs, tcod::Console &console) {
   SelectInputHandler<true>::on_render(ecs, console);
-  tcod::draw_frame(console,
-                   {mouse_loc[0] - radius - 1, mouse_loc[1] - radius - 1,
-                    radius * radius, radius * radius},
-                   DECORATION, color::red, std::nullopt);
+  auto map = ecs.lookup("currentMap").target<CurrentMap>();
+  auto &gm = map.get<GameMap>();
+  for (auto y = 0; y < console.get_height(); y++) {
+    auto dy = mouse_loc[1] - y;
+    for (auto x = 0; x < console.get_width(); x++) {
+      auto dx = mouse_loc[0] - x;
+      if (dx * dx + dy * dy <= radius * radius && gm.isInFov({x, y})) {
+        console.at({x, y}).bg = color::red;
+      }
+    }
+  }
 }
 
 void PathFinder::on_render(flecs::world ecs, tcod::Console &console) {
