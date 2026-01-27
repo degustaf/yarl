@@ -13,7 +13,6 @@
 
 #include "action.hpp"
 #include "actor.hpp"
-#include "blood.hpp"
 #include "game_map.hpp"
 #include "inventory.hpp"
 #include "message_log.hpp"

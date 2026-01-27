@@ -51,7 +51,8 @@ SDL_AppResult SDL_AppInit(void **data, [[maybe_unused]] int argc,
   ecs->set<tcod::Context>(tcod::Context(params));
   ecs->set<tcod::Console>(
       ecs->get_mut<tcod::Context>().new_console(width, height));
-  make<MainMenuInputHandler>(*ecs);
+  ecs->set<std::unique_ptr<InputHandler>>(
+      std::make_unique<MainMenuInputHandler>());
 
 #if !defined NDEBUG
   ecs->import <flecs::stats>();
