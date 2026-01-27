@@ -191,11 +191,11 @@ FireballDamageConsumable::selected(flecs::entity item,
     auto center = FPosition{(float)target[0], (float)target[1]};
     ecs.entity()
         .set<FPosition>(center)
-        .set<Velocity>({dx, dy})
+        .set<Velocity>({2 * dx, 2 * dy})
         .set<RadialLimit>({center, (float)radius})
         .set<Renderable>({0x2022, color::RGB{255, (uint8_t)(255 - 255 * r2), 0},
                           std::nullopt, RenderOrder::Actor, scale})
-        .set<Fade>({0.5f, 0.1f})
+        .set<Fade>({0.25f, 0.3f})
         .add(flecs::ChildOf, map);
   }
 
