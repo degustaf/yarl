@@ -388,7 +388,7 @@ std::unique_ptr<Action> MainGameInputHandler::keyDown(SDL_KeyboardEvent &key,
     make<CharacterScreenInputHandler>(ecs);
     return nullptr;
   case SDL_SCANCODE_SLASH:
-    make<LookHandler>(ecs, ecs);
+    make<LookHandler>(ecs);
     return nullptr;
 
   case SDL_SCANCODE_ESCAPE:

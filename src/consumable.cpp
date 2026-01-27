@@ -79,12 +79,9 @@ ActionResult LightningDamageConsumable::activate(flecs::entity item,
 
 ActionResult ConfusionConsumable::activate(flecs::entity item) const {
   auto ecs = item.world();
-  make<TargetSelector<false>>(
-      ecs,
-      [item](auto xy) {
-        return std::make_unique<TargetedItemAction>(item, xy);
-      },
-      ecs);
+  make<TargetSelector<false>>(ecs, [item](auto xy) {
+    return std::make_unique<TargetedItemAction>(item, xy);
+  });
 
   return {ActionResultType::Failure, "Select a target location.", 0.0f,
           color::needsTarget};
@@ -144,7 +141,7 @@ ActionResult FireballDamageConsumable::activate(flecs::entity item) const {
       [item](auto xy) {
         return std::make_unique<TargetedItemAction>(item, xy);
       },
-      radius, ecs);
+      radius);
 
   return {ActionResultType::Failure, "Select a target location.", 0.0f,
           color::needsTarget};
