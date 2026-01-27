@@ -396,7 +396,8 @@ generateStairs(std::array<RectangularRoom, MAX_ROOMS> &rooms, GameMap &map,
   return {0, 0};
 }
 
-static constexpr auto item_weights = std::array<WeightsByFloor, 10>{
+static constexpr auto item_weights = std::array<WeightsByFloor, 11>{
+    WeightsByFloor{1, 350, "module::fireballScroll"},
     WeightsByFloor{1, 35, "module::healthPotion"},
     WeightsByFloor{1, 35, "module::deodorant"},
     WeightsByFloor{1, 35, "module::dung"},

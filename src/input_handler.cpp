@@ -8,7 +8,6 @@
 #include <optional>
 
 #include "action.hpp"
-#include "actor.hpp"
 #include "blood.hpp"
 #include "color.hpp"
 #include "console.hpp"
@@ -366,7 +365,7 @@ std::unique_ptr<Action> MainGameInputHandler::keyDown(SDL_KeyboardEvent &key,
   case SDL_SCANCODE_G:
     return std::make_unique<PickupAction>();
   case SDL_SCANCODE_I: {
-    make<DropItemInputHandler>(ecs, "┤Select an item to use├", ecs);
+    make<UseItemInputHandler>(ecs, "┤Select an item to use├", ecs);
     return nullptr;
   }
   case SDL_SCANCODE_O:
