@@ -100,17 +100,17 @@ void Engine::new_game(flecs::world ecs, int map_width, int map_height) {
   auto seed = (uint32_t)TCODRandom::getInstance()->getInt(
       0, (int)std::numeric_limits<int32_t>::max());
   ecs.entity("seed").set<Seed>({seed});
-  auto player =
-      ecs.entity("player")
-          .set<Position>({0, 0})
-          .set<Renderable>({'@', {0, 0, 100}, std::nullopt, RenderOrder::Actor})
-          .set<Named>({"Player"})
-          .emplace<Fighter>(10, 1, 2)
-          .set<Inventory>({26})
-          .emplace<Level>()
-          .set<Scent>({ScentType::player, 0})
-          .set<ScentWarning>({false})
-          .set<Smeller>({200});
+  auto player = ecs.entity("player")
+                    .set<Position>({0, 0})
+                    .set<Renderable>({'@', color::RGB{0, 0, 100}, std::nullopt,
+                                      RenderOrder::Actor})
+                    .set<Named>({"Player"})
+                    .emplace<Fighter>(10, 1, 2)
+                    .set<Inventory>({26})
+                    .emplace<Level>()
+                    .set<Scent>({ScentType::player, 0})
+                    .set<ScentWarning>({false})
+                    .set<Smeller>({200});
   auto pistol =
       ecs.entity().is_a(ecs.lookup("module::22")).add<ContainedBy>(player);
   toggleEquip<false>(player, pistol);

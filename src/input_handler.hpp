@@ -12,7 +12,6 @@
 #include <type_traits>
 
 #include "action.hpp"
-#include "actor.hpp"
 #include "console.hpp"
 #include "game_map.hpp"
 #include "inventory.hpp"

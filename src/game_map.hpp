@@ -5,7 +5,6 @@
 #include <flecs.h>
 #include <libtcod.hpp>
 
-#include "actor.hpp"
 #include "scent.hpp"
 
 struct CurrentMap {};
@@ -44,6 +43,9 @@ struct GameMap {
   inline int getHeight() const { return height; }
   inline bool isInFov(std::array<int, 2> xy) const {
     return map.isInFov(xy[0], xy[1]);
+  }
+  inline bool isInFov(std::array<float, 2> xy) const {
+    return map.isInFov((int)xy[0], (int)xy[1]);
   }
   inline bool isTransparent(std::array<int, 2> xy) const {
     return isTransparent(xy[0], xy[1]);

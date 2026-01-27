@@ -6,7 +6,6 @@
 #include <cassert>
 #include <cstddef>
 
-#include "actor.hpp"
 #include "engine.hpp"
 #include "map_shared.hpp"
 

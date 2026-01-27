@@ -1,7 +1,9 @@
 #include "consumable.hpp"
 
 #include <cassert>
+#include <cstdint>
 #include <memory>
+#include <optional>
 
 #include "action.hpp"
 #include "actor.hpp"
@@ -11,6 +13,7 @@
 #include "game_map.hpp"
 #include "input_handler.hpp"
 #include "message_log.hpp"
+#include "position.hpp"
 #include "scent.hpp"
 #include "string.hpp"
 
@@ -177,9 +180,29 @@ FireballDamageConsumable::selected(flecs::entity item,
     }
   });
   ecs.defer_end();
+  item.destruct();
+
+  auto rng = TCODRandom::getInstance();
+  for (auto i = 0; i < 1000; i++) {
+    auto dx = rng->get(-1.0f, 1.0f);
+    auto dy = rng->get(-1.0f, 1.0f);
+    auto r2 = dx * dx + dy * dy;
+    if (r2 > 1.0f)
+      continue;
+
+    auto scale = rng->get(0.5f, 2.0f);
+    auto center = FPosition{(float)target[0], (float)target[1]};
+    ecs.entity()
+        .set<FPosition>(center)
+        .set<Velocity>({dx, dy})
+        .set<RadialLimit>({center, (float)radius})
+        .set<Renderable>({0x2022, color::RGB{255, (uint8_t)(255 - 255 * r2), 0},
+                          std::nullopt, RenderOrder::Actor, scale})
+        .set<Fade>({0.5f, 0.1f})
+        .add(flecs::ChildOf, map);
+  }
 
   if (targets_hit) {
-    item.destruct();
     return {ActionResultType::Success, "", 0.0f};
   } else {
     return {ActionResultType::Failure, "There are no targets in the radius.",

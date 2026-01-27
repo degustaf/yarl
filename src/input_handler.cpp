@@ -8,6 +8,7 @@
 #include <optional>
 
 #include "action.hpp"
+#include "actor.hpp"
 #include "blood.hpp"
 #include "color.hpp"
 #include "console.hpp"
@@ -17,6 +18,7 @@
 #include "inventory.hpp"
 #include "level.hpp"
 #include "message_log.hpp"
+#include "position.hpp"
 #include "render_functions.hpp"
 #include "textBox.hpp"
 
@@ -235,6 +237,15 @@ void MainHandler::on_render(flecs::world ecs, Console &console) {
     }
   });
 
+  auto q2 = ecs.query_builder<const FPosition, const Renderable>("module::fpos")
+                .with(flecs::ChildOf, map)
+                .build();
+  q2.each([&](auto &p, auto &r) {
+    if (gMap.isInFov(p)) {
+      r.render(console, p, true);
+    }
+  });
+
   auto player = ecs.lookup("player");
   if (player.has<MoveAnimation>()) {
     player.get<Renderable>().render(console, player.get<MoveAnimation>(), true);
@@ -416,15 +427,43 @@ MainGameInputHandler::click(SDL_MouseButtonEvent &button, flecs::world ecs) {
 }
 
 void MainGameInputHandler::animate(flecs::world ecs, uint64_t t) {
-  auto q = ecs.query<const Position, MoveAnimation>();
   auto dt = (float)(t - time);
   assert(!ecs.is_deferred());
   ecs.defer_begin();
-  q.each([dt](flecs::entity e, const Position &p, MoveAnimation &am) {
-    am.x += ((float)p.x - am.x) * (1 - std::exp(-am.speed * dt));
-    am.y += ((float)p.y - am.y) * (1 - std::exp(-am.speed * dt));
-    if (am.x == (float)p.x && am.y == (float)p.y) {
-      e.remove<MoveAnimation>();
+  ecs.query<const Position, MoveAnimation>().each(
+      [dt](flecs::entity e, const Position &p, MoveAnimation &am) {
+        am.x += ((float)p.x - am.x) * (1 - std::exp(-am.speed * dt));
+        am.y += ((float)p.y - am.y) * (1 - std::exp(-am.speed * dt));
+        if (am.x == (float)p.x && am.y == (float)p.y) {
+          e.remove<MoveAnimation>();
+        }
+      });
+  ecs.defer_end();
+
+  ecs.query<FPosition, const Velocity>().each(
+      [dt](auto &p, auto &v) { p += v * dt * 0.001f; });
+
+  ecs.defer_begin();
+  ecs.query<const FPosition, const RadialLimit>().each(
+      [](auto e, const auto &p, const auto &l) {
+        if (l.center.distanceSquared(p) >= l.radius * l.radius) {
+          e.destruct();
+        }
+      });
+  ecs.defer_end();
+
+  ecs.defer_begin();
+  ecs.query<Renderable, Fade>().each([dt](auto e, auto &r, auto &f) {
+    if (f.delay > 0) {
+      f.delay -= 0.001f * dt;
+    } else {
+      auto da = (uint8_t)(f.fade * dt);
+      assert(da != 0);
+      if (da >= r.fg.a) {
+        e.destruct();
+      } else {
+        r.fg.a -= da;
+      }
     }
   });
   ecs.defer_end();
@@ -665,7 +704,8 @@ void AreaTargetSelector::on_render(flecs::world ecs, Console &console) {
     auto dy = mouse_loc[1] - y;
     for (auto x = 0; x < console.get_width(); x++) {
       auto dx = mouse_loc[0] - x;
-      if (dx * dx + dy * dy <= radius * radius && gm.isInFov({x, y})) {
+      if (dx * dx + dy * dy <= radius * radius &&
+          gm.isInFov(std::array<int, 2>{x, y})) {
         console.at({x, y}).bg = color::red;
       }
     }

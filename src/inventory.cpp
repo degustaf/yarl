@@ -1,7 +1,5 @@
 #include "inventory.hpp"
 
-#include "actor.hpp"
-
 bool Inventory::hasRoom(flecs::entity e) const {
   auto q =
       e.world().query_builder("module::inventory").with<ContainedBy>(e).build();

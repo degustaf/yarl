@@ -85,6 +85,22 @@ static void render_texture_setup(SDL_Renderer *renderer,
 }
 
 static void
+cacheGlyph(const FontPtr &font, int ch, const TextEnginePtr &engine,
+           std::unordered_map<int, TextPtr, SDLData::hash> &cachedGlyphs) {
+  if (!TTF_FontHasGlyph(font.get(), (unsigned int)ch)) {
+#ifndef NDEBUG
+    std::cerr << "Font does not support unicode character '" << ch << "'\n";
+#endif
+    ch = ' ';
+  }
+  uint8_t buffer[4];
+  auto len = (size_t)utf8proc_encode_char(ch, buffer);
+  cachedGlyphs.emplace(
+      ch, TextPtr(TTF_CreateText(engine.get(), font.get(), (char *)buffer, len),
+                  &TTF_DestroyText));
+}
+
+static void
 render(const FontPtr &font, SDL_Renderer *renderer, const Console &console,
        std::unique_ptr<Console> &cache, SDL_Texture *img,
        const TextEnginePtr &engine,
@@ -110,20 +126,7 @@ render(const FontPtr &font, SDL_Renderer *renderer, const Console &console,
       SDL_RenderFillRect(renderer, &dstRect);
 
       if (cachedGlyphs.find(tile.ch) == cachedGlyphs.end()) {
-        auto ch = tile.ch;
-        if (!TTF_FontHasGlyph(font.get(), (unsigned int)tile.ch)) {
-#ifndef NDEBUG
-          std::cerr << "Font does not support unicode character '" << tile.ch
-                    << "'\n";
-#endif
-          ch = ' ';
-        }
-        uint8_t buffer[4];
-        auto len = (size_t)utf8proc_encode_char(ch, buffer);
-        cachedGlyphs.emplace(tile.ch,
-                             TextPtr(TTF_CreateText(engine.get(), font.get(),
-                                                    (char *)buffer, len),
-                                     &TTF_DestroyText));
+        cacheGlyph(font, tile.ch, engine, cachedGlyphs);
       }
       auto &text = cachedGlyphs.find(tile.ch)->second;
       TTF_SetTextColor(text.get(), tile.fg.r, tile.fg.g, tile.fg.b, tile.fg.a);
@@ -133,13 +136,29 @@ render(const FontPtr &font, SDL_Renderer *renderer, const Console &console,
   }
 
   for (auto &og : console.chars) {
-    // The character was at some location, before the animation started. It's
-    // glyph should be in the cache.
-    assert(cachedGlyphs.find(og.ch) != cachedGlyphs.end());
-    auto &text = cachedGlyphs.find(og.ch)->second;
-    TTF_SetTextColor(text.get(), og.fg.r, og.fg.g, og.fg.b, og.fg.a);
-    TTF_DrawRendererText(text.get(), og.x * (float)cell_width,
-                         og.y * (float)cell_height);
+    if (og.scale == 1.0f) {
+      if (cachedGlyphs.find(og.ch) == cachedGlyphs.end()) {
+        cacheGlyph(font, og.ch, engine, cachedGlyphs);
+      }
+      auto &text = cachedGlyphs.find(og.ch)->second;
+      TTF_SetTextColor(text.get(), og.fg.r, og.fg.g, og.fg.b, og.fg.a);
+      TTF_DrawRendererText(text.get(), og.x * (float)cell_width,
+                           og.y * (float)cell_height);
+    } else {
+      auto surface = TTF_RenderGlyph_Blended(
+          font.get(), (uint32_t)og.ch, {og.fg.r, og.fg.g, og.fg.b, og.fg.a});
+      auto s2 = SDL_ScaleSurface(surface, (int)(og.scale * (float)surface->w),
+                                 (int)(og.scale * (float)surface->h),
+                                 SDL_SCALEMODE_LINEAR);
+      auto texture = SDL_CreateTextureFromSurface(renderer, s2);
+      auto dstRect = SDL_FRect{
+          og.x * (float)cell_width, og.y * (float)cell_height,
+          (float)cell_width * og.scale, (float)cell_height * og.scale};
+      SDL_RenderTexture(renderer, texture, NULL, &dstRect);
+      SDL_DestroyTexture(texture);
+      SDL_DestroySurface(s2);
+      SDL_DestroySurface(surface);
+    }
   }
 
   if (img) {

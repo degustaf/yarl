@@ -1,0 +1,32 @@
+From "Juice your Turn" talk at Roguelike Celebration 2021
+https://juiceyourturns.com/
+https://youtu.be/xSYVQc7cH-4
+
+1.  Better color palette
+2.  Small screen rotation
+3.  Smooth character motion
+4.  Smooth camera (slightly different from player motion)
+5.  Flip left/right
+  5.1 Animate this.
+6.  Bouncing
+  6.1 Before movement: squash vertically, stretch horizontally
+  6.2 After movement: opposite
+  6.3 Use after shocks
+  6.4 jumping via parabolic arc
+7.  slight lean in movement
+8.  Non-blocking animation: animation speedup for animation backlog
+9.  Bump attack: have attacking character move slightly into targets space
+10. Screen shake
+  10.1 Single Direction
+  10.2 Screen rotation on hit
+11. Change color on hit (probably to white)
+12. Popup damage numbers
+13. Projectile animation (including rotation)
+14. Leave corpses
+15. Sound effects
+  15.1 Pew-pew for gun
+16. Reload
+17. Music
+18. Logical flow of animation
+  18.1 Monsters after player
+  18.2 Monster can't move out of the way of projectiles

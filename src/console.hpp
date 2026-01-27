@@ -56,6 +56,7 @@ struct Console {
     color::RGBA fg;
     float x;
     float y;
+    float scale; // 1.0f means use the default font size.
   };
 
   Console() = default;
@@ -96,8 +97,9 @@ struct Console {
     chars.clear();
   }
 
-  void addOffGrid(int ch, color::RGBA fg, std::array<float, 2> pos) {
-    chars.push_back({ch, fg, pos[0], pos[1]});
+  void addOffGrid(int ch, color::RGBA fg, std::array<float, 2> pos,
+                  float scale = 1.0f) {
+    chars.push_back({ch, fg, pos[0], pos[1], scale});
   }
 
   void print(const std::array<int, 2> &xy, std::string_view str,

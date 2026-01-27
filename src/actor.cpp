@@ -62,7 +62,7 @@ void Fighter::take_damage(int amount, flecs::entity self) {
 void Fighter::die(flecs::entity self) {
   auto &render = self.get_mut<Renderable>();
   render.ch = '%';
-  render.fg = {191, 0, 0};
+  render.fg = color::RGB{191, 0, 0};
   render.layer = RenderOrder::Corpse;
   self.remove<BlocksMovement>();
 
@@ -147,6 +147,14 @@ void Renderable::render(Console &console, const Position &pos,
   if (bg) {
     tile.bg = inFov ? *bg : (*bg / darknessFactor);
   }
+}
+
+void Renderable::render(Console &console, const FPosition &pos,
+                        bool inFov) const {
+  if (fovOnly && !inFov) {
+    return;
+  }
+  console.addOffGrid(ch, inFov ? fg : (fg / darknessFactor), pos, scale);
 }
 
 void Renderable::render(Console &console, const MoveAnimation &pos,

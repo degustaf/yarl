@@ -74,4 +74,9 @@ struct MoveAnimation {
   float speed = 0.02f;
 };
 
+struct Fade {
+  float delay;
+  float fade; // da/ms
+};
+
 struct BlocksMovement {};
