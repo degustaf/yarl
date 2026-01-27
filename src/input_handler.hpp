@@ -213,10 +213,8 @@ struct CharacterScreenInputHandler : AskUserInputHandler {
 };
 
 template <bool useF> struct SelectInputHandler : AskUserInputHandler {
-  SelectInputHandler<useF>(flecs::world ecs, const InputHandler &handler)
-      : AskUserInputHandler(handler) {
-    mouse_loc = ecs.lookup("player").get<Position>();
-  };
+  SelectInputHandler<useF>(const InputHandler &handler)
+      : AskUserInputHandler(handler){};
   virtual ~SelectInputHandler() = default;
 
   std::unique_ptr<Action> keyDown(SDL_KeyboardEvent &key, flecs::world ecs) {
@@ -331,8 +329,8 @@ template <bool useF> struct SelectInputHandler : AskUserInputHandler {
 };
 
 struct LookHandler : SelectInputHandler<false> {
-  LookHandler(flecs::world ecs, const InputHandler &handler)
-      : SelectInputHandler<false>(ecs, handler) {};
+  LookHandler(const InputHandler &handler)
+      : SelectInputHandler<false>(handler) {};
 
   virtual ~LookHandler() = default;
 
@@ -342,8 +340,8 @@ struct LookHandler : SelectInputHandler<false> {
 
 template <bool useF> struct TargetSelector : SelectInputHandler<useF> {
   template <typename F>
-  TargetSelector(F f, flecs::world ecs, const InputHandler &handler)
-      : SelectInputHandler<useF>(ecs, handler), callback(f) {}
+  TargetSelector(F f, const InputHandler &handler)
+      : SelectInputHandler<useF>(handler), callback(f) {}
 
   virtual ~TargetSelector() = default;
 
@@ -359,8 +357,8 @@ template <bool useF> struct TargetSelector : SelectInputHandler<useF> {
 
 struct AreaTargetSelector : TargetSelector<true> {
   template <typename F>
-  AreaTargetSelector(F f, int r, flecs::world ecs, const InputHandler &handler)
-      : TargetSelector<true>(f, ecs, handler), radius(r) {}
+  AreaTargetSelector(F f, int r, const InputHandler &handler)
+      : TargetSelector<true>(f, handler), radius(r) {}
 
   virtual ~AreaTargetSelector() = default;
 

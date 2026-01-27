@@ -305,12 +305,9 @@ ActionResult RangedTargetAction::perform(flecs::entity e) const {
     auto range = weapon.try_get<Ranged>();
     if (range) {
       auto ecs = e.world();
-      make<TargetSelector<true>>(
-          ecs,
-          [weapon](auto xy) {
-            return std::make_unique<TargetedItemAction>(weapon, xy);
-          },
-          ecs);
+      make<TargetSelector<true>>(ecs, [weapon](auto xy) {
+        return std::make_unique<TargetedItemAction>(weapon, xy);
+      });
       return {ActionResultType::Failure, "", 0.0f};
     }
     auto msg = tcod::stringf("Your %s isn't a ranged weapon.",
