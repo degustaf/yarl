@@ -2,30 +2,30 @@
   "dependencies": [
     {
       "name": "libtcod",
-      "version>=": "2.2.1"
+      "version>=": "2.2.2"
     },
     {
       "name": "flecs",
-      "version>=": "4.1.1"
+      "version>=": "4.1.4"
     },
     {
       "name": "sdl3",
-      "version>=": "3.2.22"
+      "version>=": "3.4.0"
     },
     {
       "name": "sdl3-image",
       "features": [ "png" ],
-      "version>=": "3.2.4"
+      "version>=": "3.4.0"
     },
     {
       "name": "sdl3-ttf",
       "features": [ "harfbuzz" ],
-      "version>=": "3.2.2"
+      "version>=": "3.2.2#1"
     },
     {
       "name": "utf8proc",
-      "version>=": "2.11.0"
+      "version>=": "2.11.3"
     }
   ],
-  "builtin-baseline": "bffcbb75f71553824aa948a7e7b4f798662a6fa7"
+  "builtin-baseline": "a2a478a93d582a4b395a4dc4b7052bfcb42c1f8e"
 }
