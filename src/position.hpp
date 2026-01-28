@@ -80,3 +80,6 @@ struct Fade {
 };
 
 struct BlocksMovement {};
+struct Trauma {
+  float trauma;
+};

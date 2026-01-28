@@ -2,6 +2,7 @@
 
 #include "color.hpp"
 
+#include <algorithm>
 #include <array>
 #include <cassert>
 #include <cstring>
@@ -9,8 +10,6 @@
 #include <optional>
 #include <string_view>
 #include <vector>
-
-#include <utf8proc.h>
 
 struct Console {
 
@@ -61,10 +60,9 @@ struct Console {
 
   Console() = default;
   Console(int w, int h)
-      : w(w), h(h), elements(w * h), fg(color::white), bg(color::black),
-        key_color(std::nullopt),
+      : chars(), w(w), h(h), elements(w * h), trauma(0.0f),
         tiles(std::make_unique<Tile[]>((size_t)elements)) {
-    clear({' ', fg, bg});
+    clear({' ', color::white, color::black});
   };
 
   [[nodiscard]] inline const Tile &at(const std::array<int, 2> &xy) const {
@@ -105,32 +103,37 @@ struct Console {
   void print(const std::array<int, 2> &xy, std::string_view str,
              std::optional<color::RGBA> fg, std::optional<color::RGBA> bg,
              Alignment alignment = Alignment::LEFT);
-
   int print_rect(const std::array<int, 4> &rect, std::string_view str);
-
   void draw_rect(const std::array<int, 4> &rect, int ch,
                  std::optional<color::RGBA> fg, std::optional<color::RGBA> bg);
-
   void draw_frame(const std::array<int, 4> &rect,
                   const std::array<int, 9> &decoration,
                   std::optional<color::RGBA> fg, std::optional<color::RGBA> bg);
-
   void blit(const Console &source, const std::array<int, 2> &dest_xy = {0, 0},
             std::array<int, 4> source_rect = {0, 0, 0, 0},
             float foreground_alpha = 1.0f, float background_alpha = 1.0f);
-
   void put_rgba(int x, int y, int ch, std::optional<color::RGBA> fg,
                 std::optional<color::RGBA> bg);
+  void inline addTrauma(float amnt) {
+    assert(amnt > 0.0f);
+    trauma = std::min(trauma + amnt, 1.0f);
+  }
+  void inline traumaDecay(uint64_t dt_ms) {
+    trauma = std::max(trauma - (float)dt_ms * 0.0005f, 0.0f);
+  }
+  struct shake {
+    double rotation;
+    float dx;
+    float dy;
+  };
+  shake getShake(uint64_t t) const;
+
+  std::vector<offGrid> chars;
 
 private:
   int w;
   int h;
   int elements;
-  color::RGBA fg;
-  color::RGBA bg;
-  std::optional<color::RGBA> key_color;
+  float trauma;
   std::unique_ptr<Tile[]> tiles;
-
-public:
-  std::vector<offGrid> chars;
 };

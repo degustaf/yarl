@@ -43,6 +43,7 @@ SDL_AppResult SDL_AppInit(void **data, [[maybe_unused]] int argc,
   ecs->set<Console>(ecs->get_mut<SDLData>().new_console(width, height));
   ecs->set<std::unique_ptr<InputHandler>>(
       std::make_unique<MainMenuInputHandler>(std::array{width, height}));
+  ecs->set<Trauma>({0.0f});
 
 #if !defined NDEBUG
   ecs->import <flecs::stats>();
@@ -63,7 +64,15 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
   console.clear();
 
   auto &handler = ecs.get_mut<std::unique_ptr<InputHandler>>();
-  handler->animate(ecs, SDL_GetTicks());
+  auto tick = SDL_GetTicks();
+  auto dt = tick - handler->time;
+  handler->animate(ecs, tick);
+  auto &tr = ecs.get_mut<Trauma>();
+  if (tr.trauma > 0.0f) {
+    console.addTrauma(tr.trauma);
+    tr.trauma = 0.0f;
+  }
+  console.traumaDecay(dt);
   handler->on_render(ecs, console);
 
   auto &data = ecs.get_mut<SDLData>();
@@ -72,7 +81,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
   SDL_SetRenderDrawColor(renderer, clear_color.r, clear_color.g, clear_color.b,
                          clear_color.a);
   SDL_RenderClear(renderer);
-  data.accumulate(console, handler->renderImg());
+  data.accumulate(console, handler->renderImg(), tick);
   SDL_RenderPresent(renderer);
 
 #if !defined NDEBUG

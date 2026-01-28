@@ -175,9 +175,7 @@ render_texture(const FontPtr &font, SDL_Renderer *renderer,
                SDL_Texture *target, SDL_Texture *img,
                const TextEnginePtr &engine,
                std::unordered_map<int, TextPtr, SDLData::hash> &cachedGlyphs) {
-  if (!target) {
-    return render(font, renderer, console, cache, img, engine, cachedGlyphs);
-  }
+  assert(target);
   auto old_target = SDL_GetRenderTarget(renderer);
   SDL_SetRenderTarget(renderer, target);
   render(font, renderer, console, cache, img, engine, cachedGlyphs);
@@ -336,7 +334,7 @@ SDLData::Transform SDLData::cursor_transform_for_console_viewport(
   };
 }
 
-void SDLData::accumulate(const Console &console, bool img) {
+void SDLData::accumulate(const Console &console, bool img, uint64_t tick) {
   render_texture_setup(_renderer.get(), dims, console, cache_console,
                        cache_texture);
   render_texture(font, _renderer.get(), console, cache_console,
@@ -347,7 +345,10 @@ void SDLData::accumulate(const Console &console, bool img) {
                                                console.get_dims());
   cursor_transform = cursor_transform_for_console_viewport(
       _renderer.get(), dims, console.get_dims());
-  SDL_RenderTexture(_renderer.get(), cache_texture.get(), nullptr, &dest);
+  auto screen_shake = console.getShake(tick);
+  auto offset = SDL_FPoint{screen_shake.dx, screen_shake.dy};
+  SDL_RenderTextureRotated(_renderer.get(), cache_texture.get(), nullptr, &dest,
+                           screen_shake.rotation, &offset, SDL_FLIP_NONE);
 }
 
 void SDLData::resetCacheConsole(void) {

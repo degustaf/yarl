@@ -1,8 +1,10 @@
 #include "console.hpp"
 
 #include <cassert>
+#include <cstdint>
 #include <optional>
 
+#include <libtcod.hpp>
 #include <utf8proc.h>
 
 static bool is_newline(int codepoint) {
@@ -336,12 +338,7 @@ static inline color::RGBA blit_lerp_(const color::RGBA dst,
 
 static Console::Tile console_blit_cell_(const Console::Tile &src,
                                         const Console::Tile &dst,
-                                        float fg_alpha, float bg_alpha,
-                                        const color::RGBA *key_color) {
-  if (key_color && key_color->r == src.bg.r && key_color->g == src.bg.g &&
-      key_color->b == src.bg.b) {
-    return dst; // Source pixel is transparent.
-  }
+                                        float fg_alpha, float bg_alpha) {
   fg_alpha *= src.fg.a / 255.0f;
   bg_alpha *= src.bg.a / 255.0f;
   if (fg_alpha > 254.5f / 255.0f && bg_alpha > 254.5f / 255.0f) {
@@ -398,9 +395,8 @@ void Console::blit(const Console &source, const std::array<int, 2> &dest_xy,
       int dy = cy - source_rect[1] + dest_xy[1];
       assert(0 <= dy && dy < h);
 
-      at({dx, dy}) = console_blit_cell_(
-          source.at({cx, cy}), at({dx, dy}), foreground_alpha, background_alpha,
-          (key_color ? &key_color.value() : NULL));
+      at({dx, dy}) = console_blit_cell_(source.at({cx, cy}), at({dx, dy}),
+                                        foreground_alpha, background_alpha);
     }
   }
 }
@@ -422,4 +418,23 @@ void Console::put_rgba(int x, int y, int ch, std::optional<color::RGBA> fg,
   if (bg) {
     tile.bg = *bg;
   }
+}
+
+static constexpr auto maxR = 10.0f;
+static constexpr auto maxDimRatio = 10.0f;
+
+Console::shake Console::getShake(uint64_t t) const {
+  static auto noise = TCODNoise(2, TCOD_NOISE_PERLIN);
+  static auto r_seed = TCODRandom::getInstance()->get(0.0f, 100.0f);
+  static auto x_seed = TCODRandom::getInstance()->get(0.0f, 100.0f);
+  static auto y_seed = TCODRandom::getInstance()->get(0.0f, 100.0f);
+
+  float pt[2] = {(float)t, r_seed};
+  auto r = maxR * trauma * trauma * noise.get(pt);
+  pt[1] = x_seed;
+  auto x = maxDimRatio * (float)w * trauma * trauma * noise.get(pt);
+  pt[1] = y_seed;
+  auto y = maxDimRatio * (float)h * trauma * trauma * noise.get(pt);
+
+  return {r, x, y};
 }

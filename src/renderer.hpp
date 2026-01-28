@@ -3,6 +3,7 @@
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
 
+#include <cstdint>
 #include <filesystem>
 #include <memory>
 #include <unordered_map>
@@ -30,7 +31,7 @@ public:
           const std::filesystem::path &imgPath);
 
   Console new_console(int width, int height);
-  void accumulate(const struct Console &console, bool img);
+  void accumulate(const struct Console &console, bool img, uint64_t tick);
   struct SDL_Renderer *renderer() { return _renderer.get(); };
   void convert_event_coordinates(SDL_Event &event);
   void resetCacheConsole(void);

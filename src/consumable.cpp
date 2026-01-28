@@ -199,6 +199,7 @@ FireballDamageConsumable::selected(flecs::entity item,
         .add(flecs::ChildOf, map);
   }
 
+  ecs.get_mut<Trauma>().trauma += 0.25f;
   if (targets_hit) {
     return {ActionResultType::Success, "", 0.0f};
   } else {

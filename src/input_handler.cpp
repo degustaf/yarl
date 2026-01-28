@@ -428,6 +428,7 @@ MainGameInputHandler::click(SDL_MouseButtonEvent &button, flecs::world ecs) {
 
 void MainGameInputHandler::animate(flecs::world ecs, uint64_t t) {
   auto dt = (float)(t - time);
+
   assert(!ecs.is_deferred());
   ecs.defer_begin();
   ecs.query<const Position, MoveAnimation>().each(

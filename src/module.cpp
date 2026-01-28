@@ -202,6 +202,7 @@ module::module(flecs::world ecs) {
   ecs.component<MoveAnimation>();
   ecs.component<Fade>();
   ecs.component<BlocksMovement>();
+  ecs.component<Trauma>();
 
   // renderer.hpp
   ecs.component<SDLData>();
