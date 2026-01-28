@@ -22,6 +22,8 @@ jobs:
           submodules: true
       - name: Install autoconf
         run: sudo apt-get install -y autoconf autoconf-archive automake libtool
+      - name: Install Wayland dependencies
+        run: sudo apt-get install -y libwayland-dev libxkbcommon-dev libegl1-mesa-dev
       - name: Fetch Vcpkg commits
         working-directory: vcpkg
         run: git fetch --unshallow
