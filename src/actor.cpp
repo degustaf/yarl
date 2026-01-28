@@ -147,6 +147,7 @@ void Renderable::render(Console &console, const Position &pos,
   if (bg) {
     tile.bg = inFov ? *bg : (*bg / darknessFactor);
   }
+  tile.flipped = flipped;
 }
 
 void Renderable::render(Console &console, const FPosition &pos,
@@ -154,7 +155,8 @@ void Renderable::render(Console &console, const FPosition &pos,
   if (fovOnly && !inFov) {
     return;
   }
-  console.addOffGrid(ch, inFov ? fg : (fg / darknessFactor), pos, scale);
+  console.addOffGrid(ch, inFov ? fg : (fg / darknessFactor), pos, scale,
+                     flipped);
 }
 
 void Renderable::render(Console &console, const MoveAnimation &pos,
@@ -162,7 +164,8 @@ void Renderable::render(Console &console, const MoveAnimation &pos,
   if (fovOnly && !inFov) {
     return;
   }
-  console.addOffGrid(ch, inFov ? fg : (fg / darknessFactor), pos);
+  console.addOffGrid(ch, inFov ? fg : (fg / darknessFactor), pos, 1.0f,
+                     flipped);
 }
 
 void Regenerator::update(flecs::entity self) {

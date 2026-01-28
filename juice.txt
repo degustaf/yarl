@@ -30,3 +30,4 @@ https://youtu.be/xSYVQc7cH-4
 18. Logical flow of animation
   18.1 Monsters after player
   18.2 Monster can't move out of the way of projectiles
+19. Lighten area around fireball

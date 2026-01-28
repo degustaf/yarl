@@ -125,18 +125,33 @@ render(const FontPtr &font, SDL_Renderer *renderer, const Console &console,
                              tile.bg.a);
       SDL_RenderFillRect(renderer, &dstRect);
 
-      if (cachedGlyphs.find(tile.ch) == cachedGlyphs.end()) {
-        cacheGlyph(font, tile.ch, engine, cachedGlyphs);
+      if (tile.flipped) {
+        auto surface = TTF_RenderGlyph_Blended(
+            font.get(), (uint32_t)tile.ch,
+            {tile.fg.r, tile.fg.g, tile.fg.b, tile.fg.a});
+        auto s2 = SDL_ScaleSurface(surface, surface->w, surface->h,
+                                   SDL_SCALEMODE_LINEAR);
+        auto texture = SDL_CreateTextureFromSurface(renderer, s2);
+        SDL_RenderTextureRotated(renderer, texture, NULL, &dstRect, 0.0,
+                                 nullptr, SDL_FLIP_HORIZONTAL);
+        SDL_DestroyTexture(texture);
+        SDL_DestroySurface(s2);
+        SDL_DestroySurface(surface);
+      } else {
+        if (cachedGlyphs.find(tile.ch) == cachedGlyphs.end()) {
+          cacheGlyph(font, tile.ch, engine, cachedGlyphs);
+        }
+        auto &text = cachedGlyphs.find(tile.ch)->second;
+        TTF_SetTextColor(text.get(), tile.fg.r, tile.fg.g, tile.fg.b,
+                         tile.fg.a);
+        TTF_DrawRendererText(text.get(), (float)(x * cell_width),
+                             (float)(y * cell_height));
       }
-      auto &text = cachedGlyphs.find(tile.ch)->second;
-      TTF_SetTextColor(text.get(), tile.fg.r, tile.fg.g, tile.fg.b, tile.fg.a);
-      TTF_DrawRendererText(text.get(), (float)(x * cell_width),
-                           (float)(y * cell_height));
     }
   }
 
   for (auto &og : console.chars) {
-    if (og.scale == 1.0f) {
+    if (og.scale == 1.0f && !og.flipped) {
       if (cachedGlyphs.find(og.ch) == cachedGlyphs.end()) {
         cacheGlyph(font, og.ch, engine, cachedGlyphs);
       }
@@ -154,7 +169,9 @@ render(const FontPtr &font, SDL_Renderer *renderer, const Console &console,
       auto dstRect = SDL_FRect{
           og.x * (float)cell_width, og.y * (float)cell_height,
           (float)cell_width * og.scale, (float)cell_height * og.scale};
-      SDL_RenderTexture(renderer, texture, NULL, &dstRect);
+      SDL_RenderTextureRotated(renderer, texture, NULL, &dstRect, 0.0, nullptr,
+                               og.flipped ? SDL_FLIP_HORIZONTAL
+                                          : SDL_FLIP_NONE);
       SDL_DestroyTexture(texture);
       SDL_DestroySurface(s2);
       SDL_DestroySurface(surface);

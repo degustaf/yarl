@@ -24,6 +24,7 @@ struct Renderable {
   RenderOrder layer;
   float scale = 1.0f;
   bool fovOnly = true;
+  bool flipped = false;
 
   void render(Console &console, const Position &pos, bool inFov) const;
   void render(Console &console, const FPosition &pos, bool inFov) const;

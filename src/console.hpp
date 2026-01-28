@@ -48,6 +48,7 @@ struct Console {
     int ch;
     color::RGBA fg;
     color::RGBA bg;
+    bool flipped = false;
   };
 
   struct offGrid {
@@ -56,6 +57,7 @@ struct Console {
     float x;
     float y;
     float scale; // 1.0f means use the default font size.
+    bool flipped;
   };
 
   Console() = default;
@@ -89,15 +91,16 @@ struct Console {
     return tiles.get() + elements;
   }
 
-  void clear(const Tile &tile = {' ', color::white, color::black}) noexcept {
+  void clear(const Tile &tile = {' ', color::white, color::black,
+                                 false}) noexcept {
     for (auto &it : *this)
       it = tile;
     chars.clear();
   }
 
   void addOffGrid(int ch, color::RGBA fg, std::array<float, 2> pos,
-                  float scale = 1.0f) {
-    chars.push_back({ch, fg, pos[0], pos[1], scale});
+                  float scale = 1.0f, bool flipped = false) {
+    chars.push_back({ch, fg, pos[0], pos[1], scale, flipped});
   }
 
   void print(const std::array<int, 2> &xy, std::string_view str,

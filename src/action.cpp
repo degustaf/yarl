@@ -152,10 +152,17 @@ ActionResult BatheAction::perform(flecs::entity e) const {
 }
 
 ActionResult BumpAction::perform(flecs::entity e) const {
+  auto &rend = e.get_mut<Renderable>();
+  if (dxy[0] > 0) {
+    rend.flipped = false;
+  } else if (dxy[0] < 0) {
+    rend.flipped = true;
+  }
+
   auto exertion = 0.0f;
+  auto &pos = e.get_mut<Position>();
+  auto mapEntity = e.world().lookup("currentMap").target<CurrentMap>();
   for (auto i = 0; i < speed; i++) {
-    auto &pos = e.get_mut<Position>();
-    auto mapEntity = e.world().lookup("currentMap").target<CurrentMap>();
     auto target = GameMap::get_blocking_entity(mapEntity, pos + dxy);
     auto result = [&]() {
       if (target) {
