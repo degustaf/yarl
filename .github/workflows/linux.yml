@@ -25,9 +25,9 @@ jobs:
       - name: Install Wayland dependencies
         run: sudo apt-get install -y libwayland-dev libxkbcommon-dev libegl1-mesa-dev
       - name: Needed build tool
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y python3.12-venv
+        uses: actions/setup-python@v6
+        with:
+          python-version: 3.12
       - name: Fetch Vcpkg commits
         working-directory: vcpkg
         run: git fetch --unshallow
