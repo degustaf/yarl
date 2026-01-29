@@ -51,12 +51,11 @@ ActionResult LightningDamageConsumable::activate(flecs::entity item,
   auto &gameMap = map.get<GameMap>();
   auto &consumerPos = consumer.get<Position>();
   auto target = consumer.null();
-  auto q = ecs.query_builder<Position>("module::fighter")
-               .with<Fighter>()
+  auto q = ecs.query_builder<const Position, const Fighter>("module::fighter")
                .with(flecs::ChildOf, map)
                .build();
-  q.each([&](auto e, auto &p) {
-    if ((e != consumer) && (gameMap.isInFov(p))) {
+  q.each([&](auto e, auto &p, auto &f) {
+    if ((e != consumer) && (f.hp() > 0) && (gameMap.isInFov(p))) {
       auto d2 = consumerPos.distanceSquared(p);
       if (d2 < closestDistanceSq) {
         target = e;
