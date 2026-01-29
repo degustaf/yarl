@@ -69,6 +69,7 @@ ActionResult LightningDamageConsumable::activate(flecs::entity item,
             0.0f, color::impossible};
   }
 
+  ecs.get_mut<Trauma>().trauma += 0.25f;
   auto &tp = target.get<Position>();
   ecs.entity()
       .set<Position>(tp)
