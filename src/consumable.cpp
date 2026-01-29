@@ -69,6 +69,15 @@ ActionResult LightningDamageConsumable::activate(flecs::entity item,
     return {ActionResultType::Failure, "No enemy is close enough to strike.",
             0.0f, color::impossible};
   }
+
+  auto &tp = target.get<Position>();
+  ecs.entity()
+      .set<Position>(tp)
+      .set<MoveAnimation>({(float)consumerPos.x, (float)consumerPos.y, 0.05f})
+      .set<Renderable>({0x3df, color::yellow, std::nullopt, RenderOrder::Item})
+      .add<DisappearOnHit>()
+      .add(flecs::ChildOf, map);
+
   auto msg = stringf(
       "A lighting bolt strikes the %s with a loud thunder, for %d damage!",
       target.get<Named>().name.c_str(), damage);

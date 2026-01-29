@@ -85,11 +85,12 @@ static void render_texture_setup(SDL_Renderer *renderer,
 }
 
 static void
-cacheGlyph(const FontPtr &font, int ch, const TextEnginePtr &engine,
+cacheGlyph(const FontPtr &font, int &ch, const TextEnginePtr &engine,
            std::unordered_map<int, TextPtr, SDLData::hash> &cachedGlyphs) {
   if (!TTF_FontHasGlyph(font.get(), (unsigned int)ch)) {
 #ifndef NDEBUG
-    std::cerr << "Font does not support unicode character '" << ch << "'\n";
+    std::cerr << "Font does not support unicode character '" << std::hex << ch
+              << std::dec << "'\n";
 #endif
     ch = ' ';
   }
@@ -138,10 +139,11 @@ render(const FontPtr &font, SDL_Renderer *renderer, const Console &console,
         SDL_DestroySurface(s2);
         SDL_DestroySurface(surface);
       } else {
-        if (cachedGlyphs.find(tile.ch) == cachedGlyphs.end()) {
-          cacheGlyph(font, tile.ch, engine, cachedGlyphs);
+        auto ch = tile.ch;
+        if (cachedGlyphs.find(ch) == cachedGlyphs.end()) {
+          cacheGlyph(font, ch, engine, cachedGlyphs);
         }
-        auto &text = cachedGlyphs.find(tile.ch)->second;
+        auto &text = cachedGlyphs.find(ch)->second;
         TTF_SetTextColor(text.get(), tile.fg.r, tile.fg.g, tile.fg.b,
                          tile.fg.a);
         TTF_DrawRendererText(text.get(), (float)(x * cell_width),
@@ -152,10 +154,11 @@ render(const FontPtr &font, SDL_Renderer *renderer, const Console &console,
 
   for (auto &og : console.chars) {
     if (og.scale == 1.0f && !og.flipped) {
+      auto ch = og.ch;
       if (cachedGlyphs.find(og.ch) == cachedGlyphs.end()) {
-        cacheGlyph(font, og.ch, engine, cachedGlyphs);
+        cacheGlyph(font, ch, engine, cachedGlyphs);
       }
-      auto &text = cachedGlyphs.find(og.ch)->second;
+      auto &text = cachedGlyphs.find(ch)->second;
       TTF_SetTextColor(text.get(), og.fg.r, og.fg.g, og.fg.b, og.fg.a);
       TTF_DrawRendererText(text.get(), og.x * (float)cell_width,
                            og.y * (float)cell_height);

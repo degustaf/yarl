@@ -79,6 +79,8 @@ struct Fade {
   float fade; // da/ms
 };
 
+struct DisappearOnHit {};
+
 struct BlocksMovement {};
 struct Trauma {
   float trauma;

@@ -201,6 +201,7 @@ module::module(flecs::world ecs) {
   ecs.component<RadialLimit>();
   ecs.component<MoveAnimation>();
   ecs.component<Fade>();
+  ecs.component<DisappearOnHit>();
   ecs.component<BlocksMovement>();
   ecs.component<Trauma>();
 
