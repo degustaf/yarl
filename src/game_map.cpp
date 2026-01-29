@@ -56,7 +56,7 @@ void GameMap::nextFloor(flecs::entity player) const {
 }
 
 static constexpr auto floor_light =
-    Console::Tile{'.', {100, 90, 25, 255}, {200, 180, 50, 255}};
+    Console::Tile{'.', {100, 90, 25, 255}, {200, 180, 80, 255}};
 static constexpr auto floor_dark =
     Console::Tile{'.', {25, 25, 75, 255}, {50, 50, 150, 255}};
 static constexpr auto floor_sensed =
