@@ -68,6 +68,11 @@ struct MoveAnimation {
   MoveAnimation(const Position &p) : x((float)p.x), y((float)p.y) {};
 
   operator std::array<float, 2>() const { return {x, y}; };
+  template <typename T> float distanceSquared(const Pos<T> &other) const {
+    auto dx = x - (float)other.x;
+    auto dy = y - (float)other.y;
+    return dx * dx + dy * dy;
+  }
 
   float x;
   float y;

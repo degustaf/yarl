@@ -435,7 +435,7 @@ void MainGameInputHandler::animate(flecs::world ecs, uint64_t t) {
       [dt](flecs::entity e, const Position &p, MoveAnimation &am) {
         am.x += ((float)p.x - am.x) * (1 - std::exp(-am.speed * dt));
         am.y += ((float)p.y - am.y) * (1 - std::exp(-am.speed * dt));
-        if (am.x == (float)p.x && am.y == (float)p.y) {
+        if (am.distanceSquared(p) <= 0.1 * 0.1) {
           if (e.has<DisappearOnHit>()) {
             e.destruct();
           } else {
