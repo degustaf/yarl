@@ -210,7 +210,8 @@ void MainHandler::on_render(flecs::world ecs, Console &console) {
               HUD_HEIGHT);
 
   auto q =
-      ecs.query_builder<const Position, const MoveAnimation *, const Renderable,
+      ecs.query_builder<const Position, const MoveAnimation *,
+                        const AttackAnimation *, const Renderable,
                         const Openable *>("module::renderable")
           .with(flecs::ChildOf, map)
           .order_by<const Renderable>([](auto, auto r1, auto, auto r2) {
@@ -218,10 +219,12 @@ void MainHandler::on_render(flecs::world ecs, Console &console) {
           })
           .build();
 
-  q.each([&](auto p, auto ma, auto r, auto openable) {
+  q.each([&](auto p, auto ma, auto aa, auto r, auto openable) {
     if (gMap.isInFov(p)) {
       if (ma) {
         r.render(console, *ma, true);
+      } else if (aa) {
+        r.render(console, *aa, true);
       } else {
         r.render(console, p, true);
       }
@@ -231,6 +234,8 @@ void MainHandler::on_render(flecs::world ecs, Console &console) {
     } else if (gMap.isExplored(p)) {
       if (ma) {
         r.render(console, *ma, false);
+      } else if (aa) {
+        r.render(console, *aa, false);
       } else {
         r.render(console, p, false);
       }
@@ -443,6 +448,15 @@ void MainGameInputHandler::animate(flecs::world ecs, uint64_t t) {
           }
         }
       });
+
+  ecs.query<AttackAnimation>().each([dt](flecs::entity e, AttackAnimation &aa) {
+    aa.x += (aa.targetX - aa.x) * (1 - std::exp(-aa.speed * dt));
+    aa.y += (aa.targetY - aa.y) * (1 - std::exp(-aa.speed * dt));
+    if (aa.distanceTargetSquared() <= 0.1 * 0.1) {
+      e.emplace<MoveAnimation>(aa);
+      e.remove<AttackAnimation>();
+    }
+  });
   ecs.defer_end();
 
   ecs.query<FPosition, const Velocity>().each(

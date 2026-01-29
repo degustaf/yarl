@@ -134,8 +134,6 @@ int Fighter::power(flecs::entity self, bool ranged) const {
   return power;
 }
 
-static constexpr uint8_t darknessFactor = 2;
-
 void Renderable::render(Console &console, const Position &pos,
                         bool inFov) const {
   if (fovOnly && !inFov) {
@@ -148,24 +146,6 @@ void Renderable::render(Console &console, const Position &pos,
     tile.bg = inFov ? *bg : (*bg / darknessFactor);
   }
   tile.flipped = flipped;
-}
-
-void Renderable::render(Console &console, const FPosition &pos,
-                        bool inFov) const {
-  if (fovOnly && !inFov) {
-    return;
-  }
-  console.addOffGrid(ch, inFov ? fg : (fg / darknessFactor), pos, scale,
-                     flipped);
-}
-
-void Renderable::render(Console &console, const MoveAnimation &pos,
-                        bool inFov) const {
-  if (fovOnly && !inFov) {
-    return;
-  }
-  console.addOffGrid(ch, inFov ? fg : (fg / darknessFactor), pos, 1.0f,
-                     flipped);
 }
 
 void Regenerator::update(flecs::entity self) {

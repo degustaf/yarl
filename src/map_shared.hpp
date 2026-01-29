@@ -43,7 +43,7 @@ static constexpr auto max_items_by_floor =
     std::array<MaxByFloor, 2>{MaxByFloor{1, 1}, {4, 2}};
 
 static constexpr auto max_monsters_by_floor =
-    std::array<MaxByFloor, 1>{MaxByFloor{4, 1}};
+    std::array<MaxByFloor, 1>{MaxByFloor{1, 2}};
 
 template <size_t N>
 static int getMaxValueForFloor(const std::array<MaxByFloor, N> &maxByFloor,

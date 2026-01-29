@@ -26,9 +26,17 @@ struct Renderable {
   bool fovOnly = true;
   bool flipped = false;
 
+  static constexpr uint8_t darknessFactor = 2;
+
+  template <typename T>
+  void render(Console &console, const T &pos, bool inFov) const {
+    if (fovOnly && !inFov) {
+      return;
+    }
+    console.addOffGrid(ch, inFov ? fg : (fg / darknessFactor),
+                       (std::array<float, 2>)pos, 1.0f, flipped);
+  }
   void render(Console &console, const Position &pos, bool inFov) const;
-  void render(Console &console, const FPosition &pos, bool inFov) const;
-  void render(Console &console, const MoveAnimation &pos, bool inFov) const;
 };
 
 struct Named {

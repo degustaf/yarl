@@ -61,11 +61,33 @@ struct RadialLimit {
   float radius;
 };
 
+struct AttackAnimation {
+  AttackAnimation(const Position &target, const Position &current,
+                  float speed = 0.02f)
+      : targetX((float)target.x), targetY((float)target.y), x((float)current.x),
+        y((float)current.y), speed(speed) {};
+
+  operator std::array<float, 2>() const { return {x, y}; };
+  float distanceTargetSquared() const {
+    auto dx = x - targetX;
+    auto dy = y - targetY;
+    return dx * dx + dy * dy;
+  }
+
+  float targetX;
+  float targetY;
+
+  float x;
+  float y;
+  float speed;
+};
+
 struct MoveAnimation {
-  MoveAnimation() : MoveAnimation(0, 0) {};
   MoveAnimation(float x, float y) : x(x), y(y) {};
   MoveAnimation(float x, float y, float speed) : x(x), y(y), speed(speed) {};
   MoveAnimation(const Position &p) : x((float)p.x), y((float)p.y) {};
+  MoveAnimation(const AttackAnimation &a)
+      : x(a.targetX), y(a.targetY), speed(a.speed) {};
 
   operator std::array<float, 2>() const { return {x, y}; };
   template <typename T> float distanceSquared(const Pos<T> &other) const {

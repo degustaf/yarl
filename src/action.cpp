@@ -9,6 +9,7 @@
 #include "game_map.hpp"
 #include "input_handler.hpp"
 #include "inventory.hpp"
+#include "position.hpp"
 #include "string.hpp"
 
 static ActionResult attack(flecs::entity e, std::array<int, 2> pos,
@@ -64,7 +65,7 @@ ActionResult MoveAction::perform(flecs::entity e) const {
       if (GameMap::get_blocking_entity(mapEntity, pos + dxy) == e.null()) {
         e.world().defer_begin();
         if (!e.has<MoveAnimation>()) {
-          e.set<MoveAnimation>(pos);
+          e.emplace<MoveAnimation>(pos);
         }
         pos.move(dxy);
         e.world().defer_end();
@@ -83,7 +84,14 @@ ActionResult MoveAction::perform(flecs::entity e) const {
 
 ActionResult MeleeAction::perform(flecs::entity e) const {
   auto &pos = e.get<Position>();
-  return attack(e, pos + dxy, false);
+  auto ret = attack(e, pos + dxy, false);
+  if (ret.type == ActionResultType::Success) {
+    if (e.has<AttackAnimation>()) {
+      e.remove<AttackAnimation>();
+    }
+    e.emplace<AttackAnimation>(pos + dxy, pos);
+  }
+  return ret;
 }
 
 ActionResult DoorDirectionAction::perform(flecs::entity e) const {

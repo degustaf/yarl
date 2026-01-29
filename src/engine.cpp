@@ -111,9 +111,9 @@ void Engine::new_game(flecs::world ecs, int map_width, int map_height) {
                     .set<Scent>({ScentType::player, 0})
                     .set<ScentWarning>({false})
                     .set<Smeller>({200});
-  auto pistol =
-      ecs.entity().is_a(ecs.lookup("module::22")).add<ContainedBy>(player);
-  toggleEquip<false>(player, pistol);
+  auto sword =
+      ecs.entity().is_a(ecs.lookup("module::sword")).add<ContainedBy>(player);
+  toggleEquip<false>(player, sword);
 
   auto map = ecs.entity();
   map.emplace<GameMap>(

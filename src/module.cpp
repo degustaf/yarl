@@ -199,6 +199,7 @@ module::module(flecs::world ecs) {
   ecs.component<FPosition>();
   ecs.component<Velocity>();
   ecs.component<RadialLimit>();
+  ecs.component<AttackAnimation>();
   ecs.component<MoveAnimation>();
   ecs.component<Fade>();
   ecs.component<DisappearOnHit>();
