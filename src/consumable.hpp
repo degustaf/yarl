@@ -55,7 +55,6 @@ struct MagicMappingConsumable {
 template <typename T> struct TrackerConsumable {
   int turns;
   ActionResult activate(flecs::entity item, flecs::entity consumer) const;
-  template <typename Console>
   void render(Console &console, flecs::entity map) const;
 };
 

@@ -230,6 +230,7 @@ void MainHandler::on_render(flecs::world ecs, Console &console) {
       }
     } else if (gMap.isSensed(p) && openable) {
       assert(ma == nullptr);
+      assert(aa == nullptr);
       r.render(console, p, true);
     } else if (gMap.isExplored(p)) {
       if (ma) {
