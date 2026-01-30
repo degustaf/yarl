@@ -217,7 +217,6 @@ ActionResult TrackerConsumable<T>::activate(flecs::entity item,
 }
 
 template <typename T>
-template <typename Console>
 void TrackerConsumable<T>::render(Console &console, flecs::entity map) const {
   auto ecs = map.world();
   auto &gMap = map.get<GameMap>();
