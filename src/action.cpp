@@ -11,6 +11,7 @@
 #include "inventory.hpp"
 #include "position.hpp"
 #include "string.hpp"
+#include "util.hpp"
 
 static ActionResult attack(flecs::entity e, std::array<int, 2> pos,
                            bool ranged) {
@@ -196,29 +197,9 @@ ActionResult BumpAction::perform(flecs::entity e) const {
 }
 
 ActionResult ItemAction::perform(flecs::entity e) const {
-  if (item.has<HealingConsumable>()) {
-    return item.get<HealingConsumable>().activate(item, e);
-  } else if (item.has<LightningDamageConsumable>()) {
-    return item.get<LightningDamageConsumable>().activate(item, e);
-  } else if (item.has<ConfusionConsumable>()) {
-    return item.get<ConfusionConsumable>().activate(item);
-  } else if (item.has<FireballDamageConsumable>()) {
-    return item.get<FireballDamageConsumable>().activate(item);
-  } else if (item.has<DeodorantConsumable>()) {
-    return item.get<DeodorantConsumable>().activate(item, e);
-  } else if (item.has<ScentConsumable>()) {
-    return item.get<ScentConsumable>().activate(item, e);
-  } else if (item.has<MagicMappingConsumable>()) {
-    return MagicMappingConsumable{}.activate(item, e);
-    // } else if (item.has<TrackerConsumable>()) {
-    //   return item.get<TrackerConsumable>().activate(item, e);
-  } else if (item.has<RopeConsumable>()) {
-    return RopeConsumable{}.activate(item, e);
-  } else if (item.has<TransporterConsumable>()) {
-    return TransporterConsumable{}.activate(item, e);
-  }
-  assert(false);
-  return {ActionResultType::Failure, "", 0.0f};
+  auto consumable = get<Consumable>(item);
+  assert(consumable);
+  return consumable->activate(item, e);
 }
 
 ActionResult PickupAction::perform(flecs::entity e) const {

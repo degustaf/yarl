@@ -172,20 +172,22 @@ module::module(flecs::world ecs) {
 
   // consumable.hpp
   ecs.component<Consumable>();
-  ecs.component<HealingConsumable>().member<int>("amount").is_a<Consumable>();
+  ecs.component<HealingConsumable>()
+      .member("amount", &HealingConsumable::amount)
+      .is_a<Consumable>();
   ecs.component<DeodorantConsumable>()
-      .member<float>("amount")
+      .member("amount", &DeodorantConsumable::amount)
       .is_a<Consumable>();
   ecs.component<LightningDamageConsumable>()
-      .member<int>("damage")
-      .member<int>("maximumRange")
+      .member("damage", &LightningDamageConsumable::damage)
+      .member("maximumRange", &LightningDamageConsumable::maximumRange)
       .is_a<Consumable>();
   ecs.component<ConfusionConsumable>()
-      .member<int>("number_of_turns")
+      .member("number_of_turns", &ConfusionConsumable::number_of_turns)
       .is_a<Consumable>();
   ecs.component<FireballDamageConsumable>()
-      .member<int>("damage")
-      .member<int>("radius")
+      .member("damage", &FireballDamageConsumable::damage)
+      .member("radius", &FireballDamageConsumable::radius)
       .is_a<Consumable>();
   ecs.component<MagicMappingConsumable>().is_a<Consumable>();
   ecs.component<RopeConsumable>().is_a<Consumable>();
@@ -218,7 +220,9 @@ module::module(flecs::world ecs) {
       .member("power", &ScentOnDeath::power)
       .is_a<OnDeath>();
   ecs.component<Smeller>().member<float>("threshold");
-  ecs.component<ScentConsumable>().member<Scent>("scent").is_a<Consumable>();
+  ecs.component<ScentConsumable>()
+      .member("scent", &ScentConsumable::scent)
+      .is_a<Consumable>();
 
   // game_map.hpp
   ecs.component<CurrentMap>().add(flecs::Exclusive);

@@ -86,7 +86,8 @@ ActionResult LightningDamageConsumable::activate(flecs::entity item,
   return {ActionResultType::Success, msg, 0.0f};
 }
 
-ActionResult ConfusionConsumable::activate(flecs::entity item) const {
+ActionResult ConfusionConsumable::activate(flecs::entity item,
+                                           flecs::entity) const {
   auto ecs = item.world();
   make<TargetSelector<false>>(ecs, [item](auto xy) {
     return std::make_unique<TargetedItemAction>(item, xy);
@@ -143,7 +144,8 @@ ActionResult ConfusionConsumable::selected(flecs::entity item,
   return {ActionResultType::Success, msg, 0.0f, color::statusEffectApplied};
 }
 
-ActionResult FireballDamageConsumable::activate(flecs::entity item) const {
+ActionResult FireballDamageConsumable::activate(flecs::entity item,
+                                                flecs::entity) const {
   auto ecs = item.world();
   make<AreaTargetSelector>(
       ecs,
