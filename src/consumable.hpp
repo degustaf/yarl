@@ -4,72 +4,99 @@
 
 #include "action.hpp"
 #include "scent.hpp"
+#include "util.hpp"
 
-struct Consumable {};
+struct Consumable {
+  virtual ActionResult activate(flecs::entity item,
+                                flecs::entity target) const = 0;
+};
 
-struct HealingConsumable {
+struct HealingConsumable : Consumable {
+  HealingConsumable() = default;
+  HealingConsumable(int amount) : amount(amount) {};
   int amount;
 
-  ActionResult activate(flecs::entity item, flecs::entity target) const;
+  virtual ActionResult activate(flecs::entity item,
+                                flecs::entity target) const override;
 };
 
-struct DeodorantConsumable {
+struct DeodorantConsumable : Consumable {
+  DeodorantConsumable() = default;
+  DeodorantConsumable(float amount) : amount(amount) {};
   float amount;
 
-  ActionResult activate(flecs::entity item, flecs::entity target) const;
+  virtual ActionResult activate(flecs::entity item,
+                                flecs::entity target) const override;
 };
 
-struct LightningDamageConsumable {
+struct LightningDamageConsumable : Consumable {
+  LightningDamageConsumable() = default;
+  LightningDamageConsumable(int damage, int maximumRange)
+      : damage(damage), maximumRange(maximumRange) {};
   int damage;
   int maximumRange;
 
-  ActionResult activate(flecs::entity item, flecs::entity consumer) const;
+  virtual ActionResult activate(flecs::entity item,
+                                flecs::entity consumer) const override;
 };
 
-struct ConfusionConsumable {
+struct ConfusionConsumable : Consumable {
+  ConfusionConsumable() = default;
+  ConfusionConsumable(int number_of_turns)
+      : number_of_turns(number_of_turns) {};
   int number_of_turns;
 
-  ActionResult activate(flecs::entity item) const;
+  virtual ActionResult activate(flecs::entity item,
+                                flecs::entity consumer) const override;
   ActionResult selected(flecs::entity item, flecs::entity consumer,
                         std::array<int, 2> target) const;
 };
 
-struct FireballDamageConsumable {
+struct FireballDamageConsumable : Consumable {
+  FireballDamageConsumable() = default;
+  FireballDamageConsumable(int damage, int radius)
+      : damage(damage), radius(radius) {};
   int damage;
   int radius;
 
-  ActionResult activate(flecs::entity item) const;
+  virtual ActionResult activate(flecs::entity item,
+                                flecs::entity consumer) const override;
   ActionResult selected(flecs::entity item, std::array<int, 2> target) const;
 };
 
-struct ScentConsumable {
+struct ScentConsumable : Consumable {
+  ScentConsumable() = default;
+  ScentConsumable(Scent scent) : scent(scent) {};
   Scent scent;
 
-  ActionResult activate(flecs::entity item, flecs::entity consumer) const;
+  virtual ActionResult activate(flecs::entity item,
+                                flecs::entity consumer) const override;
 };
 
-struct MagicMappingConsumable {
-  ActionResult activate(flecs::entity item, flecs::entity consumer) const;
+struct MagicMappingConsumable : Consumable {
+  virtual ActionResult activate(flecs::entity item,
+                                flecs::entity consumer) const override;
 };
 
-template <typename T> struct TrackerConsumable {
+template <typename T> struct TrackerConsumable : Consumable {
+  TrackerConsumable<T>() = default;
+  TrackerConsumable<T>(int turns) : turns(turns){};
   int turns;
-  ActionResult activate(flecs::entity item, flecs::entity consumer) const;
-  void render(Console &console, flecs::entity map) const;
+  virtual ActionResult activate(flecs::entity item,
+                                flecs::entity consumer) const override;
+  void render(tcod::Console &console, flecs::entity map) const;
 };
 
-struct RopeConsumable {
-  ActionResult activate(flecs::entity item, flecs::entity consumer) const;
+struct RopeConsumable : Consumable {
+  virtual ActionResult activate(flecs::entity item,
+                                flecs::entity consumer) const override;
 };
 
-struct TransporterConsumable {
-  ActionResult activate(flecs::entity item, flecs::entity consumer) const;
+struct TransporterConsumable : Consumable {
+  virtual ActionResult activate(flecs::entity item,
+                                flecs::entity consumer) const override;
 };
 
 inline bool isConsumable(flecs::entity e) {
-  return e.has<HealingConsumable>() || e.has<LightningDamageConsumable>() ||
-         e.has<ConfusionConsumable>() || e.has<FireballDamageConsumable>() ||
-         e.has<DeodorantConsumable>() || e.has<ScentConsumable>() ||
-         e.has<MagicMappingConsumable>() || /* e.has<TrackerConsumable>() || */
-         e.has<RopeConsumable>() || e.has<TransporterConsumable>();
+  return get<Consumable>(e) != nullptr;
 }
