@@ -16,6 +16,7 @@
 #include "game_map.hpp"
 #include "inventory.hpp"
 #include "message_log.hpp"
+#include "pathfinding.hpp"
 
 struct InputHandler {
   InputHandler(std::array<int, 2> dims)
@@ -85,15 +86,21 @@ struct MainHandler : InputHandler {
                                      std::unique_ptr<Action>) override;
 };
 
-struct MainGameInputHandler : MainHandler {
-  MainGameInputHandler(const InputHandler &h) : MainHandler(h) {};
+struct MainAnimation : MainHandler {
+  MainAnimation(const InputHandler &h) : MainHandler(h) {};
+  virtual ~MainAnimation() = default;
+
+  virtual void animate(flecs::world, uint64_t t) override;
+};
+
+struct MainGameInputHandler : MainAnimation {
+  MainGameInputHandler(const InputHandler &h) : MainAnimation(h) {};
   virtual ~MainGameInputHandler() = default;
 
   virtual std::unique_ptr<Action> keyDown(SDL_KeyboardEvent &,
                                           flecs::world) override;
   virtual std::unique_ptr<Action> click(SDL_MouseButtonEvent &,
                                         flecs::world) override;
-  virtual void animate(flecs::world, uint64_t t) override;
 };
 
 template <typename T, typename F,
@@ -382,10 +389,29 @@ struct AreaTargetSelector : TargetSelector<true> {
   int radius;
 };
 
-struct PathFinder : MainHandler {
+struct AutoMove : MainAnimation {
+  AutoMove(const InputHandler &handler) : MainAnimation(handler) {};
+
+  virtual ~AutoMove() = default;
+
+  virtual void on_render(flecs::world, Console &) override;
+};
+
+struct AutoExplore : AutoMove {
+  AutoExplore(flecs::entity map, const InputHandler &handler)
+      : AutoMove(handler), ae(map, map.get<GameMap>()) {};
+
+  virtual ~AutoExplore() = default;
+
+  virtual void on_render(flecs::world, Console &) override;
+
+  pathfinding::AutoExplore ae;
+};
+
+struct PathFinder : AutoMove {
   PathFinder(flecs::entity map, std::array<int, 2> orig,
              std::array<int, 2> dest, const InputHandler &handler)
-      : MainHandler(handler) {
+      : AutoMove(handler) {
     auto &gameMap = map.get<GameMap>();
     pathCallback = std::make_unique<PathCallback>(map);
     path = std::make_unique<TCODPath>(gameMap.getWidth(), gameMap.getHeight(),

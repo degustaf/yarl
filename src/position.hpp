@@ -83,6 +83,7 @@ struct AttackAnimation {
 };
 
 struct MoveAnimation {
+  MoveAnimation() : x(0.0f), y(0.0f) {};
   MoveAnimation(float x, float y) : x(x), y(y) {};
   MoveAnimation(float x, float y, float speed) : x(x), y(y), speed(speed) {};
   MoveAnimation(const Position &p) : x((float)p.x), y((float)p.y) {};

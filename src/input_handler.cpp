@@ -15,6 +15,7 @@
 #include "consumable.hpp"
 #include "defines.hpp"
 #include "engine.hpp"
+#include "game_map.hpp"
 #include "inventory.hpp"
 #include "level.hpp"
 #include "message_log.hpp"
@@ -78,6 +79,8 @@ static Console buildCommandMenu(void) {
   con.at({2, y++}).ch = key(SDL_SCANCODE_PERIOD);
   con.print({2, y}, ">: Take elevator", color::white, std::nullopt);
   con.at({2, y++}).ch = key(SDL_SCANCODE_COMMA);
+  con.print({2, y}, "A: Autoexplore", color::white, std::nullopt);
+  con.at({2, y++}).ch = key(SDL_SCANCODE_A);
   con.print({2, y}, "C: This menu", color::white, std::nullopt);
   con.at({2, y++}).ch = key(SDL_SCANCODE_C);
   con.print({2, y}, "D: Drop an item", color::white, std::nullopt);
@@ -110,7 +113,9 @@ static void commandsMenu(flecs::world ecs, InputHandler &handler) {
                          (c.get_height() - COMMAND_MENU_HEIGHT) / 2});
   };
 
-  makePopup<decltype(f)>(ecs, f, handler);
+  ecs.set<std::unique_ptr<InputHandler>>(
+      std::make_unique<PopupInputHandler<MainGameInputHandler, decltype(f)>>(
+          f, handler));
 }
 
 std::unique_ptr<Action> InputHandler::dispatch(SDL_Event *event,
@@ -312,13 +317,75 @@ ActionResult MainHandler::handle_action(flecs::world ecs,
                   "The Fiend can track you by your scent.", color::white,
                   color::black, Console::Alignment::CENTER);
         };
-        makePopup<decltype(f)>(ecs, f, *this);
+        ecs.set<std::unique_ptr<InputHandler>>(
+            std::make_unique<
+                PopupInputHandler<MainGameInputHandler, decltype(f)>>(f,
+                                                                      *this));
         warning.warned = true;
       }
     }
     return ret;
   }
   return {ActionResultType::Failure, "", 0.0f};
+}
+
+void MainAnimation::animate(flecs::world ecs, uint64_t t) {
+  auto dt = (float)(t - time);
+
+  assert(!ecs.is_deferred());
+  ecs.defer_begin();
+  ecs.query<const Position, MoveAnimation>().each(
+      [dt](flecs::entity e, const Position &p, MoveAnimation &am) {
+        am.x += ((float)p.x - am.x) * (1 - std::exp(-am.speed * dt));
+        am.y += ((float)p.y - am.y) * (1 - std::exp(-am.speed * dt));
+        if (am.distanceSquared(p) <= 0.1 * 0.1) {
+          if (e.has<DisappearOnHit>()) {
+            e.destruct();
+          } else {
+            e.remove<MoveAnimation>();
+          }
+        }
+      });
+
+  ecs.query<AttackAnimation>().each([dt](flecs::entity e, AttackAnimation &aa) {
+    aa.x += (aa.targetX - aa.x) * (1 - std::exp(-aa.speed * dt));
+    aa.y += (aa.targetY - aa.y) * (1 - std::exp(-aa.speed * dt));
+    if (aa.distanceTargetSquared() <= 0.1 * 0.1) {
+      e.emplace<MoveAnimation>(aa);
+      e.remove<AttackAnimation>();
+    }
+  });
+  ecs.defer_end();
+
+  ecs.query<FPosition, const Velocity>().each(
+      [dt](auto &p, auto &v) { p += v * dt * 0.001f; });
+
+  ecs.defer_begin();
+  ecs.query<const FPosition, const RadialLimit>().each(
+      [](auto e, const auto &p, const auto &l) {
+        if (l.center.distanceSquared(p) >= l.radius * l.radius) {
+          e.destruct();
+        }
+      });
+  ecs.defer_end();
+
+  ecs.defer_begin();
+  ecs.query<Renderable, Fade>().each([dt](auto e, auto &r, auto &f) {
+    if (f.delay > 0) {
+      f.delay -= 0.001f * dt;
+    } else {
+      auto da = (uint8_t)(f.fade * dt);
+      assert(da != 0);
+      if (da >= r.fg.a) {
+        e.destruct();
+      } else {
+        r.fg.a -= da;
+      }
+    }
+  });
+  ecs.defer_end();
+
+  MainHandler::animate(ecs, t);
 }
 
 std::unique_ptr<Action> MainGameInputHandler::keyDown(SDL_KeyboardEvent &key,
@@ -370,6 +437,9 @@ std::unique_ptr<Action> MainGameInputHandler::keyDown(SDL_KeyboardEvent &key,
   case SDL_SCANCODE_CLEAR:
     return std::make_unique<WaitAction>();
 
+  case SDL_SCANCODE_A:
+    make<AutoExplore>(ecs, ecs.lookup("currentMap").target<CurrentMap>());
+    return nullptr;
   case SDL_SCANCODE_C:
     commandsMenu(ecs, *this);
     return nullptr;
@@ -430,65 +500,6 @@ MainGameInputHandler::click(SDL_MouseButtonEvent &button, flecs::world ecs) {
     }
   }
   return nullptr;
-}
-
-void MainGameInputHandler::animate(flecs::world ecs, uint64_t t) {
-  auto dt = (float)(t - time);
-
-  assert(!ecs.is_deferred());
-  ecs.defer_begin();
-  ecs.query<const Position, MoveAnimation>().each(
-      [dt](flecs::entity e, const Position &p, MoveAnimation &am) {
-        am.x += ((float)p.x - am.x) * (1 - std::exp(-am.speed * dt));
-        am.y += ((float)p.y - am.y) * (1 - std::exp(-am.speed * dt));
-        if (am.distanceSquared(p) <= 0.1 * 0.1) {
-          if (e.has<DisappearOnHit>()) {
-            e.destruct();
-          } else {
-            e.remove<MoveAnimation>();
-          }
-        }
-      });
-
-  ecs.query<AttackAnimation>().each([dt](flecs::entity e, AttackAnimation &aa) {
-    aa.x += (aa.targetX - aa.x) * (1 - std::exp(-aa.speed * dt));
-    aa.y += (aa.targetY - aa.y) * (1 - std::exp(-aa.speed * dt));
-    if (aa.distanceTargetSquared() <= 0.1 * 0.1) {
-      e.emplace<MoveAnimation>(aa);
-      e.remove<AttackAnimation>();
-    }
-  });
-  ecs.defer_end();
-
-  ecs.query<FPosition, const Velocity>().each(
-      [dt](auto &p, auto &v) { p += v * dt * 0.001f; });
-
-  ecs.defer_begin();
-  ecs.query<const FPosition, const RadialLimit>().each(
-      [](auto e, const auto &p, const auto &l) {
-        if (l.center.distanceSquared(p) >= l.radius * l.radius) {
-          e.destruct();
-        }
-      });
-  ecs.defer_end();
-
-  ecs.defer_begin();
-  ecs.query<Renderable, Fade>().each([dt](auto e, auto &r, auto &f) {
-    if (f.delay > 0) {
-      f.delay -= 0.001f * dt;
-    } else {
-      auto da = (uint8_t)(f.fade * dt);
-      assert(da != 0);
-      if (da >= r.fg.a) {
-        e.destruct();
-      } else {
-        r.fg.a -= da;
-      }
-    }
-  });
-  ecs.defer_end();
-
-  MainHandler::animate(ecs, t);
 }
 
 std::unique_ptr<Action> AskUserInputHandler::keyDown(SDL_KeyboardEvent &key,
@@ -732,29 +743,7 @@ void AreaTargetSelector::on_render(flecs::world ecs, Console &console) {
   }
 }
 
-void PathFinder::on_render(flecs::world ecs, Console &console) {
-  if (path->isEmpty()) {
-    MainHandler::on_render(ecs, console);
-    make<MainGameInputHandler>(ecs);
-    return;
-  }
-  int x, y;
-  if (!path->walk(&x, &y, true)) {
-    make<MainGameInputHandler>(ecs);
-    MainHandler::on_render(ecs, console);
-    return;
-  }
-  auto player = ecs.entity("player");
-  auto pos = player.get<Position>();
-  std::unique_ptr<Action> act =
-      std::make_unique<BumpAction>(x - pos.x, y - pos.y, 1);
-  auto ret = handle_action(ecs, std::move(act));
-  if (!ret) {
-    assert(ret.type == ActionResultType::Failure);
-    MainHandler::on_render(ecs, console);
-    return;
-  }
-
+void AutoMove::on_render(flecs::world ecs, Console &console) {
   auto map = ecs.lookup("currentMap").target<CurrentMap>();
   auto &gm = map.get<GameMap>();
   auto q = ecs.query_builder<const Position>()
@@ -768,6 +757,63 @@ void PathFinder::on_render(flecs::world ecs, Console &console) {
   }
 
   MainHandler::on_render(ecs, console);
+}
+
+void AutoExplore::on_render(flecs::world ecs, Console &console) {
+  auto player = ecs.entity("player");
+  auto pos = player.get<Position>();
+  auto xy = ae.run(pos);
+  if (pos == xy) {
+    MainAnimation::on_render(ecs, console);
+    make<MainGameInputHandler>(ecs);
+    return;
+  }
+  std::unique_ptr<Action> act =
+      std::make_unique<BumpAction>(xy[0] - pos.x, xy[1] - pos.y, 1);
+  auto ret = handle_action(ecs, std::move(act));
+  if (this == ecs.get<std::unique_ptr<InputHandler>>().get()) {
+    AutoMove::on_render(ecs, console);
+  }
+  if (!ret) {
+    assert(ret.type == ActionResultType::Failure);
+    // Verify that we haven't already replaced the current inputHanf=dler and
+    // freed this.
+    if (this == ecs.get<std::unique_ptr<InputHandler>>().get()) {
+      make<MainGameInputHandler>(ecs);
+    }
+  }
+}
+
+void PathFinder::on_render(flecs::world ecs, Console &console) {
+  if (path->isEmpty()) {
+    MainAnimation::on_render(ecs, console);
+    assert(this == ecs.get<std::unique_ptr<InputHandler>>().get());
+    make<MainGameInputHandler>(ecs);
+    return;
+  }
+  int x, y;
+  if (!path->walk(&x, &y, true)) {
+    MainAnimation::on_render(ecs, console);
+    assert(this == ecs.get<std::unique_ptr<InputHandler>>().get());
+    make<MainGameInputHandler>(ecs);
+    return;
+  }
+  auto player = ecs.entity("player");
+  auto pos = player.get<Position>();
+  std::unique_ptr<Action> act =
+      std::make_unique<BumpAction>(x - pos.x, y - pos.y, 1);
+  auto ret = handle_action(ecs, std::move(act));
+  if (this == ecs.get<std::unique_ptr<InputHandler>>().get()) {
+    AutoMove::on_render(ecs, console);
+  }
+  if (!ret) {
+    assert(ret.type == ActionResultType::Failure);
+    // Verify that we haven't already replaced the current inputHanf=dler and
+    // freed this.
+    if (this == ecs.get<std::unique_ptr<InputHandler>>().get()) {
+      make<MainGameInputHandler>(ecs);
+    }
+  }
 }
 
 std::unique_ptr<Action> GameOver::keyDown(SDL_KeyboardEvent &key,

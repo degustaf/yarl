@@ -3,6 +3,7 @@
 #include <array>
 #include <climits>
 #include <cmath>
+#include <memory>
 #include <queue>
 #include <vector>
 
@@ -20,9 +21,14 @@ inline bool operator==(const Index &lhs, const Index &rhs) {
 
 template <typename T> class map {
 public:
-  map(const Index &dimensions) : map(dimensions, T()){};
+  map(const Index &dimensions) : map(dimensions, T()) {};
   map(const Index &dimensions, const T &val)
-      : dimensions(dimensions), cost(dimensions[0] * dimensions[1], val){};
+      : dimensions(dimensions),
+        cost(std::make_unique<T[]>(dimensions[0] * dimensions[1])) {
+    for (auto i = 0; i < dimensions[0] * dimensions[1]; i++) {
+      cost[i] = val;
+    }
+  };
 
   inline T &operator[](const Index &idx) {
     return cost[idx[0] + dimensions[0] * idx[1]];
@@ -32,8 +38,8 @@ public:
   };
   inline void resize(size_t n) { cost.resize(n); }
 
-  auto begin() { return cost.begin(); };
-  auto end() { return cost.end(); };
+  auto begin() { return cost.get(); };
+  auto end() { return begin() + (size_t)(dimensions[0] * dimensions[1]); };
 
   Index dimensions;
 
@@ -73,7 +79,7 @@ public:
   };
 
 private:
-  std::vector<T> cost;
+  std::unique_ptr<T[]> cost;
 };
 
 inline std::vector<Index> constructPath(Index start, Index goal,
@@ -88,7 +94,8 @@ inline std::vector<Index> constructPath(Index start, Index goal,
 }
 
 template <typename Heuristic>
-std::vector<Index> aStar(map<int> cost, Index start, Index goal, Heuristic h) {
+std::vector<Index> aStar(const map<int> &cost, Index start, Index goal,
+                         Heuristic h) {
   struct Node {
     Index idx;
     int cost;
@@ -131,7 +138,7 @@ class Dijkstra {
 public:
   Dijkstra(int width, int height, map<int> &&cost)
       : width(width), height(height), distance({width, height}, infinity),
-        cost(cost), cameFrom({width, height}){};
+        cost(std::move(cost)), cameFrom({width, height}) {};
   inline void set(int x, int y, int value) { set({x, y}, value); };
   void set(Index xy, int value);
   void scan(void);
@@ -155,6 +162,21 @@ private:
   map<int> distance;
   map<int> cost;
   map<Index> cameFrom;
+};
+
+class AutoExplore {
+public:
+  AutoExplore(flecs::entity map, const GameMap &gamemap)
+      : gamemap(gamemap), cost({gamemap.getWidth(), gamemap.getHeight()}, 0),
+        mapEntity(map) {};
+
+  Index run(Index start);
+
+private:
+  static constexpr auto Infinity = 1 << 30;
+  const GameMap &gamemap;
+  map<int> cost;
+  flecs::entity mapEntity;
 };
 
 } // namespace pathfinding
