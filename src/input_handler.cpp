@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <array>
 #include <cassert>
-#include <libtcod/console.h>
 #include <memory>
 #include <optional>
 
@@ -13,6 +12,7 @@
 #include "consumable.hpp"
 #include "defines.hpp"
 #include "engine.hpp"
+#include "game_map.hpp"
 #include "inventory.hpp"
 #include "level.hpp"
 #include "message_log.hpp"
@@ -75,6 +75,8 @@ static tcod::Console buildCommandMenu(void) {
   con.at({2, y++}).ch = key(SDL_SCANCODE_PERIOD);
   tcod::print(con, {2, y}, ">: Take elevator", color::white, std::nullopt);
   con.at({2, y++}).ch = key(SDL_SCANCODE_COMMA);
+  tcod::print(con, {2, y}, "A: Autoexplore", color::white, std::nullopt);
+  con.at({2, y++}).ch = key(SDL_SCANCODE_A);
   tcod::print(con, {2, y}, "C: This menu", color::white, std::nullopt);
   con.at({2, y++}).ch = key(SDL_SCANCODE_C);
   tcod::print(con, {2, y}, "D: Drop an item", color::white, std::nullopt);
@@ -108,7 +110,9 @@ static void commandsMenu(flecs::world ecs, InputHandler &handler) {
                 (c.get_height() - COMMAND_MENU_HEIGHT) / 2});
   };
 
-  makePopup<decltype(f)>(ecs, f, handler);
+  ecs.set<std::unique_ptr<InputHandler>>(
+      std::make_unique<PopupInputHandler<MainGameInputHandler, decltype(f)>>(
+          f, handler));
 }
 
 std::unique_ptr<Action> InputHandler::dispatch(SDL_Event *event,
@@ -274,7 +278,10 @@ ActionResult MainHandler::handle_action(flecs::world ecs,
                       "The Fiend can track you by your scent.", color::white,
                       color::black, TCOD_CENTER);
         };
-        makePopup<decltype(f)>(ecs, f, *this);
+        ecs.set<std::unique_ptr<InputHandler>>(
+            std::make_unique<
+                PopupInputHandler<MainGameInputHandler, decltype(f)>>(f,
+                                                                      *this));
         warning.warned = true;
       }
     }
@@ -332,6 +339,9 @@ std::unique_ptr<Action> MainGameInputHandler::keyDown(SDL_KeyboardEvent &key,
   case SDL_SCANCODE_CLEAR:
     return std::make_unique<WaitAction>();
 
+  case SDL_SCANCODE_A:
+    make<AutoExplore>(ecs, ecs.lookup("currentMap").target<CurrentMap>());
+    return nullptr;
   case SDL_SCANCODE_C:
     commandsMenu(ecs, *this);
     return nullptr;
@@ -640,29 +650,7 @@ void AreaTargetSelector::on_render(flecs::world ecs, tcod::Console &console) {
   }
 }
 
-void PathFinder::on_render(flecs::world ecs, tcod::Console &console) {
-  if (path->isEmpty()) {
-    MainHandler::on_render(ecs, console);
-    make<MainGameInputHandler>(ecs);
-    return;
-  }
-  int x, y;
-  if (!path->walk(&x, &y, true)) {
-    make<MainGameInputHandler>(ecs);
-    MainHandler::on_render(ecs, console);
-    return;
-  }
-  auto player = ecs.entity("player");
-  auto pos = player.get<Position>();
-  std::unique_ptr<Action> act =
-      std::make_unique<BumpAction>(x - pos.x, y - pos.y, 1);
-  auto ret = handle_action(ecs, std::move(act));
-  if (!ret) {
-    assert(ret.type == ActionResultType::Failure);
-    MainHandler::on_render(ecs, console);
-    return;
-  }
-
+void AutoMove::on_render(flecs::world ecs, tcod::Console &console) {
   auto map = ecs.lookup("currentMap").target<CurrentMap>();
   auto &gm = map.get<GameMap>();
   auto q = ecs.query_builder<const Position>()
@@ -676,6 +664,57 @@ void PathFinder::on_render(flecs::world ecs, tcod::Console &console) {
   }
 
   MainHandler::on_render(ecs, console);
+}
+
+void AutoExplore::on_render(flecs::world ecs, tcod::Console &console) {
+  auto player = ecs.entity("player");
+  auto pos = player.get<Position>();
+  auto xy = ae.run(pos);
+  if (pos == xy) {
+    MainHandler::on_render(ecs, console);
+    make<MainGameInputHandler>(ecs);
+    return;
+  }
+  std::unique_ptr<Action> act =
+      std::make_unique<BumpAction>(xy[0] - pos.x, xy[1] - pos.y, 1);
+  MainHandler::on_render(ecs, console);
+  auto ret = handle_action(ecs, std::move(act));
+  if (!ret) {
+    assert(ret.type == ActionResultType::Failure);
+    // Verify that we haven't already replaced the current inputHanf=dler and
+    // freed this.
+    if (this == ecs.get<std::unique_ptr<InputHandler>>().get()) {
+      make<MainGameInputHandler>(ecs);
+    }
+  }
+}
+
+void PathFinder::on_render(flecs::world ecs, tcod::Console &console) {
+  if (path->isEmpty()) {
+    MainHandler::on_render(ecs, console);
+    make<MainGameInputHandler>(ecs);
+    return;
+  }
+  int x, y;
+  if (!path->walk(&x, &y, true)) {
+    MainHandler::on_render(ecs, console);
+    make<MainGameInputHandler>(ecs);
+    return;
+  }
+  auto player = ecs.entity("player");
+  auto pos = player.get<Position>();
+  std::unique_ptr<Action> act =
+      std::make_unique<BumpAction>(x - pos.x, y - pos.y, 1);
+  AutoMove::on_render(ecs, console);
+  auto ret = handle_action(ecs, std::move(act));
+  if (!ret) {
+    assert(ret.type == ActionResultType::Failure);
+    // Verify that we haven't already replaced the current inputHanf=dler and
+    // freed this.
+    if (this == ecs.get<std::unique_ptr<InputHandler>>().get()) {
+      make<MainGameInputHandler>(ecs);
+    }
+  }
 }
 
 std::unique_ptr<Action> GameOver::keyDown(SDL_KeyboardEvent &key,

@@ -16,6 +16,7 @@
 #include "game_map.hpp"
 #include "inventory.hpp"
 #include "message_log.hpp"
+#include "pathfinding.hpp"
 
 struct InputHandler {
   virtual ~InputHandler() = default;
@@ -367,10 +368,29 @@ struct AreaTargetSelector : TargetSelector<true> {
   int radius;
 };
 
-struct PathFinder : MainHandler {
+struct AutoMove : MainHandler {
+  AutoMove(const InputHandler &handler) : MainHandler(handler) {};
+
+  virtual ~AutoMove() = default;
+
+  virtual void on_render(flecs::world, tcod::Console &) override;
+};
+
+struct AutoExplore : AutoMove {
+  AutoExplore(flecs::entity map, const InputHandler &handler)
+      : AutoMove(handler), ae(map, map.get<GameMap>()) {};
+
+  virtual ~AutoExplore() = default;
+
+  virtual void on_render(flecs::world, tcod::Console &) override;
+
+  pathfinding::AutoExplore ae;
+};
+
+struct PathFinder : AutoMove {
   PathFinder(flecs::entity map, std::array<int, 2> orig,
              std::array<int, 2> dest, const InputHandler &handler)
-      : MainHandler(handler) {
+      : AutoMove(handler) {
     auto &gameMap = map.get<GameMap>();
     pathCallback = std::make_unique<PathCallback>(map);
     path = std::make_unique<TCODPath>(gameMap.getWidth(), gameMap.getHeight(),
