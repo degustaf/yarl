@@ -238,15 +238,17 @@ flecs::entity GameMap::get_blocking_entity(flecs::entity map,
 float PathCallback::getWalkCost(int xFrom, int yFrom, int xTo, int yTo,
                                 void *) const {
   auto &gameMap = map.get<GameMap>();
+  if (!gameMap.isWalkable(xTo, yTo)) {
+    if (gameMap.get_blocking_entity(map, {xTo, yTo})) {
+      return 2.0;
+    }
+    return 1000.0f;
+  }
   if (!gameMap.isExplored(xTo, yTo)) {
     return 0.0f;
   }
   if ((xTo - xFrom) * (xTo - xFrom) + (yTo - yFrom) * (yTo - yFrom) > 2) {
     return 0.0f;
-  }
-
-  if (gameMap.get_blocking_entity(map, {xTo, yTo})) {
-    return 2.0;
   }
 
   return 1.0;
