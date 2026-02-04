@@ -1,5 +1,6 @@
 #include "pathfinding.hpp"
 #include "actor.hpp"
+#include "inventory.hpp"
 
 using namespace pathfinding;
 
@@ -20,6 +21,18 @@ Index AutoExplore::run(Index start) {
       }
     }
   }
+
+  mapEntity.world()
+      .query_builder<const Position>()
+      .with<Item>()
+      .with(flecs::ChildOf, mapEntity)
+      .build()
+      .each([&](const Position &p) {
+        if (gamemap.isInFov(p)) {
+          cost[p] = 0;
+          queue.push(p);
+        }
+      });
 
   while (!queue.empty()) {
     auto next = queue.top();
