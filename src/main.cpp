@@ -54,6 +54,13 @@ SDL_AppResult SDL_AppInit(void **data, [[maybe_unused]] int argc,
   ecs->set<std::unique_ptr<InputHandler>>(
       std::make_unique<MainMenuInputHandler>());
 
+  if (std::filesystem::exists(data_dir / configName)) {
+    Command::load(data_dir / configName);
+  } else {
+    Command::init();
+    Command::save(data_dir / configName);
+  }
+
 #if !defined NDEBUG
   ecs->import <flecs::stats>();
   ecs->set<flecs::Rest>({});

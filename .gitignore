@@ -5,7 +5,7 @@ emscripten
 opt
 perf.*
 
-*.sav
+save
 
 # Jekyll files for the tutorial site.
 docs/_site
