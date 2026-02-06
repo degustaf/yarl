@@ -110,15 +110,11 @@ Command Command::get(SDL_KeyboardEvent &key) {
     return {CommandType::ESCAPE, 0};
 
   default: {
-    auto ch = key.key;
-    if (ch < SDLK_A || ch > SDLK_Z) {
-      ch = 0;
-    }
     auto it = mapping.find(key.scancode);
     if (it != mapping.end()) {
-      return {it->second, ch};
+      return {it->second, key.key};
     } else {
-      return {CommandType::NONE, ch};
+      return {CommandType::NONE, key.key};
     }
     break;
   }
