@@ -12,6 +12,8 @@
 #include <type_traits>
 
 #include "action.hpp"
+#include "actor.hpp"
+#include "command.hpp"
 #include "console.hpp"
 #include "game_map.hpp"
 #include "inventory.hpp"
@@ -27,7 +29,7 @@ struct InputHandler {
 
   std::unique_ptr<Action> dispatch(SDL_Event *event, flecs::world &ecs);
 
-  virtual std::unique_ptr<Action> keyDown(SDL_KeyboardEvent &, flecs::world) {
+  virtual std::unique_ptr<Action> keyDown(Command, flecs::world) {
     return nullptr;
   };
   virtual std::unique_ptr<Action> click(SDL_MouseButtonEvent &, flecs::world) {
@@ -65,16 +67,18 @@ inline void make(flecs::world ecs, Args &&...args) {
 }
 
 struct MainMenuInputHandler : InputHandler {
-  MainMenuInputHandler(std::array<int, 2> dims) : InputHandler(dims) {};
-  MainMenuInputHandler(const InputHandler &h) : InputHandler(h) {};
-  MainMenuInputHandler(const MainMenuInputHandler &) = default;
-  MainMenuInputHandler(MainMenuInputHandler &&) = default;
+  MainMenuInputHandler(std::array<int, 2> dims) : InputHandler(dims), idx(0) {};
+  MainMenuInputHandler(const InputHandler &h) : InputHandler(h), idx(0) {};
+  // MainMenuInputHandler(const MainMenuInputHandler &) = default;
+  // MainMenuInputHandler(MainMenuInputHandler &&) = default;
   virtual ~MainMenuInputHandler() = default;
 
-  virtual std::unique_ptr<Action> keyDown(SDL_KeyboardEvent &,
-                                          flecs::world) override;
+  virtual std::unique_ptr<Action> keyDown(Command, flecs::world) override;
   virtual void on_render(flecs::world, Console &) override;
   virtual bool renderImg() const override { return true; };
+  int idx;
+  static constexpr auto choices = std::array{
+      "Play a new game   ", "Continue last game", "Quit              "};
 };
 
 struct MainHandler : InputHandler {
@@ -97,8 +101,7 @@ struct MainGameInputHandler : MainAnimation {
   MainGameInputHandler(const InputHandler &h) : MainAnimation(h) {};
   virtual ~MainGameInputHandler() = default;
 
-  virtual std::unique_ptr<Action> keyDown(SDL_KeyboardEvent &,
-                                          flecs::world) override;
+  virtual std::unique_ptr<Action> keyDown(Command, flecs::world) override;
   virtual std::unique_ptr<Action> click(SDL_MouseButtonEvent &,
                                         flecs::world) override;
 };
@@ -110,13 +113,11 @@ struct PopupInputHandler : InputHandler {
       : InputHandler(p), parent(p), childOnRender(childOnRendor) {};
   virtual ~PopupInputHandler() = default;
 
-  virtual std::unique_ptr<Action> keyDown(SDL_KeyboardEvent &key,
+  virtual std::unique_ptr<Action> keyDown(Command cmd,
                                           flecs::world ecs) override {
-    switch (key.scancode) {
-    case SDL_SCANCODE_ESCAPE:
-    case SDL_SCANCODE_RETURN:
-    case SDL_SCANCODE_RETURN2:
-    case SDL_SCANCODE_KP_ENTER:
+    switch (cmd.type) {
+    case CommandType::ESCAPE:
+    case CommandType::ENTER:
       make<T>(ecs);
       break;
     default:
@@ -151,8 +152,7 @@ struct AskUserInputHandler : MainHandler {
   AskUserInputHandler(const InputHandler &handler) : MainHandler(handler) {};
   virtual ~AskUserInputHandler() = default;
 
-  virtual std::unique_ptr<Action> keyDown(SDL_KeyboardEvent &,
-                                          flecs::world) override;
+  virtual std::unique_ptr<Action> keyDown(Command, flecs::world) override;
   virtual std::unique_ptr<Action> click(SDL_MouseButtonEvent &,
                                         flecs::world) override;
   virtual ActionResult handle_action(flecs::world,
@@ -170,8 +170,7 @@ struct InventoryInputHandler : AskUserInputHandler {
               .build()) {};
   virtual ~InventoryInputHandler() = default;
 
-  virtual std::unique_ptr<Action> keyDown(SDL_KeyboardEvent &,
-                                          flecs::world) override;
+  virtual std::unique_ptr<Action> keyDown(Command, flecs::world) override;
   virtual void on_render(flecs::world, Console &) override;
   virtual std::unique_ptr<Action> item_selected(flecs::entity item) = 0;
 
@@ -201,9 +200,7 @@ struct UseItemInputHandler : InventoryInputHandler {
 struct LevelupHandler : AskUserInputHandler {
   LevelupHandler(const InputHandler &handler) : AskUserInputHandler(handler) {};
   virtual ~LevelupHandler() = default;
-
-  virtual std::unique_ptr<Action> keyDown(SDL_KeyboardEvent &,
-                                          flecs::world) override;
+  virtual std::unique_ptr<Action> keyDown(Command, flecs::world) override;
   virtual std::unique_ptr<Action> click(SDL_MouseButtonEvent &,
                                         flecs::world) override;
   virtual void on_render(flecs::world, Console &) override;
@@ -218,8 +215,7 @@ struct HistoryInputHandler : MainHandler {
 
   virtual ~HistoryInputHandler() = default;
 
-  virtual std::unique_ptr<Action> keyDown(SDL_KeyboardEvent &,
-                                          flecs::world) override;
+  virtual std::unique_ptr<Action> keyDown(Command, flecs::world) override;
   virtual void on_render(flecs::world, Console &) override;
 
   size_t cursor;
@@ -239,65 +235,39 @@ template <bool useF> struct SelectInputHandler : AskUserInputHandler {
       : AskUserInputHandler(handler){};
   virtual ~SelectInputHandler() = default;
 
-  std::unique_ptr<Action> keyDown(SDL_KeyboardEvent &key, flecs::world ecs) {
+  std::unique_ptr<Action> keyDown(Command cmd, flecs::world ecs) {
     auto dxy = std::array<int, 2>{0, 0};
 
-    switch (key.scancode) {
-    case SDL_SCANCODE_LSHIFT:
-    case SDL_SCANCODE_RSHIFT:
-    case SDL_SCANCODE_LCTRL:
-    case SDL_SCANCODE_RCTRL:
-    case SDL_SCANCODE_LALT:
-    case SDL_SCANCODE_RALT:
-      return nullptr;
-
-    case SDL_SCANCODE_UP:
-    case SDL_SCANCODE_KP_8:
-    case SDL_SCANCODE_K:
+    switch (cmd.type) {
+    case CommandType::UP:
       dxy = {0, -1};
       break;
-    case SDL_SCANCODE_DOWN:
-    case SDL_SCANCODE_KP_2:
-    case SDL_SCANCODE_J:
+    case CommandType::DOWN:
       dxy = {0, 1};
       break;
-    case SDL_SCANCODE_LEFT:
-    case SDL_SCANCODE_KP_4:
-    case SDL_SCANCODE_H:
+    case CommandType::LEFT:
       dxy = {-1, 0};
       break;
-    case SDL_SCANCODE_RIGHT:
-    case SDL_SCANCODE_KP_6:
-    case SDL_SCANCODE_L:
+    case CommandType::RIGHT:
       dxy = {1, 0};
       break;
-    case SDL_SCANCODE_HOME:
-    case SDL_SCANCODE_KP_7:
-    case SDL_SCANCODE_Y:
+    case CommandType::UL:
       dxy = {-1, -1};
       break;
-    case SDL_SCANCODE_END:
-    case SDL_SCANCODE_KP_1:
-    case SDL_SCANCODE_B:
+    case CommandType::DL:
       dxy = {-1, 1};
       break;
-    case SDL_SCANCODE_PAGEUP:
-    case SDL_SCANCODE_KP_9:
-    case SDL_SCANCODE_U:
+    case CommandType::UR:
       dxy = {1, -1};
       break;
-    case SDL_SCANCODE_PAGEDOWN:
-    case SDL_SCANCODE_KP_3:
-    case SDL_SCANCODE_N:
+    case CommandType::DR:
       dxy = {1, 1};
       break;
 
-    case SDL_SCANCODE_RETURN:
-    case SDL_SCANCODE_RETURN2:
-    case SDL_SCANCODE_KP_ENTER:
+    case CommandType::ENTER:
       return loc_selected(ecs, mouse_loc);
 
-    case SDL_SCANCODE_F:
+    case CommandType::SHOOT:
       if (useF) {
         return loc_selected(ecs, mouse_loc);
       }
@@ -308,23 +278,10 @@ template <bool useF> struct SelectInputHandler : AskUserInputHandler {
       return nullptr;
     }
 
-    auto modifier = 1;
-    if (key.mod & SDL_KMOD_SHIFT) {
-      modifier *= 5;
-    }
-    if (key.mod & SDL_KMOD_CTRL) {
-      modifier *= 10;
-    }
-    if (key.mod & SDL_KMOD_ALT) {
-      modifier *= 20;
-    }
-
     auto currentMap = ecs.lookup("currentMap").target<CurrentMap>();
     auto &map = currentMap.get<GameMap>();
-    mouse_loc[0] =
-        std::clamp(mouse_loc[0] + dxy[0] * modifier, 0, map.getWidth());
-    mouse_loc[1] =
-        std::clamp(mouse_loc[1] + dxy[1] * modifier, 0, map.getHeight());
+    mouse_loc[0] = std::clamp(mouse_loc[0] + dxy[0], 0, map.getWidth());
+    mouse_loc[1] = std::clamp(mouse_loc[1] + dxy[1], 0, map.getHeight());
     return nullptr;
   }
 
@@ -432,14 +389,14 @@ template <bool useRope> struct JumpConfirm : AskUserInputHandler {
       : AskUserInputHandler(handler), item(item) {};
   virtual ~JumpConfirm() = default;
 
-  virtual std::unique_ptr<Action> keyDown(SDL_KeyboardEvent &key,
+  virtual std::unique_ptr<Action> keyDown(Command cmd,
                                           flecs::world ecs) override {
-    switch (key.scancode) {
-    case SDL_SCANCODE_Y:
+    switch (cmd.ch) {
+    case 'Y':
       if (useRope)
         item.destruct();
       return std::make_unique<JumpAction>(useRope);
-    case SDL_SCANCODE_J:
+    case 'J':
       if (useRope) {
         return std::make_unique<JumpAction>(false);
       }
@@ -447,7 +404,7 @@ template <bool useRope> struct JumpConfirm : AskUserInputHandler {
     default:
       break;
     }
-    return AskUserInputHandler::keyDown(key, ecs);
+    return AskUserInputHandler::keyDown(cmd, ecs);
   }
 
   virtual void on_render(flecs::world ecs, Console &console) override {
@@ -481,8 +438,7 @@ struct GameOver : MainHandler {
   GameOver(const InputHandler &handler) : MainHandler(handler) {};
   virtual ~GameOver() = default;
 
-  virtual std::unique_ptr<Action> keyDown(SDL_KeyboardEvent &,
-                                          flecs::world) override;
+  virtual std::unique_ptr<Action> keyDown(Command cmd, flecs::world) override;
 };
 
 struct WinScreen : GameOver {

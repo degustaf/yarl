@@ -4,6 +4,7 @@
 #include <array>
 #include <cassert>
 #include <cmath>
+#include <cstring>
 #include <memory>
 #include <optional>
 
@@ -11,6 +12,7 @@
 #include "actor.hpp"
 #include "blood.hpp"
 #include "color.hpp"
+#include "command.hpp"
 #include "console.hpp"
 #include "consumable.hpp"
 #include "defines.hpp"
@@ -26,10 +28,6 @@
 static constexpr auto COMMAND_MENU_WIDTH = 70;
 static constexpr auto COMMAND_MENU_HEIGHT = 28;
 
-static char key(SDL_Scancode c) {
-  return *SDL_GetKeyName(SDL_GetKeyFromScancode(c, SDL_KMOD_NONE, true));
-}
-
 static Console buildCommandMenu(void) {
   auto con = Console(COMMAND_MENU_WIDTH, COMMAND_MENU_HEIGHT);
   con.clear();
@@ -40,68 +38,92 @@ static Console buildCommandMenu(void) {
             std::nullopt);
 
   // vim directions
-  auto y = 3;
-  con.print({3, y}, "y k u", color::white, std::nullopt);
-  con.at({3, y}).ch = key(SDL_SCANCODE_Y);
-  con.at({5, y}).ch = key(SDL_SCANCODE_K);
-  con.at({7, y}).ch = key(SDL_SCANCODE_U);
-  y++;
-  con.print({4, y}, "\\|/", color::white, std::nullopt);
-  y++;
-  con.print({3, y}, "h-*-l", color::white, std::nullopt);
-  con.at({3, y}).ch = key(SDL_SCANCODE_H);
-  con.at({7, y}).ch = key(SDL_SCANCODE_L);
-  y++;
-  con.print({4, y}, "/|\\", color::white, std::nullopt);
-  y++;
-  con.print({3, y}, "b j n", color::white, std::nullopt);
-  con.at({3, y}).ch = key(SDL_SCANCODE_B);
-  con.at({5, y}).ch = key(SDL_SCANCODE_J);
-  con.at({7, y}).ch = key(SDL_SCANCODE_N);
+  con.print({2, 3}, "y k u", color::white, std::nullopt);
+  con.print({2, 4}, " \\|/ ", color::white, std::nullopt);
+  con.print({2, 5}, "h-*-l", color::white, std::nullopt);
+  con.print({2, 6}, " /|\\ ", color::white, std::nullopt);
+  con.print({2, 7}, "b j n", color::white, std::nullopt);
 
   // numpad directions.
   con.print({10, 2}, "numpad", color::white, std::nullopt);
   con.print({10, 3}, "7 8 9", color::white, std::nullopt);
-  con.print({11, 4}, "\\|/", color::white, std::nullopt);
+  con.print({10, 4}, " \\|/", color::white, std::nullopt);
   con.print({10, 5}, "4-*-6", color::white, std::nullopt);
-  con.print({11, 6}, "/|\\", color::white, std::nullopt);
+  con.print({10, 6}, " /|\\", color::white, std::nullopt);
   con.print({10, 7}, "1 2 3", color::white, std::nullopt);
 
-  y = 9;
+  auto y = 9;
 
-  con.print({2, y++}, "Hold <shift> to move 2 spaces", color::white,
-            std::nullopt);
-  con.print({2, y++}, "Hold <ctrl> to move 3 spaces", color::white,
-            std::nullopt);
-  y++;
-  con.print({2, y++}, "5: wait", color::white, std::nullopt);
-  con.print({2, y}, ".: wait", color::white, std::nullopt);
-  con.at({2, y++}).ch = key(SDL_SCANCODE_PERIOD);
-  con.print({2, y}, ">: Take elevator", color::white, std::nullopt);
-  con.at({2, y++}).ch = key(SDL_SCANCODE_COMMA);
-  con.print({2, y}, "A: Autoexplore", color::white, std::nullopt);
-  con.at({2, y++}).ch = key(SDL_SCANCODE_A);
-  con.print({2, y}, "C: This menu", color::white, std::nullopt);
-  con.at({2, y++}).ch = key(SDL_SCANCODE_C);
-  con.print({2, y}, "D: Drop an item", color::white, std::nullopt);
-  con.at({2, y++}).ch = key(SDL_SCANCODE_D);
-  con.print({2, y}, "F: Fire a weapon", color::white, std::nullopt);
-  con.at({2, y++}).ch = key(SDL_SCANCODE_F);
-  con.print({2, y}, "G: Pick up an item", color::white, std::nullopt);
-  con.at({2, y++}).ch = key(SDL_SCANCODE_G);
-  con.print({2, y}, "I: Inventory", color::white, std::nullopt);
-  con.at({2, y++}).ch = key(SDL_SCANCODE_I);
-  con.print({2, y}, "V: View game log", color::white, std::nullopt);
-  con.at({2, y++}).ch = key(SDL_SCANCODE_V);
-  con.print({2, y}, "X: View character information", color::white,
-            std::nullopt);
-  con.at({2, y++}).ch = key(SDL_SCANCODE_X);
-  con.print({2, y}, "/: Look around map", color::white, std::nullopt);
-  con.at({2, y++}).ch = key(SDL_SCANCODE_SLASH);
-  auto str =
-      stringf("%s: Exit menu", SDL_GetKeyName(SDL_GetKeyFromScancode(
-                                   SDL_SCANCODE_ESCAPE, SDL_KMOD_NONE, true)));
-  con.print({2, y}, str, color::white, std::nullopt);
+  // con.print({2, y++}, "Hold <shift> to move 2 spaces", color::white,
+  //             std::nullopt);
+  // con.print({2, y++}, "Hold <ctrl> to move 3 spaces", color::white,
+  //             std::nullopt);
+  // y++;
+
+  // Remappable commands
+  for (auto &cmd : Command::mapping) {
+    switch (cmd.second) {
+    case CommandType::UL: {
+      auto buffer = stringf("%s", SDL_GetKeyName(SDL_GetKeyFromScancode(
+                                      cmd.first, SDL_KMOD_NONE, true)));
+      con.print({2, 3}, buffer, color::white, std::nullopt);
+      break;
+    }
+    case CommandType::UP: {
+      auto buffer = stringf("%s", SDL_GetKeyName(SDL_GetKeyFromScancode(
+                                      cmd.first, SDL_KMOD_NONE, true)));
+      con.print({4, 3}, buffer, color::white, std::nullopt);
+      break;
+    }
+    case CommandType::UR: {
+      auto buffer = stringf("%s", SDL_GetKeyName(SDL_GetKeyFromScancode(
+                                      cmd.first, SDL_KMOD_NONE, true)));
+      con.print({6, 3}, buffer, color::white, std::nullopt);
+      break;
+    }
+
+    case CommandType::LEFT: {
+      auto buffer = stringf("%s", SDL_GetKeyName(SDL_GetKeyFromScancode(
+                                      cmd.first, SDL_KMOD_NONE, true)));
+      con.print({2, 5}, buffer, color::white, std::nullopt);
+      break;
+    }
+    case CommandType::RIGHT: {
+      auto buffer = stringf("%s", SDL_GetKeyName(SDL_GetKeyFromScancode(
+                                      cmd.first, SDL_KMOD_NONE, true)));
+      con.print({6, 5}, buffer, color::white, std::nullopt);
+      break;
+    }
+
+    case CommandType::DL: {
+      auto buffer = stringf("%s", SDL_GetKeyName(SDL_GetKeyFromScancode(
+                                      cmd.first, SDL_KMOD_NONE, true)));
+      con.print({2, 7}, buffer, color::white, std::nullopt);
+      break;
+    }
+    case CommandType::DOWN: {
+      auto buffer = stringf("%s", SDL_GetKeyName(SDL_GetKeyFromScancode(
+                                      cmd.first, SDL_KMOD_NONE, true)));
+      con.print({4, 7}, buffer, color::white, std::nullopt);
+      break;
+    }
+    case CommandType::DR: {
+      auto buffer = stringf("%s", SDL_GetKeyName(SDL_GetKeyFromScancode(
+                                      cmd.first, SDL_KMOD_NONE, true)));
+      con.print({6, 7}, buffer, color::white, std::nullopt);
+      break;
+    }
+
+    default: {
+      auto buffer = stringf("%s: %s",
+                            SDL_GetKeyName(SDL_GetKeyFromScancode(
+                                cmd.first, SDL_KMOD_NONE, true)),
+                            CommandTypeDescription(cmd.second));
+      con.print({2, y}, buffer, color::white, std::nullopt);
+      y++;
+    }
+    }
+  }
 
   return con;
 }
@@ -125,7 +147,7 @@ std::unique_ptr<Action> InputHandler::dispatch(SDL_Event *event,
     return std::make_unique<ExitAction>();
 
   case SDL_EVENT_KEY_DOWN:
-    return keyDown(event->key, ecs);
+    return keyDown(Command::get(event->key), ecs);
 
   case SDL_EVENT_MOUSE_MOTION:
     mouse_loc = {(int)event->motion.x, (int)event->motion.y};
@@ -150,26 +172,45 @@ ActionResult InputHandler::handle_action(flecs::world ecs,
   return {ActionResultType::Failure, "", 0.0f};
 }
 
-std::unique_ptr<Action> MainMenuInputHandler::keyDown(SDL_KeyboardEvent &key,
+std::unique_ptr<Action> MainMenuInputHandler::keyDown(Command cmd,
                                                       flecs::world ecs) {
-  switch (key.scancode) {
-  case SDL_SCANCODE_Q:
-  case SDL_SCANCODE_ESCAPE:
+  switch (cmd.type) {
+  case CommandType::ESCAPE:
     return std::make_unique<ExitAction>();
-  case SDL_SCANCODE_C:
-    // This could cause the unique_ptr managing this's lifetime to deallocate
-    if (Engine::load(ecs, data_dir / saveFilename, *this)) {
+
+  case CommandType::UP:
+    idx--;
+    if (idx == -1)
+      idx = choices.size() - 1;
+    break;
+  case CommandType::DOWN:
+    idx++;
+    if (idx == choices.size())
+      idx = 0;
+    break;
+
+  case CommandType::ENTER:
+    switch (idx) {
+    case 0:
+      assert(mouse_loc[0] >= 0);
+      assert(mouse_loc[1] >= 0);
+      Engine::clear_game_data(ecs);
+      Engine::new_game(ecs, dim[0], dim[1] - HUD_HEIGHT - 2);
       make<MainGameInputHandler>(ecs);
+      return nullptr;
+    case 1:
+      if (Engine::load(ecs, data_dir / saveFilename, *this)) {
+        make<MainGameInputHandler>(ecs);
+        return nullptr;
+      }
+      break;
+    case 2:
+      return std::make_unique<ExitAction>();
+    default:
+      assert(false);
+      break;
     }
     break;
-  case SDL_SCANCODE_N: {
-    assert(mouse_loc[0] >= 0);
-    assert(mouse_loc[1] >= 0);
-    Engine::clear_game_data(ecs);
-    Engine::new_game(ecs, dim[0], dim[1] - HUD_HEIGHT - 2);
-    make<MainGameInputHandler>(ecs);
-    break;
-  }
 
   default:
     return nullptr;
@@ -191,13 +232,8 @@ void MainMenuInputHandler::on_render(flecs::world, Console &console) {
   console.print({printY, console.get_height() - 2}, "By degustaf",
                 color::menu_title, std::nullopt, Console::Alignment::CENTER);
 
-  static const auto choices =
-      std::array{"[%c] Play a new game     ", "[%c] Continue last game  ",
-                 "[%c] Quit                "};
-  static const auto keys =
-      std::array{key(SDL_SCANCODE_N), key(SDL_SCANCODE_C), key(SDL_SCANCODE_Q)};
   for (auto i = 0; i < (int)choices.size(); i++) {
-    auto str = tcod::stringf(choices[i], keys[i]);
+    auto str = i == idx ? stringf("\u25BA %s", choices[i]) : choices[i];
     console.print({printY, console.get_height() / 2 - 2 + i}, str,
                   color::menu_text, color::black, Console::Alignment::CENTER);
   }
@@ -388,86 +424,66 @@ void MainAnimation::animate(flecs::world ecs, uint64_t t) {
   MainHandler::animate(ecs, t);
 }
 
-std::unique_ptr<Action> MainGameInputHandler::keyDown(SDL_KeyboardEvent &key,
+std::unique_ptr<Action> MainGameInputHandler::keyDown(Command cmd,
                                                       flecs::world ecs) {
   auto speed = 1;
-  if (key.mod & SDL_KMOD_SHIFT)
-    speed *= 2;
-  if (key.mod & SDL_KMOD_CTRL)
-    speed *= 3;
-  switch (key.scancode) {
-  case SDL_SCANCODE_UP:
-  case SDL_SCANCODE_KP_8:
-  case SDL_SCANCODE_K:
+  // if (key.mod & SDL_KMOD_SHIFT)
+  //   speed *= 2;
+  // if (key.mod & SDL_KMOD_CTRL)
+  //   speed *= 3;
+  switch (cmd.type) {
+  case CommandType::UP:
     return std::make_unique<BumpAction>(0, -1, speed);
-  case SDL_SCANCODE_DOWN:
-  case SDL_SCANCODE_KP_2:
-  case SDL_SCANCODE_J:
+  case CommandType::DOWN:
     return std::make_unique<BumpAction>(0, 1, speed);
-  case SDL_SCANCODE_LEFT:
-  case SDL_SCANCODE_KP_4:
-  case SDL_SCANCODE_H:
+  case CommandType::LEFT:
     return std::make_unique<BumpAction>(-1, 0, speed);
-  case SDL_SCANCODE_RIGHT:
-  case SDL_SCANCODE_KP_6:
-  case SDL_SCANCODE_L:
+  case CommandType::RIGHT:
     return std::make_unique<BumpAction>(1, 0, speed);
-  case SDL_SCANCODE_HOME:
-  case SDL_SCANCODE_KP_7:
-  case SDL_SCANCODE_Y:
+  case CommandType::UL:
     return std::make_unique<BumpAction>(-1, -1, speed);
-  case SDL_SCANCODE_END:
-  case SDL_SCANCODE_KP_1:
-  case SDL_SCANCODE_B:
+  case CommandType::DL:
     return std::make_unique<BumpAction>(-1, 1, speed);
-  case SDL_SCANCODE_PAGEUP:
-  case SDL_SCANCODE_KP_9:
-  case SDL_SCANCODE_U:
+  case CommandType::UR:
     return std::make_unique<BumpAction>(1, -1, speed);
-  case SDL_SCANCODE_PAGEDOWN:
-  case SDL_SCANCODE_KP_3:
-  case SDL_SCANCODE_N:
+  case CommandType::DR:
     return std::make_unique<BumpAction>(1, 1, speed);
 
-  case SDL_SCANCODE_COMMA:
+  case CommandType::STAIRS:
     return std::make_unique<TakeStairsAction>();
 
-  case SDL_SCANCODE_PERIOD:
-  case SDL_SCANCODE_KP_5:
-  case SDL_SCANCODE_CLEAR:
+  case CommandType::WAIT:
     return std::make_unique<WaitAction>();
 
-  case SDL_SCANCODE_A:
+  case CommandType::AUTO:
     make<AutoExplore>(ecs, ecs.lookup("currentMap").target<CurrentMap>());
     return nullptr;
-  case SDL_SCANCODE_C:
+  case CommandType::COMMANDS:
     commandsMenu(ecs, *this);
     return nullptr;
-  case SDL_SCANCODE_D: {
+  case CommandType::DROP:
     make<DropItemInputHandler>(ecs, "┤Select an item to drop├", ecs);
     return nullptr;
-  }
-  case SDL_SCANCODE_F:
+  case CommandType::SHOOT:
     return std::make_unique<RangedTargetAction>();
-  case SDL_SCANCODE_G:
+  case CommandType::GRAB:
     return std::make_unique<PickupAction>();
-  case SDL_SCANCODE_I: {
+  case CommandType::INVENTORY:
     make<UseItemInputHandler>(ecs, "┤Select an item to use├", ecs);
     return nullptr;
-  }
-  case SDL_SCANCODE_O:
+  case CommandType::OPEN:
     return std::make_unique<DoorAction>();
-  case SDL_SCANCODE_V:
+  case CommandType::MESSAGES:
     make<HistoryInputHandler>(ecs, ecs);
     return nullptr;
-  case SDL_SCANCODE_X:
+  case CommandType::CHARACTER:
     make<CharacterScreenInputHandler>(ecs);
     return nullptr;
-  case SDL_SCANCODE_SLASH:
+  case CommandType::PEEK:
     make<LookHandler>(ecs);
     return nullptr;
 
-  case SDL_SCANCODE_ESCAPE:
+  case CommandType::ESCAPE:
     make<MainMenuInputHandler>(ecs);
     return nullptr;
 
@@ -502,15 +518,12 @@ MainGameInputHandler::click(SDL_MouseButtonEvent &button, flecs::world ecs) {
   return nullptr;
 }
 
-std::unique_ptr<Action> AskUserInputHandler::keyDown(SDL_KeyboardEvent &key,
+std::unique_ptr<Action> AskUserInputHandler::keyDown(Command cmd,
                                                      flecs::world ecs) {
-  switch (key.scancode) {
-  case SDL_SCANCODE_LSHIFT:
-  case SDL_SCANCODE_RSHIFT:
-  case SDL_SCANCODE_LCTRL:
-  case SDL_SCANCODE_RCTRL:
-  case SDL_SCANCODE_LALT:
-  case SDL_SCANCODE_RALT:
+  switch (cmd.type) {
+  case CommandType::SHIFT:
+  case CommandType::CTRL:
+  case CommandType::ALT:
     return nullptr;
   default:
     make<MainGameInputHandler>(ecs);
@@ -538,13 +551,13 @@ AskUserInputHandler::handle_action(flecs::world ecs,
   return ret;
 }
 
-std::unique_ptr<Action> InventoryInputHandler::keyDown(SDL_KeyboardEvent &key,
+std::unique_ptr<Action> InventoryInputHandler::keyDown(Command cmd,
                                                        flecs::world ecs) {
-  auto idx = key.key - SDLK_A;
+  auto idx = cmd.ch - SDLK_A;
   if (0 <= (int)idx && (int)idx < q.count()) {
     return item_selected(q.page(idx, 1).first());
   }
-  return AskUserInputHandler::keyDown(key, ecs);
+  return AskUserInputHandler::keyDown(cmd, ecs);
 }
 
 static int menuXLocation(flecs::entity player) {
@@ -588,30 +601,22 @@ std::unique_ptr<Action> UseItemInputHandler::item_selected(flecs::entity item) {
   return nullptr;
 }
 
-std::unique_ptr<Action> LevelupHandler::keyDown(SDL_KeyboardEvent &key,
-                                                flecs::world ecs) {
+std::unique_ptr<Action> LevelupHandler::keyDown(Command cmd, flecs::world ecs) {
   auto player = ecs.lookup("player");
   auto &level = player.get_mut<Level>();
   auto msg = "";
-  switch (key.scancode) {
-  case SDL_SCANCODE_LSHIFT:
-  case SDL_SCANCODE_RSHIFT:
-  case SDL_SCANCODE_LCTRL:
-  case SDL_SCANCODE_RCTRL:
-  case SDL_SCANCODE_LALT:
-  case SDL_SCANCODE_RALT:
-    return nullptr;
-  case SDL_SCANCODE_A:
+  switch (cmd.ch) {
+  case 'A':
     msg = level.increase_max_hp(player);
     break;
-  case SDL_SCANCODE_B:
+  case 'B':
     msg = level.increase_power(player);
     break;
-  case SDL_SCANCODE_C:
+  case 'C':
     msg = level.increase_defense(player);
     break;
   default:
-    return std::make_unique<MessageAction>("Invalid entry.", color::invalid);
+    return nullptr;
   }
   make<MainGameInputHandler>(ecs);
   return std::make_unique<MessageAction>(msg);
@@ -634,44 +639,44 @@ void LevelupHandler::on_render(flecs::world ecs, Console &console) {
                 std::nullopt);
 
   auto fighter = player.get<Fighter>();
-  auto msg = stringf("%c) Constitution (+20 HP, from %d)", key(SDL_SCANCODE_A),
-                     fighter.max_hp);
+  auto msg = stringf("%c) Constitution (+20 HP, from %d)",
+                     SDL_GetKeyName(SDLK_A), fighter.max_hp);
   console.print({x + 1, 4}, msg, std::nullopt, std::nullopt);
-  msg = stringf("%c) Strength (+1 attack, from %d)", key(SDL_SCANCODE_B),
+  msg = stringf("%c) Strength (+1 attack, from %d)", SDL_GetKeyName(SDLK_B),
                 fighter.power(player, false));
   console.print({x + 1, 5}, msg, std::nullopt, std::nullopt);
-  msg = stringf("%c) Agility (+1 defense, from %d)", key(SDL_SCANCODE_C),
+  msg = stringf("%c) Agility (+1 defense, from %d)", SDL_GetKeyName(SDLK_C),
                 fighter.defense(player));
   console.print({x + 1, 6}, msg, std::nullopt, std::nullopt);
 }
 
-std::unique_ptr<Action> HistoryInputHandler::keyDown(SDL_KeyboardEvent &key,
+std::unique_ptr<Action> HistoryInputHandler::keyDown(Command cmd,
                                                      flecs::world ecs) {
-  switch (key.scancode) {
-  case SDL_SCANCODE_UP:
+  switch (cmd.type) {
+  case CommandType::UP:
     if (cursor == 0) {
       cursor = log_length - 1;
     } else {
       cursor--;
     }
     return nullptr;
-  case SDL_SCANCODE_DOWN:
+  case CommandType::DOWN:
     if (cursor == log_length - 1) {
       cursor = 0;
     } else {
       cursor++;
     }
     return nullptr;
-  case SDL_SCANCODE_PAGEUP:
+  case CommandType::PAGEUP:
     cursor = cursor < 10 ? 0 : cursor - 10;
     return nullptr;
-  case SDL_SCANCODE_PAGEDOWN:
+  case CommandType::PAGEDOWN:
     cursor = std::min(cursor + 10, log_length - 1);
     return nullptr;
-  case SDL_SCANCODE_HOME:
+  case CommandType::HOME:
     cursor = 0;
     return nullptr;
-  case SDL_SCANCODE_END:
+  case CommandType::END:
     cursor = log_length - 1;
     return nullptr;
 
@@ -816,10 +821,9 @@ void PathFinder::on_render(flecs::world ecs, Console &console) {
   }
 }
 
-std::unique_ptr<Action> GameOver::keyDown(SDL_KeyboardEvent &key,
-                                          flecs::world ecs) {
-  switch (key.scancode) {
-  case SDL_SCANCODE_ESCAPE: {
+std::unique_ptr<Action> GameOver::keyDown(Command cmd, flecs::world ecs) {
+  switch (cmd.type) {
+  case CommandType::ESCAPE: {
     make<MainMenuInputHandler>(ecs);
     return nullptr;
   }

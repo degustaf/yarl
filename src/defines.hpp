@@ -35,6 +35,7 @@ inline std::string directionName(const std::array<int, 2> &dir) {
 
 const std::filesystem::path data_dir = "save";
 constexpr auto saveFilename = "savegame.sav";
+constexpr auto configName = "config.dat";
 
 constexpr auto DECORATION = std::array<int, 9>{
     0x250c, 0x2500, 0x2510, 0x2502, ' ', 0x2502, 0x2514, 0x2500, 0x2518};
