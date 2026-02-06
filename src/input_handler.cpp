@@ -200,6 +200,9 @@ std::unique_ptr<Action> MainMenuInputHandler::keyDown(Command cmd,
       }
       break;
     case 2:
+      make<KeybindMenu>(ecs);
+      return nullptr;
+    case 3:
       return std::make_unique<ExitAction>();
     default:
       assert(false);
@@ -232,6 +235,97 @@ void MainMenuInputHandler::on_render(flecs::world, tcod::Console &console) {
     tcod::print(console, {printY, console.get_height() / 2 - 2 + i}, str,
                 color::menu_text, color::black, TCOD_CENTER);
   }
+}
+
+std::unique_ptr<Action> KeybindMenu::keyDown(Command cmd, flecs::world ecs) {
+  switch (cmd.type) {
+  case CommandType::ESCAPE:
+    make<MainMenuInputHandler>(ecs);
+    return nullptr;
+  case CommandType::UP:
+    idx--;
+    if (idx == -1)
+      idx = (int)keys.size() - 1;
+    break;
+  case CommandType::DOWN:
+    idx++;
+    if (idx == (int)keys.size())
+      idx = 0;
+    break;
+  case CommandType::ENTER:
+    ecs.set<std::unique_ptr<InputHandler>>(
+        std::make_unique<KeyBinding>(*this, Command::mapping[keys[idx]]));
+    break;
+
+  default:
+    break;
+  }
+
+  return nullptr;
+}
+
+void KeybindMenu::on_render(flecs::world ecs, tcod::Console &console) {
+  MainMenuInputHandler::on_render(ecs, console);
+  for (auto &tile : console) {
+    tile.fg /= 8;
+    tile.bg /= 8;
+  }
+
+  auto frameX = (console.get_width() - COMMAND_MENU_WIDTH) / 2;
+  auto frameY = (console.get_height() - COMMAND_MENU_HEIGHT) / 2;
+
+  tcod::draw_frame(console,
+                   {frameX, frameY, COMMAND_MENU_WIDTH, COMMAND_MENU_HEIGHT},
+                   DECORATION, color::menu_border, std::nullopt);
+
+  auto y = 0;
+  for (auto &key : keys) {
+    auto buffer = tcod::stringf(
+        "%-25s: %s", CommandTypeDescription(Command::mapping[key]),
+        SDL_GetKeyName(SDL_GetKeyFromScancode(key, SDL_KMOD_NONE, true)));
+    tcod::print(console, {frameX + 2, frameY + y + 2}, buffer,
+                y == idx ? color::black : color::white,
+                y == idx ? std::optional(color::menu_border) : std::nullopt);
+    y++;
+  }
+}
+
+std::unique_ptr<Action> KeyBinding::keyDown(Command cmd, flecs::world ecs) {
+  switch (cmd.type) {
+  case CommandType::ESCAPE:
+    ecs.set<std::unique_ptr<InputHandler>>(
+        std::make_unique<KeybindMenu>(*this));
+    return nullptr;
+  case CommandType::NONE: {
+    SDL_Keymod mod = SDL_KMOD_NONE;
+    auto scan = SDL_GetScancodeFromKey(cmd.ch, &mod);
+    Command::set(scan, c);
+    keys[idx] = scan;
+    ecs.set<std::unique_ptr<InputHandler>>(
+        std::make_unique<KeybindMenu>(*this));
+    return nullptr;
+  }
+  default:
+    return nullptr;
+  }
+}
+
+void KeyBinding::on_render(flecs::world ecs, tcod::Console &console) {
+  KeybindMenu::on_render(ecs, console);
+  for (auto &tile : console) {
+    tile.fg /= 8;
+    tile.bg /= 8;
+  }
+
+  auto str = tcod::stringf("Press a key for %s", CommandTypeDescription(c));
+
+  auto frameX = (int)(console.get_width() - str.length() - 2) / 2;
+  auto frameY = (int)(console.get_height() - 3) / 2;
+
+  tcod::draw_frame(console, {frameX, frameY, (int)str.length() + 2, 3},
+                   DECORATION, color::menu_border, std::nullopt);
+  tcod::print(console, {frameX + 1, frameY + 1}, str, color::menu_text,
+              std::nullopt);
 }
 
 static auto constexpr commandBox = std::array{62, 45, 13, 3};

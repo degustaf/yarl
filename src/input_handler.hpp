@@ -64,8 +64,35 @@ struct MainMenuInputHandler : InputHandler {
   virtual void on_render(flecs::world, tcod::Console &) override;
 
   int idx;
-  static constexpr auto choices = std::array{
-      "Play a new game   ", "Continue last game", "Quit              "};
+  static constexpr auto choices =
+      std::array{"Play a new game   ", "Continue last game",
+                 "Options           ", "Quit              "};
+};
+
+struct KeybindMenu : MainMenuInputHandler {
+  KeybindMenu(const InputHandler &h) : MainMenuInputHandler(h), idx(0) {
+    for (auto &c : Command::mapping) {
+      keys.push_back(c.first);
+    }
+  };
+  KeybindMenu(const KeybindMenu &) = default;
+  virtual ~KeybindMenu() = default;
+
+  virtual std::unique_ptr<Action> keyDown(Command, flecs::world) override;
+  virtual void on_render(flecs::world, tcod::Console &) override;
+
+  int idx;
+  std::vector<SDL_Scancode> keys;
+};
+
+struct KeyBinding : KeybindMenu {
+  KeyBinding(const KeybindMenu &m, CommandType c) : KeybindMenu(m), c(c) {};
+  ~KeyBinding() = default;
+
+  virtual std::unique_ptr<Action> keyDown(Command, flecs::world) override;
+  virtual void on_render(flecs::world, tcod::Console &) override;
+
+  CommandType c;
 };
 
 struct MainHandler : InputHandler {
