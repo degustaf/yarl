@@ -35,11 +35,11 @@
   X(CHARACTER, SDL_SCANCODE_X, "character screen") SEP \
   X(UL, SDL_SCANCODE_Y, "up-left") SEP \
   X(WAIT, SDL_SCANCODE_SPACE, "wait a turn") SEP \
+  X(TURN, SDL_SCANCODE_T, "display turn and seed") SEP \
   X(STAIRS, SDL_SCANCODE_PERIOD, "use the stairs")
 
   // X(EQUIP, SDL_SCANCODE_E, "equip item") SEP
   // X(REMOVE, SDL_SCANCODE_R, "remove an item") SEP
-  // X(TURN, SDL_SCANCODE_T, "display turn and seed") SEP
   // X(TEXT, SDL_SCANCODE_TAB, "enter a command")
 
 #define COMMA ,

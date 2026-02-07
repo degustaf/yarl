@@ -1,6 +1,7 @@
 #include "action.hpp"
 
 #include <cassert>
+#include <cinttypes>
 #include <memory>
 
 #include <libtcod.hpp>
@@ -8,6 +9,7 @@
 #include "actor.hpp"
 #include "color.hpp"
 #include "consumable.hpp"
+#include "engine.hpp"
 #include "game_map.hpp"
 #include "input_handler.hpp"
 #include "inventory.hpp"
@@ -296,4 +298,13 @@ ActionResult RangedTargetAction::perform(flecs::entity e) const {
     return {ActionResultType::Failure, msg, 0.0f};
   }
   return {ActionResultType::Failure, "You do not have a weapon to fire.", 0.0f};
+}
+
+ActionResult SeedAction::perform(flecs::entity e) const {
+  auto seed = e.world().lookup("seed");
+  auto turn = e.world().lookup("turn");
+
+  auto str = tcod::stringf("Seed: %" PRIu32 ", Turn: %" PRId64,
+                           seed.get<Seed>().seed, turn.get<Turn>().turn);
+  return {ActionResultType::Failure, str, 0.0f};
 }

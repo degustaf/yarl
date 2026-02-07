@@ -388,6 +388,7 @@ ActionResult MainHandler::handle_action(flecs::world ecs,
       if (scentMessage.size() > 0) {
         log.addMessage(scentMessage);
       }
+      ecs.lookup("turn").get_mut<Turn>().turn++;
     }
     // if (player.has<TrackerConsumable>()) {
     //   auto &t = player.get_mut<TrackerConsumable>();
@@ -478,6 +479,8 @@ std::unique_ptr<Action> MainGameInputHandler::keyDown(Command cmd,
   case CommandType::PEEK:
     make<LookHandler>(ecs);
     return nullptr;
+  case CommandType::TURN:
+    return std::make_unique<SeedAction>();
 
   case CommandType::ESCAPE:
     make<MainMenuInputHandler>(ecs);

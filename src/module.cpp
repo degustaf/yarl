@@ -191,6 +191,7 @@ module::module(flecs::world ecs) {
 
   // engine.hpp
   ecs.component<Seed>().member<uint32_t>("seed");
+  ecs.component<Turn>().member<int64_t>("turn");
 
   // scent.hpp
   ecs.component<ScentType>();
