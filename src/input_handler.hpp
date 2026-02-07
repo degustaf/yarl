@@ -47,7 +47,7 @@ struct InputHandler {
   std::array<int, 2> mouse_loc = {0, 0};
   std::array<int, 2> dim;
   std::array<int, 4> commandBox;
-  uint64_t time;
+  uint64_t time = 0;
 
 protected:
   template <typename T> inline void make(flecs::world ecs) {
@@ -378,6 +378,7 @@ struct AutoMove : MainAnimation {
 
   virtual ~AutoMove() = default;
 
+  virtual std::unique_ptr<Action> keyDown(Command, flecs::world) override;
   virtual void on_render(flecs::world, Console &) override;
 };
 

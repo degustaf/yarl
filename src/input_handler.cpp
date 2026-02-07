@@ -846,6 +846,17 @@ void AreaTargetSelector::on_render(flecs::world ecs, Console &console) {
   }
 }
 
+std::unique_ptr<Action> AutoMove::keyDown(Command cmd, flecs::world ecs) {
+  switch (cmd.type) {
+  case CommandType::ESCAPE:
+  case CommandType::ENTER:
+    make<MainGameInputHandler>(ecs);
+    return nullptr;
+  default:
+    return nullptr;
+  }
+}
+
 void AutoMove::on_render(flecs::world ecs, Console &console) {
   auto map = ecs.lookup("currentMap").target<CurrentMap>();
   auto &gm = map.get<GameMap>();
@@ -855,11 +866,10 @@ void AutoMove::on_render(flecs::world ecs, Console &console) {
                .build();
   auto seen = false;
   q.each([&](auto &p) { seen |= gm.isInFov(p); });
+  MainHandler::on_render(ecs, console);
   if (seen) {
     make<MainGameInputHandler>(ecs);
   }
-
-  MainHandler::on_render(ecs, console);
 }
 
 void AutoExplore::on_render(flecs::world ecs, Console &console) {
