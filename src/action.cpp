@@ -59,6 +59,21 @@ static ActionResult attack(flecs::entity e, std::array<int, 2> pos,
   }
 }
 
+static flecs::entity itemAtLocation(flecs::entity e) {
+
+  auto &pos = e.get<Position>();
+  auto currentMap = e.world().lookup("currentMap");
+  assert(currentMap);
+  auto map = currentMap.target<CurrentMap>();
+  auto q = e.world()
+               .query_builder<const Position>("module::pickup")
+               .with<Item>()
+               .with(flecs::ChildOf, map)
+               .build();
+  return q.find(
+      [&](flecs::entity item, auto &p) { return e != item && p == pos; });
+}
+
 ActionResult MoveAction::perform(flecs::entity e) const {
   auto &pos = e.get_mut<Position>();
   auto mapEntity = e.world().lookup("currentMap").target<CurrentMap>();
@@ -72,6 +87,23 @@ ActionResult MoveAction::perform(flecs::entity e) const {
         }
         pos.move(dxy);
         e.world().defer_end();
+        auto inventory = e.try_get<Inventory>();
+        if (!inventory) {
+          return {ActionResultType::Success, "", 1.0f};
+        }
+        if (!inventory->hasRoom(e)) {
+          return {ActionResultType::Failure, "Your inventory is full.", 1.0f,
+                  color::impossible};
+        }
+
+        auto item = itemAtLocation(e);
+        if (item) {
+          item.add<ContainedBy>(e).remove<Position>().remove(flecs::ChildOf,
+                                                             mapEntity);
+          auto msg = tcod::stringf("You picked up the %s!",
+                                   item.get<Named>().name.c_str());
+          return {ActionResultType::Success, msg, 1.0f};
+        }
         return {ActionResultType::Success, "", 1.0f};
       }
     } else if (map.isTransparent(pos + dxy)) {
@@ -211,18 +243,9 @@ ActionResult PickupAction::perform(flecs::entity e) const {
             color::impossible};
   }
 
-  auto &pos = e.get<Position>();
-  auto currentMap = e.world().lookup("currentMap");
-  assert(currentMap);
-  auto map = currentMap.target<CurrentMap>();
-  auto q = e.world()
-               .query_builder<const Position>("module::pickup")
-               .with<Item>()
-               .with(flecs::ChildOf, map)
-               .build();
-  auto item = q.find(
-      [&](flecs::entity item, auto &p) { return e != item && p == pos; });
+  auto item = itemAtLocation(e);
   if (item) {
+    auto map = e.world().lookup("currentMap").target<CurrentMap>();
     item.add<ContainedBy>(e).remove<Position>().remove(flecs::ChildOf, map);
     auto msg = stringf("You picked up the %s!", item.get<Named>().name.c_str());
     return {ActionResultType::Success, msg, 0.0f};
