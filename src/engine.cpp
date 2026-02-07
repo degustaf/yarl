@@ -100,6 +100,7 @@ void Engine::new_game(flecs::world ecs, int map_width, int map_height) {
   auto seed = (uint32_t)TCODRandom::getInstance()->getInt(
       0, (int)std::numeric_limits<int32_t>::max());
   ecs.entity("seed").set<Seed>({seed});
+  ecs.entity("turn").set<Turn>({0});
   auto player = ecs.entity("player")
                     .set<Position>({0, 0})
                     .set<Renderable>({'@', color::RGB{0, 0, 100}, std::nullopt,
@@ -135,6 +136,9 @@ void Engine::clear_game_data(flecs::world ecs) {
   auto seed = ecs.lookup("seed");
   if (seed)
     seed.destruct();
+  auto turn = ecs.lookup("turn");
+  if (turn)
+    turn.destruct();
   auto player = ecs.lookup("player");
   if (player)
     player.destruct();

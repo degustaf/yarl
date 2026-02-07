@@ -195,6 +195,7 @@ module::module(flecs::world ecs) {
 
   // engine.hpp
   ecs.component<Seed>().member<uint32_t>("seed");
+  ecs.component<Turn>().member<int64_t>("turn");
 
   // position.hpp
   ecs.component<Position>().member<int>("x").member<int>("y");

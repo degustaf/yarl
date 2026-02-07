@@ -10,6 +10,10 @@ struct Seed {
   uint32_t seed;
 };
 
+struct Turn {
+  int64_t turn;
+};
+
 namespace Engine {
 
 void handle_enemy_turns(flecs::world ecs);

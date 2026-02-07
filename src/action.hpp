@@ -186,6 +186,11 @@ struct EquipAction : Action {
 };
 
 struct RangedTargetAction : Action {
-  virtual ActionResult perform(flecs::entity e) const;
-  virtual ~RangedTargetAction() = default;
+  virtual ActionResult perform(flecs::entity e) const override;
+  virtual ~RangedTargetAction() override = default;
+};
+
+struct SeedAction : Action {
+  virtual ActionResult perform(flecs::entity e) const override;
+  virtual ~SeedAction() override = default;
 };
