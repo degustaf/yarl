@@ -860,12 +860,11 @@ std::unique_ptr<Action> AutoMove::keyDown(Command cmd, flecs::world ecs) {
 void AutoMove::on_render(flecs::world ecs, Console &console) {
   auto map = ecs.lookup("currentMap").target<CurrentMap>();
   auto &gm = map.get<GameMap>();
-  auto q = ecs.query_builder<const Position>()
-               .with<Fighter>()
+  auto q = ecs.query_builder<const Position, const Fighter>()
                .with(flecs::ChildOf, map)
                .build();
   auto seen = false;
-  q.each([&](auto &p) { seen |= gm.isInFov(p); });
+  q.each([&](auto &p, auto &f) { seen |= gm.isInFov(p) && f.isAlive(); });
   MainHandler::on_render(ecs, console);
   if (seen) {
     make<MainGameInputHandler>(ecs);
