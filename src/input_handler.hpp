@@ -356,6 +356,7 @@ struct AutoMove : MainHandler {
 
   virtual ~AutoMove() = default;
 
+  virtual std::unique_ptr<Action> keyDown(Command, flecs::world) override;
   virtual void on_render(flecs::world, tcod::Console &) override;
 };
 

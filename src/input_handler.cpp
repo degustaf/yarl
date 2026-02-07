@@ -752,6 +752,17 @@ void AreaTargetSelector::on_render(flecs::world ecs, tcod::Console &console) {
   }
 }
 
+std::unique_ptr<Action> AutoMove::keyDown(Command cmd, flecs::world ecs) {
+  switch (cmd.type) {
+  case CommandType::ESCAPE:
+  case CommandType::ENTER:
+    make<MainGameInputHandler>(ecs);
+    return nullptr;
+  default:
+    return nullptr;
+  }
+}
+
 void AutoMove::on_render(flecs::world ecs, tcod::Console &console) {
   auto map = ecs.lookup("currentMap").target<CurrentMap>();
   auto &gm = map.get<GameMap>();
