@@ -84,6 +84,7 @@ struct Fighter {
   void die(flecs::entity self);
   int defense(flecs::entity self) const;
   int power(flecs::entity self, bool ranged) const;
+  bool isAlive() const { return _hp > 0; }
 
   int max_hp;
   int _hp;
