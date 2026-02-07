@@ -45,7 +45,7 @@ Index AutoExplore::run(Index start) {
         continue;
       }
       auto e = gamemap.get_blocking_entity(mapEntity, {x, y});
-      if (e and e.has<Openable>()) {
+      if (e && e.has<Openable>()) {
         if (value + 2 < cost[{x, y}]) {
           cost[{x, y}] = value + 2;
           queue.push({x, y});
