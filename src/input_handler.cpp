@@ -788,14 +788,16 @@ void AutoExplore::on_render(flecs::world ecs, tcod::Console &console) {
   }
   std::unique_ptr<Action> act =
       std::make_unique<BumpAction>(xy[0] - pos.x, xy[1] - pos.y, 1);
-  MainHandler::on_render(ecs, console);
   auto ret = handle_action(ecs, std::move(act));
-  if (!ret) {
-    assert(ret.type == ActionResultType::Failure);
-    // Verify that we haven't already replaced the current inputHanf=dler and
-    // freed this.
-    if (this == ecs.get<std::unique_ptr<InputHandler>>().get()) {
-      make<MainGameInputHandler>(ecs);
+  if (this == ecs.get<std::unique_ptr<InputHandler>>().get()) {
+    AutoMove::on_render(ecs, console);
+    if (!ret) {
+      assert(ret.type == ActionResultType::Failure);
+      // Verify that we haven't already replaced the current inputHandler and
+      // freed this.
+      if (this == ecs.get<std::unique_ptr<InputHandler>>().get()) {
+        make<MainGameInputHandler>(ecs);
+      }
     }
   }
 }
@@ -816,14 +818,16 @@ void PathFinder::on_render(flecs::world ecs, tcod::Console &console) {
   auto pos = player.get<Position>();
   std::unique_ptr<Action> act =
       std::make_unique<BumpAction>(x - pos.x, y - pos.y, 1);
-  AutoMove::on_render(ecs, console);
   auto ret = handle_action(ecs, std::move(act));
-  if (!ret) {
-    assert(ret.type == ActionResultType::Failure);
-    // Verify that we haven't already replaced the current inputHanf=dler and
-    // freed this.
-    if (this == ecs.get<std::unique_ptr<InputHandler>>().get()) {
-      make<MainGameInputHandler>(ecs);
+  if (this == ecs.get<std::unique_ptr<InputHandler>>().get()) {
+    AutoMove::on_render(ecs, console);
+    if (!ret) {
+      assert(ret.type == ActionResultType::Failure);
+      // Verify that we haven't already replaced the current inputHanf=dler and
+      // freed this.
+      if (this == ecs.get<std::unique_ptr<InputHandler>>().get()) {
+        make<MainGameInputHandler>(ecs);
+      }
     }
   }
 }

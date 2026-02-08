@@ -9,8 +9,8 @@ static constexpr auto MAX_ROOMS = 30;
 
 struct RectangularRoom {
   RectangularRoom(int x, int y, int width, int height)
-      : x1(x), y1(y), x2(x + width), y2(y + height){};
-  RectangularRoom() : x1(0), y1(0), x2(0), y2(0){};
+      : x1(x), y1(y), x2(x + width), y2(y + height) {};
+  RectangularRoom() : x1(0), y1(0), x2(0), y2(0) {};
 
   std::array<int, 2> center(void) const {
     return {(x1 + x2) / 2, (y1 + y2) / 2};
@@ -43,7 +43,7 @@ static constexpr auto max_items_by_floor =
     std::array<MaxByFloor, 2>{MaxByFloor{1, 1}, {4, 2}};
 
 static constexpr auto max_monsters_by_floor =
-    std::array<MaxByFloor, 1>{MaxByFloor{4, 1}};
+    std::array<MaxByFloor, 1>{MaxByFloor{1, 2}};
 
 template <size_t N>
 static int getMaxValueForFloor(const std::array<MaxByFloor, N> &maxByFloor,

@@ -410,7 +410,8 @@ static constexpr auto item_weights = std::array<WeightsByFloor, 11>{
     WeightsByFloor{4, 30, "module::45"}};
 
 static constexpr auto monster_weights =
-    std::array<WeightsByFloor, 2>{WeightsByFloor{4, 20, "module::cysts"}};
+    std::array<WeightsByFloor, 2>{WeightsByFloor{1, 20, "module::orc"},
+                                  WeightsByFloor{4, 20, "module::cysts"}};
 
 static void populateRoom(flecs::entity map, flecs::entity player,
                          TCODRandom &rng, bool &first, const GameMap &dungeon,
