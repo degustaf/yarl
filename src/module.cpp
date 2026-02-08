@@ -291,24 +291,28 @@ module::module(flecs::world ecs) {
       .set<Renderable>({'~', {255, 255, 0}, std::nullopt, RenderOrder::Item})
       .set<Named>({"Lightning Scroll"})
       .add<Item>()
+      .add<Flammable>()
       .set<LightningDamageConsumable>({20, 5});
 
   ecs.prefab("confusionScroll")
       .set<Renderable>({'~', {207, 63, 255}, std::nullopt, RenderOrder::Item})
       .set<Named>({"Confusion Scroll"})
       .add<Item>()
+      .add<Flammable>()
       .set<ConfusionConsumable>({10});
 
   ecs.prefab("fireballScroll")
       .set<Renderable>({'~', {255, 0, 0}, std::nullopt, RenderOrder::Item})
       .set<Named>({"Fireball Scroll"})
       .add<Item>()
+      .add<Flammable>()
       .set<FireballDamageConsumable>({12, 3});
 
   ecs.prefab("dung")
       .set<Renderable>({'~', color::brown, std::nullopt, RenderOrder::Item})
       .set<Named>({"Fiend dung"})
       .add<Item>()
+      .add<Flammable>()
       .set<ScentConsumable>({{ScentType::fiend, 100}});
 
   ecs.prefab("mapper")
@@ -330,6 +334,7 @@ module::module(flecs::world ecs) {
           {0x2320, color::lightGrey, std::nullopt, RenderOrder::Item})
       .set<Named>({"Rope"})
       .add<Item>()
+      .add<Flammable>()
       .add<RopeConsumable>();
 
   ecs.prefab("dagger")

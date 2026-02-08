@@ -12,6 +12,7 @@
 #include "defines.hpp"
 #include "game_map.hpp"
 #include "input_handler.hpp"
+#include "inventory.hpp"
 #include "message_log.hpp"
 #include "scent.hpp"
 
@@ -163,6 +164,11 @@ FireballDamageConsumable::selected(flecs::entity item,
                   "module::fighterPosition")
                .with(flecs::ChildOf, map)
                .build();
+  auto flammableQ = ecs.query_builder<const Position, const Named>(
+                           "module::flammablePosition")
+                        .with<Flammable>()
+                        .with(flecs::ChildOf, map)
+                        .build();
   auto targets_hit = false;
   auto &messageLog = ecs.lookup("messageLog").get_mut<MessageLog>();
   ecs.defer_begin();
@@ -176,10 +182,18 @@ FireballDamageConsumable::selected(flecs::entity item,
       f.take_damage(damage, e);
     }
   });
+  flammableQ.each([&](auto e, const Position &p, const Named &n) {
+    if (p.distanceSquared(target) <= radius * radius) {
+      targets_hit = true;
+      auto msg = tcod::stringf("The %s burns up.", n.name.c_str());
+      e.destruct();
+    }
+  });
+  // TODO destroy flammable items in inventories.
   ecs.defer_end();
 
+  item.destruct();
   if (targets_hit) {
-    item.destruct();
     return {ActionResultType::Success, "", 0.0f};
   } else {
     return {ActionResultType::Failure, "There are no targets in the radius.",
