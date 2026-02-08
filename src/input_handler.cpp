@@ -885,13 +885,13 @@ void AutoExplore::on_render(flecs::world ecs, Console &console) {
   auto ret = handle_action(ecs, std::move(act));
   if (this == ecs.get<std::unique_ptr<InputHandler>>().get()) {
     AutoMove::on_render(ecs, console);
-  }
-  if (!ret) {
-    assert(ret.type == ActionResultType::Failure);
-    // Verify that we haven't already replaced the current inputHanf=dler and
-    // freed this.
-    if (this == ecs.get<std::unique_ptr<InputHandler>>().get()) {
-      make<MainGameInputHandler>(ecs);
+    if (!ret) {
+      assert(ret.type == ActionResultType::Failure);
+      // Verify that we haven't already replaced the current inputHandler and
+      // freed this.
+      if (this == ecs.get<std::unique_ptr<InputHandler>>().get()) {
+        make<MainGameInputHandler>(ecs);
+      }
     }
   }
 }
@@ -917,13 +917,13 @@ void PathFinder::on_render(flecs::world ecs, Console &console) {
   auto ret = handle_action(ecs, std::move(act));
   if (this == ecs.get<std::unique_ptr<InputHandler>>().get()) {
     AutoMove::on_render(ecs, console);
-  }
-  if (!ret) {
-    assert(ret.type == ActionResultType::Failure);
-    // Verify that we haven't already replaced the current inputHanf=dler and
-    // freed this.
-    if (this == ecs.get<std::unique_ptr<InputHandler>>().get()) {
-      make<MainGameInputHandler>(ecs);
+    if (!ret) {
+      assert(ret.type == ActionResultType::Failure);
+      // Verify that we haven't already replaced the current inputHanf=dler and
+      // freed this.
+      if (this == ecs.get<std::unique_ptr<InputHandler>>().get()) {
+        make<MainGameInputHandler>(ecs);
+      }
     }
   }
 }
