@@ -18,6 +18,7 @@ struct Tile {
   static constexpr auto Bloody = uint8_t(0x4);
   static constexpr auto KnownBloody = uint8_t(0x8);
   static constexpr auto Sensed = uint8_t(0x10);
+  static constexpr auto Water = uint8_t(0x20);
 };
 
 void deleteMapEntity(flecs::entity map);
@@ -47,7 +48,7 @@ struct GameMap {
     return isTransparent(xy[0], xy[1]);
   }
   inline bool isTransparent(int x, int y) const {
-    return map.isTransparent(x, y);
+    return inBounds(x, y) && map.isTransparent(x, y);
   }
   inline bool isWalkable(std::array<int, 2> xy) const {
     return isWalkable(xy[0], xy[1]);
@@ -83,8 +84,14 @@ struct GameMap {
   inline bool isSensed(std::array<int, 2> xy) const {
     return isSensed(xy[0], xy[1]);
   }
+  inline bool isWater(int x, int y) const {
+    return inBounds(x, y) && (tiles[y * width + x].flags & Tile::Water);
+  }
+  inline bool isWater(std::array<int, 2> xy) const {
+    return isWater(xy[0], xy[1]);
+  }
   inline bool isChasm(std::array<int, 2> xy) const {
-    return isTransparent(xy) && !isWalkable(xy);
+    return isTransparent(xy) && !isWalkable(xy) && !isWater(xy);
   };
   inline Scent &getScent(std::array<int, 2> xy) {
     return scent[xy[1] * width + xy[0]];

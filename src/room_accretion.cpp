@@ -302,7 +302,8 @@ static void floodFill(TCODMap &m, int x, int y) {
   }
 }
 
-static void addLake(int width, int height, TCODRandom &rng, GameMap &map) {
+static void addLake(int width, int height, TCODRandom &rng, GameMap &map,
+                    bool water) {
   auto area = std::vector<bool>(width * height, false);
   for (auto i = 0; i < width * height; i++) {
     area[i] = rng.getDouble(0.0, 1.0) < CELLULAR_AUTOMATA_PERCENT;
@@ -373,6 +374,12 @@ static void addLake(int width, int height, TCODRandom &rng, GameMap &map) {
 
   for (auto &xy : best.tiles) {
     map.setProperties(xy[0], xy[1], true, false);
+  }
+
+  if (water) {
+    for (auto &xy : best.tiles) {
+      map.tiles[xy[1] * width + xy[0]].flags = Tile::Water;
+    }
   }
 }
 
@@ -501,7 +508,7 @@ void roomAccretion::generateDungeon(flecs::entity map, GameMap &dungeon,
   }
   if (dungeon.level < MAX_DUNGEON_LEVEL) {
     for (auto i = 0; i < LAKE_ITER; i++) {
-      addLake(width, height, rng, dungeon);
+      addLake(width, height, rng, dungeon, rng.get(0, 1) == 0);
     }
   }
   auto stairs = generateStairs(rooms, dungeon, roomCount);

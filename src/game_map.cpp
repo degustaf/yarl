@@ -80,6 +80,11 @@ static constexpr auto stairs_sensed =
 static constexpr auto shroud =
     TCOD_ConsoleTile{' ', {255, 255, 255, 255}, {0, 0, 0, 255}};
 
+static constexpr auto water_light =
+    TCOD_ConsoleTile{'~', {0, 0, 255, 255}, {63, 63, 255, 255}};
+static constexpr auto water_dark =
+    TCOD_ConsoleTile{'~', {0, 0, 127, 255}, {0, 0, 63, 255}};
+
 static constexpr auto chasm_light =
     TCOD_ConsoleTile{0x2591, {100, 100, 100, 255}, {50, 50, 50, 255}};
 static constexpr auto chasm_dark =
@@ -92,12 +97,14 @@ void GameMap::render(tcod::Console &console) const {
         console.at(x, y) = isStairs({x, y})          ? stairs_light
                            : isKnownBloody({x, y})   ? bloody_floor_light
                            : map.isWalkable(x, y)    ? floor_light
+                           : isWater(x, y)           ? water_light
                            : map.isTransparent(x, y) ? chasm_light
                                                      : wall_light;
       } else if (isExplored(x, y)) {
         console.at(x, y) = isStairs({x, y})          ? stairs_dark
                            : isKnownBloody({x, y})   ? bloody_floor_dark
                            : map.isWalkable(x, y)    ? floor_dark
+                           : isWater(x, y)           ? water_dark
                            : map.isTransparent(x, y) ? chasm_dark
                                                      : wall_dark;
       } else if (isSensed(x, y)) {
