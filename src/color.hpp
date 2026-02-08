@@ -56,3 +56,11 @@ static inline TCOD_ColorRGBA &operator/=(TCOD_ColorRGBA &lhs,
   lhs.b /= rhs;
   return lhs;
 }
+
+static inline TCOD_ColorRGBA &operator+=(TCOD_ColorRGBA &lhs,
+                                         const int8_t rhs) {
+  lhs.r = (uint8_t)std::clamp(lhs.r + rhs, 0, 255);
+  lhs.g = (uint8_t)std::clamp(lhs.g + rhs, 0, 255);
+  lhs.b = (uint8_t)std::clamp(lhs.b + rhs, 0, 255);
+  return lhs;
+}

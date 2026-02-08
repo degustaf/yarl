@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <vector>
 
 #include <flecs.h>
@@ -27,7 +28,7 @@ void deleteMapEntity(flecs::world ecs);
 struct GameMap {
   GameMap(int width = 0, int height = 0, int level = 1)
       : width(width), height(height), level(level), tiles(width * height),
-        scent(width * height), map(width, height) {
+        scent(width * height), map(width, height), noise(3) {
     map.clear();
   };
 
@@ -102,7 +103,7 @@ struct GameMap {
 
   void carveOut(int x, int y);
   void nextFloor(flecs::entity player) const;
-  void render(tcod::Console &console) const;
+  void render(tcod::Console &console, uint64_t time);
   void update_fov(flecs::entity player);
   void update_scent(flecs::entity map);
   void reveal();
@@ -125,6 +126,7 @@ struct GameMap {
 
 private:
   TCODMap map;
+  TCODNoise noise;
 };
 
 struct PathCallback : ITCODPathCallback {

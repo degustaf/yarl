@@ -333,7 +333,7 @@ static auto constexpr commandBox = std::array{62, 45, 13, 3};
 void MainHandler::on_render(flecs::world ecs, tcod::Console &console) {
   auto map = ecs.lookup("currentMap").target<CurrentMap>();
   auto &gMap = map.get_mut<GameMap>();
-  gMap.render(console);
+  gMap.render(console, time);
 
   ecs.lookup("messageLog").get<MessageLog>().render(console, 21, 45, 40, 5);
 
