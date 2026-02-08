@@ -81,6 +81,11 @@ static constexpr auto stairs_sensed =
 
 static constexpr auto shroud = Console::Tile{' ', color::white, color::black};
 
+static constexpr auto water_light =
+    Console::Tile{0x2248, {0, 0, 255, 255}, {63, 63, 255, 255}};
+static constexpr auto water_dark =
+    Console::Tile{0x2248, {0, 0, 127, 255}, {0, 0, 63, 255}};
+
 static constexpr auto chasm_light =
     Console::Tile{' ', color::white, {100, 100, 100, 255}};
 static constexpr auto chasm_dark =
@@ -93,17 +98,20 @@ void GameMap::render(Console &console) const {
         console.at({x, y}) = isStairs({x, y})          ? stairs_light
                              : isKnownBloody({x, y})   ? bloody_floor_light
                              : map.isWalkable(x, y)    ? floor_light
+                             : isWater(x, y)           ? water_light
                              : map.isTransparent(x, y) ? chasm_light
                                                        : wall_light;
       } else if (isExplored(x, y)) {
         console.at({x, y}) = isStairs({x, y})          ? stairs_dark
                              : isKnownBloody({x, y})   ? bloody_floor_dark
                              : map.isWalkable(x, y)    ? floor_dark
+                             : isWater(x, y)           ? water_dark
                              : map.isTransparent(x, y) ? chasm_dark
                                                        : wall_dark;
       } else if (isSensed(x, y)) {
         console.at({x, y}) = isStairs({x, y})          ? stairs_sensed
                              : map.isWalkable(x, y)    ? floor_sensed
+                             : isWater(x, y)           ? water_dark
                              : map.isTransparent(x, y) ? chasm_dark
                                                        : wall_dark;
       } else {
