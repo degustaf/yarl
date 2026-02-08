@@ -337,7 +337,7 @@ void KeyBinding::on_render(flecs::world ecs, Console &console) {
 void MainHandler::on_render(flecs::world ecs, Console &console) {
   auto map = ecs.lookup("currentMap").target<CurrentMap>();
   auto &gMap = map.get_mut<GameMap>();
-  gMap.render(console);
+  gMap.render(console, time);
 
   ecs.lookup("messageLog")
       .get<MessageLog>()

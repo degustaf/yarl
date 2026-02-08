@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <cstdint>
 
 namespace color {
@@ -44,6 +45,13 @@ struct RGBA {
   inline constexpr bool operator==(const RGBA &rhs) const {
     return r == rhs.r && g == rhs.g && b == rhs.b && a == rhs.a;
   };
+
+  constexpr inline RGBA &operator+=(const int8_t rhs) {
+    r = (uint8_t)std::clamp(r + rhs, 0, 255);
+    g = (uint8_t)std::clamp(g + rhs, 0, 255);
+    b = (uint8_t)std::clamp(b + rhs, 0, 255);
+    return *this;
+  }
 
   constexpr inline RGBA operator/(const uint8_t rhs) const {
     auto ret = *this;

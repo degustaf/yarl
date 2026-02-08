@@ -91,9 +91,12 @@ static constexpr auto chasm_light =
 static constexpr auto chasm_dark =
     Console::Tile{' ', color::white, {25, 25, 75, 255}};
 
-void GameMap::render(Console &console) const {
+void GameMap::render(Console &console, uint64_t time) {
+  float vec[3] = {0, 0, (float)time / (1000.0f)};
   for (auto y = 0; y < height; y++) {
+    vec[1] = (float)y;
     for (auto x = 0; x < width; x++) {
+      vec[0] = (float)x;
       if (map.isInFov(x, y)) {
         console.at({x, y}) = isStairs({x, y})          ? stairs_light
                              : isKnownBloody({x, y})   ? bloody_floor_light
@@ -101,6 +104,9 @@ void GameMap::render(Console &console) const {
                              : isWater(x, y)           ? water_light
                              : map.isTransparent(x, y) ? chasm_light
                                                        : wall_light;
+        if (isWater(x, y)) {
+          console.at({x, y}).bg += (int8_t)(63 * noise.get(vec));
+        }
       } else if (isExplored(x, y)) {
         console.at({x, y}) = isStairs({x, y})          ? stairs_dark
                              : isKnownBloody({x, y})   ? bloody_floor_dark
@@ -108,12 +114,18 @@ void GameMap::render(Console &console) const {
                              : isWater(x, y)           ? water_dark
                              : map.isTransparent(x, y) ? chasm_dark
                                                        : wall_dark;
+        if (isWater(x, y)) {
+          console.at({x, y}).bg += (int8_t)(31 * noise.get(vec));
+        }
       } else if (isSensed(x, y)) {
         console.at({x, y}) = isStairs({x, y})          ? stairs_sensed
                              : map.isWalkable(x, y)    ? floor_sensed
                              : isWater(x, y)           ? water_dark
                              : map.isTransparent(x, y) ? chasm_dark
                                                        : wall_dark;
+        if (isWater(x, y)) {
+          console.at({x, y}).bg += (int8_t)(31 * noise.get(vec));
+        }
       } else {
         console.at({x, y}) = shroud;
       }
