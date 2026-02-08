@@ -226,6 +226,7 @@ module::module(flecs::world ecs) {
   ecs.component<Inventory>().member<int>("capacity");
   ecs.component<ContainedBy>().add(flecs::Exclusive);
   ecs.component<Item>();
+  ecs.component<Flammable>();
   ecs.component<EquipmentType>();
   ecs.component<Equippable>()
       .member<EquipmentType>("type")
