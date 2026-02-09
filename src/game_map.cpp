@@ -135,7 +135,7 @@ void GameMap::render(tcod::Console &console, uint64_t time) {
 
 void GameMap::update_fov(flecs::entity player) {
   auto pos = player.get<Position>();
-  map.computeFov(pos.x, pos.y, 8, true, FOV_SYMMETRIC_SHADOWCAST);
+  computeFov(*this, pos, 8);
   for (auto y = 0; y < height; y++) {
     for (auto x = 0; x < width; x++) {
       if (map.isInFov(x, y)) {

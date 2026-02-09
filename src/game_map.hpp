@@ -45,6 +45,9 @@ struct GameMap {
   inline bool isInFov(std::array<int, 2> xy) const {
     return map.isInFov(xy[0], xy[1]);
   }
+  inline void setFov(std::array<int, 2> xy, bool visible) {
+    return map.setInFov(xy[0], xy[1], visible);
+  }
   inline bool isTransparent(std::array<int, 2> xy) const {
     return isTransparent(xy[0], xy[1]);
   }
@@ -128,6 +131,8 @@ private:
   TCODMap map;
   TCODNoise noise;
 };
+
+void computeFov(GameMap &map, std::array<int, 2> origin, int maxRadius);
 
 struct PathCallback : ITCODPathCallback {
   PathCallback(flecs::entity map) : map(map) {};
