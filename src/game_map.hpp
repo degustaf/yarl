@@ -9,6 +9,12 @@
 #include "actor.hpp"
 #include "scent.hpp"
 
+struct BlocksMovement {};
+struct BlocksFov {};
+struct Openable {};
+struct Fountain {};
+struct Portal {};
+
 struct CurrentMap {};
 
 struct Tile {
@@ -107,7 +113,7 @@ struct GameMap {
   void carveOut(int x, int y);
   void nextFloor(flecs::entity player) const;
   void render(tcod::Console &console, uint64_t time);
-  void update_fov(flecs::entity player);
+  void update_fov(flecs::entity mapEntity, flecs::entity player);
   void update_scent(flecs::entity map);
   void reveal();
   inline TCODPath path(void) const { return TCODPath(&map); };
@@ -132,7 +138,8 @@ private:
   TCODNoise noise;
 };
 
-void computeFov(GameMap &map, std::array<int, 2> origin, int maxRadius);
+void computeFov(flecs::entity mapEntity, GameMap &map,
+                std::array<int, 2> origin, int maxRadius);
 
 struct PathCallback : ITCODPathCallback {
   PathCallback(flecs::entity map) : map(map) {};

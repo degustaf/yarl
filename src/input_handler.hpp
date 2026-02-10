@@ -240,7 +240,8 @@ template <bool useF> struct SelectInputHandler : AskUserInputHandler {
       : AskUserInputHandler(handler){};
   virtual ~SelectInputHandler() = default;
 
-  std::unique_ptr<Action> keyDown(Command cmd, flecs::world ecs) {
+  virtual std::unique_ptr<Action> keyDown(Command cmd,
+                                          flecs::world ecs) override {
     auto dxy = std::array<int, 2>{0, 0};
 
     switch (cmd.type) {
@@ -290,8 +291,8 @@ template <bool useF> struct SelectInputHandler : AskUserInputHandler {
     return nullptr;
   }
 
-  std::unique_ptr<Action> click(SDL_MouseButtonEvent &button,
-                                flecs::world ecs) {
+  virtual std::unique_ptr<Action> click(SDL_MouseButtonEvent &button,
+                                        flecs::world ecs) override {
     auto currentMap = ecs.lookup("currentMap").target<CurrentMap>();
     auto &map = currentMap.get<GameMap>();
     if (map.inBounds((int)button.x, (int)button.y)) {
@@ -302,7 +303,7 @@ template <bool useF> struct SelectInputHandler : AskUserInputHandler {
     return AskUserInputHandler::click(button, ecs);
   }
 
-  void on_render(flecs::world ecs, tcod::Console &console) {
+  virtual void on_render(flecs::world ecs, tcod::Console &console) override {
     MainHandler::on_render(ecs, console);
     auto &tile = console.at(mouse_loc);
     tile.bg = color::white;
@@ -332,8 +333,9 @@ template <bool useF> struct TargetSelector : SelectInputHandler<useF> {
   std::unique_ptr<Action> loc_selected(flecs::world ecs,
                                        std::array<int, 2> xy) {
 
+    auto ret = callback(xy);
     make<MainGameInputHandler>(ecs);
-    return callback(xy);
+    return ret;
   }
 
   std::function<std::unique_ptr<Action>(std::array<int, 2>)> callback;

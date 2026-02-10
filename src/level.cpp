@@ -35,7 +35,7 @@ void Level::increaseLevel(void) {
 const char *Level::increase_max_hp(flecs::entity e, int amount) {
   static constexpr auto msg = "Your health improves!";
 
-  auto fighter = e.get_mut<Fighter>();
+  auto &fighter = e.get_mut<Fighter>();
   fighter.max_hp += amount;
   fighter.heal(amount, e);
   increaseLevel();
