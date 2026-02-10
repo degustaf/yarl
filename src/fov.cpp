@@ -1,4 +1,6 @@
+#include "actor.hpp"
 #include "game_map.hpp"
+
 #include <array>
 #include <cmath>
 #include <optional>
@@ -17,10 +19,14 @@ struct Row {
   std::array<int, 2> origin;
   Quadrant quad;
   int depth;
+  int dx;
+  int dy;
   double startSlope;
   double endSlope;
 
-  Row next() const { return {origin, quad, depth + 1, startSlope, endSlope}; };
+  Row next(int col = 0) const {
+    return {origin, quad, depth + 1, dx + 1, dy + col, startSlope, endSlope};
+  };
 
   std::array<int, 2> transform(std::array<int, 2> tile) const {
     switch (quad) {
@@ -56,10 +62,13 @@ static double slope(std::array<int, 2> tile) {
   return (2.0 * tile[1] - 1) / (2.0 * tile[0]);
 }
 
-static void scan(GameMap &map, Row row) {
+static void scan(GameMap &map, flecs::query<const Position> &q, Row row,
+                 int rSquared) {
   auto prev_tile = std::optional<std::array<int, 2>>(std::nullopt);
   for (auto col = (int)std::floor(row.depth * row.startSlope + 0.5);
        col <= (int)std::ceil(row.depth * row.endSlope - 0.5); col++) {
+    if (row.dx * row.dx + (row.dy + col) * (row.dy + col) > rSquared)
+      continue;
     auto tile = std::array{row.depth, col};
     assert(map.inBounds(row.transform(tile)));
     if (isWall(map, row, tile) || row.is_symmetric(tile)) {
@@ -71,29 +80,47 @@ static void scan(GameMap &map, Row row) {
     if (prev_tile && isFloor(map, row, *prev_tile) && isWall(map, row, tile)) {
       auto nextRow = row.next();
       nextRow.endSlope = slope(tile);
-      scan(map, nextRow);
+      scan(map, q, nextRow, rSquared);
+    }
+    auto portals = std::vector<Position>{};
+    q.each([&](flecs::iter &it, size_t, const Position &p) {
+      if (p == row.transform(tile)) {
+        auto otherSide = it.pair(1).second();
+        portals.push_back(otherSide.get<Position>());
+      }
+    });
+    for (auto p : portals) {
+      map.setFov(p, true);
+      scan(map, q,
+           {p, row.quad, 1, row.dx, row.dy + col, slope(tile),
+            slope({tile[0], tile[1] + 1})},
+           rSquared);
     }
     prev_tile = tile;
   }
   if (prev_tile && isFloor(map, row, *prev_tile)) {
-    scan(map, row.next());
+    scan(map, q, row.next(), rSquared);
   }
 }
 
-void computeFov(GameMap &map, std::array<int, 2> origin, int maxRadius) {
+void computeFov(flecs::entity mapEntity, GameMap &map,
+                std::array<int, 2> origin, int maxRadius) {
+
+  for (auto y = 0; y < map.getHeight(); y++) {
+    for (auto x = 0; x < map.getWidth(); x++) {
+      map.setFov({x, y}, false);
+    }
+  }
+
+  auto ecs = mapEntity.world();
+  auto q = ecs.query_builder<const Position>()
+               .with(ecs.component<Portal>(), flecs::Wildcard)
+               .with(flecs::ChildOf, mapEntity)
+               .build();
+
   map.setFov(origin, true);
 
   for (auto quad : quadrants) {
-    scan(map, {origin, quad, 1, -1.0, 1.0});
-  }
-
-  for (auto y = 0; y < map.getHeight(); y++) {
-    auto dy = origin[1] - y;
-    for (auto x = 0; x < map.getWidth(); x++) {
-      auto dx = origin[0] - x;
-      if (dx * dx + dy * dy > maxRadius * maxRadius) {
-        map.setFov({x, y}, false);
-      }
-    }
+    scan(map, q, {origin, quad, 1, 0, 0, -1.0, 1.0}, maxRadius * maxRadius);
   }
 }

@@ -138,9 +138,6 @@ module::module(flecs::world ecs) {
       .member<std::optional<color::RGB>>("bg")
       .member<RenderOrder>("layer");
   ecs.component<Named>().member<std::string>("name");
-  ecs.component<BlocksFov>();
-  ecs.component<Openable>();
-  ecs.component<Fountain>();
   ecs.component<Fighter>()
       .member<int>("max_hp")
       .member<int>("_hp")
@@ -226,6 +223,11 @@ module::module(flecs::world ecs) {
       .is_a<Consumable>();
 
   // game_map.hpp
+  ecs.component<BlocksMovement>();
+  ecs.component<BlocksFov>();
+  ecs.component<Openable>();
+  ecs.component<Fountain>();
+  ecs.component<Portal>().add(flecs::Symmetric);
   ecs.component<CurrentMap>().add(flecs::Exclusive);
   ecs.component<Tile>().member<uint8_t>("flags");
   ecs.component<std::vector<Tile>>().opaque(std_vector_support<Tile>);

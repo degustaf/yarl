@@ -1,0 +1,395 @@
+[1mdiff --git a/src/actor.hpp b/src/actor.hpp[m
+[1mindex 67a75a3..027c805 100644[m
+[1m--- a/src/actor.hpp[m
+[1m+++ b/src/actor.hpp[m
+[36m@@ -65,11 +65,6 @@[m [mstruct Named {[m
+   std::string name;[m
+ };[m
+ [m
+[31m-struct BlocksMovement {};[m
+[31m-struct BlocksFov {};[m
+[31m-struct Openable {};[m
+[31m-struct Fountain {};[m
+[31m-[m
+ void toggleDoor(flecs::entity door);[m
+ [m
+ struct Fighter {[m
+[1mdiff --git a/src/engine.cpp b/src/engine.cpp[m
+[1mindex 876cbd7..e0cd8fe 100644[m
+[1m--- a/src/engine.cpp[m
+[1m+++ b/src/engine.cpp[m
+[36m@@ -94,7 +94,7 @@[m [mbool Engine::load(flecs::world ecs, const std::filesystem::path &file_name,[m
+   gamemap.init();[m
+   auto player = ecs.lookup("player");[m
+   roomAccretion::generateDungeon(map, gamemap, player, false);[m
+[31m-  gamemap.update_fov(player);[m
+[32m+[m[32m  gamemap.update_fov(map, player);[m
+ [m
+   return true;[m
+ }[m
+[36m@@ -126,7 +126,7 @@[m [mvoid Engine::new_game(flecs::world ecs) {[m
+   map.emplace<GameMap>([m
+       roomAccretion::generateDungeon(map, map_width, map_height, 1, player));[m
+   ecs.entity("currentMap").add<CurrentMap>(map);[m
+[31m-  map.get_mut<GameMap>().update_fov(player);[m
+[32m+[m[32m  map.get_mut<GameMap>().update_fov(map, player);[m
+ [m
+   ecs.entity("messageLog")[m
+       .set<MessageLog>({})[m
+[1mdiff --git a/src/fov.cpp b/src/fov.cpp[m
+[1mindex 5995a88..f110ffc 100644[m
+[1m--- a/src/fov.cpp[m
+[1m+++ b/src/fov.cpp[m
+[36m@@ -1,4 +1,6 @@[m
+[32m+[m[32m#include "actor.hpp"[m
+ #include "game_map.hpp"[m
+[32m+[m
+ #include <array>[m
+ #include <cmath>[m
+ #include <optional>[m
+[36m@@ -17,10 +19,14 @@[m [mstruct Row {[m
+   std::array<int, 2> origin;[m
+   Quadrant quad;[m
+   int depth;[m
+[32m+[m[32m  int dx;[m
+[32m+[m[32m  int dy;[m
+   double startSlope;[m
+   double endSlope;[m
+ [m
+[31m-  Row next() const { return {origin, quad, depth + 1, startSlope, endSlope}; };[m
+[32m+[m[32m  Row next(int col = 0) const {[m
+[32m+[m[32m    return {origin, quad, depth + 1, dx + 1, dy + col, startSlope, endSlope};[m
+[32m+[m[32m  };[m
+ [m
+   std::array<int, 2> transform(std::array<int, 2> tile) const {[m
+     switch (quad) {[m
+[36m@@ -56,10 +62,13 @@[m [mstatic double slope(std::array<int, 2> tile) {[m
+   return (2.0 * tile[1] - 1) / (2.0 * tile[0]);[m
+ }[m
+ [m
+[31m-static void scan(GameMap &map, Row row) {[m
+[32m+[m[32mstatic void scan(GameMap &map, flecs::query<const Position> &q, Row row,[m
+[32m+[m[32m                 int rSquared) {[m
+   auto prev_tile = std::optional<std::array<int, 2>>(std::nullopt);[m
+   for (auto col = (int)std::floor(row.depth * row.startSlope + 0.5);[m
+        col <= (int)std::ceil(row.depth * row.endSlope - 0.5); col++) {[m
+[32m+[m[32m    if (row.dx * row.dx + (row.dy + col) * (row.dy + col) > rSquared)[m
+[32m+[m[32m      continue;[m
+     auto tile = std::array{row.depth, col};[m
+     assert(map.inBounds(row.transform(tile)));[m
+     if (isWall(map, row, tile) || row.is_symmetric(tile)) {[m
+[36m@@ -71,29 +80,46 @@[m [mstatic void scan(GameMap &map, Row row) {[m
+     if (prev_tile && isFloor(map, row, *prev_tile) && isWall(map, row, tile)) {[m
+       auto nextRow = row.next();[m
+       nextRow.endSlope = slope(tile);[m
+[31m-      scan(map, nextRow);[m
+[32m+[m[32m      scan(map, q, nextRow, rSquared);[m
+[32m+[m[32m    }[m
+[32m+[m[32m    auto portals = std::vector<Position>{};[m
+[32m+[m[32m    q.each([&](flecs::iter &it, size_t, const Position &p) {[m
+[32m+[m[32m      if (p == row.transform(tile)) {[m
+[32m+[m[32m        auto otherSide = it.pair(1).second();[m
+[32m+[m[32m        portals.push_back(otherSide.get<Position>());[m
+[32m+[m[32m      }[m
+[32m+[m[32m    });[m
+[32m+[m[32m    for (auto p : portals) {[m
+[32m+[m[32m      scan(map, q,[m
+[32m+[m[32m           {p, row.quad, 1, row.dx, row.dy + col, slope(tile),[m
+[32m+[m[32m            slope({tile[0], tile[1] + 1})},[m
+[32m+[m[32m           rSquared);[m
+     }[m
+     prev_tile = tile;[m
+   }[m
+   if (prev_tile && isFloor(map, row, *prev_tile)) {[m
+[31m-    scan(map, row.next());[m
+[32m+[m[32m    scan(map, q, row.next(), rSquared);[m
+   }[m
+ }[m
+ [m
+[31m-void computeFov(GameMap &map, std::array<int, 2> origin, int maxRadius) {[m
+[31m-  map.setFov(origin, true);[m
+[31m-[m
+[31m-  for (auto quad : quadrants) {[m
+[31m-    scan(map, {origin, quad, 1, -1.0, 1.0});[m
+[31m-  }[m
+[32m+[m[32mvoid computeFov(flecs::entity mapEntity, GameMap &map,[m
+[32m+[m[32m                std::array<int, 2> origin, int maxRadius) {[m
+ [m
+   for (auto y = 0; y < map.getHeight(); y++) {[m
+[31m-    auto dy = origin[1] - y;[m
+     for (auto x = 0; x < map.getWidth(); x++) {[m
+[31m-      auto dx = origin[0] - x;[m
+[31m-      if (dx * dx + dy * dy > maxRadius * maxRadius) {[m
+[31m-        map.setFov({x, y}, false);[m
+[31m-      }[m
+[32m+[m[32m      map.setFov({x, y}, false);[m
+     }[m
+   }[m
+[32m+[m
+[32m+[m[32m  auto ecs = mapEntity.world();[m
+[32m+[m[32m  auto q = ecs.query_builder<const Position>()[m
+[32m+[m[32m               .with(ecs.component<Portal>(), flecs::Wildcard)[m
+[32m+[m[32m               .with(flecs::ChildOf, mapEntity)[m
+[32m+[m[32m               .build();[m
+[32m+[m
+[32m+[m[32m  map.setFov(origin, true);[m
+[32m+[m
+[32m+[m[32m  for (auto quad : quadrants) {[m
+[32m+[m[32m    scan(map, q, {origin, quad, 1, 0, 0, -1.0, 1.0}, maxRadius * maxRadius);[m
+[32m+[m[32m  }[m
+ }[m
+[1mdiff --git a/src/game_map.cpp b/src/game_map.cpp[m
+[1mindex e256cb1..cf094ed 100644[m
+[1m--- a/src/game_map.cpp[m
+[1m+++ b/src/game_map.cpp[m
+[36m@@ -1,6 +1,7 @@[m
+ #include "game_map.hpp"[m
+ [m
+ #include <cstddef>[m
+[32m+[m[32m#include <flecs/addons/cpp/entity.hpp>[m
+ [m
+ #include "color.hpp"[m
+ #include "defines.hpp"[m
+[36m@@ -133,9 +134,9 @@[m [mvoid GameMap::render(tcod::Console &console, uint64_t time) {[m
+   }[m
+ }[m
+ [m
+[31m-void GameMap::update_fov(flecs::entity player) {[m
+[32m+[m[32mvoid GameMap::update_fov(flecs::entity mapEntity, flecs::entity player) {[m
+   auto pos = player.get<Position>();[m
+[31m-  computeFov(*this, pos, 8);[m
+[32m+[m[32m  computeFov(mapEntity, *this, pos, 8);[m
+   for (auto y = 0; y < height; y++) {[m
+     for (auto x = 0; x < width; x++) {[m
+       if (map.isInFov(x, y)) {[m
+[1mdiff --git a/src/game_map.hpp b/src/game_map.hpp[m
+[1mindex e386d6a..7d84c3b 100644[m
+[1m--- a/src/game_map.hpp[m
+[1m+++ b/src/game_map.hpp[m
+[36m@@ -9,6 +9,12 @@[m
+ #include "actor.hpp"[m
+ #include "scent.hpp"[m
+ [m
+[32m+[m[32mstruct BlocksMovement {};[m
+[32m+[m[32mstruct BlocksFov {};[m
+[32m+[m[32mstruct Openable {};[m
+[32m+[m[32mstruct Fountain {};[m
+[32m+[m[32mstruct Portal {};[m
+[32m+[m
+ struct CurrentMap {};[m
+ [m
+ struct Tile {[m
+[36m@@ -107,7 +113,7 @@[m [mstruct GameMap {[m
+   void carveOut(int x, int y);[m
+   void nextFloor(flecs::entity player) const;[m
+   void render(tcod::Console &console, uint64_t time);[m
+[31m-  void update_fov(flecs::entity player);[m
+[32m+[m[32m  void update_fov(flecs::entity mapEntity, flecs::entity player);[m
+   void update_scent(flecs::entity map);[m
+   void reveal();[m
+   inline TCODPath path(void) const { return TCODPath(&map); };[m
+[36m@@ -132,7 +138,8 @@[m [mprivate:[m
+   TCODNoise noise;[m
+ };[m
+ [m
+[31m-void computeFov(GameMap &map, std::array<int, 2> origin, int maxRadius);[m
+[32m+[m[32mvoid computeFov(flecs::entity mapEntity, GameMap &map,[m
+[32m+[m[32m                std::array<int, 2> origin, int maxRadius);[m
+ [m
+ struct PathCallback : ITCODPathCallback {[m
+   PathCallback(flecs::entity map) : map(map) {};[m
+[1mdiff --git a/src/input_handler.cpp b/src/input_handler.cpp[m
+[1mindex 86520ed..d2f1210 100644[m
+[1m--- a/src/input_handler.cpp[m
+[1m+++ b/src/input_handler.cpp[m
+[36m@@ -380,7 +380,7 @@[m [mActionResult MainHandler::handle_action(flecs::world ecs,[m
+     if (ret) {[m
+       auto map = ecs.lookup("currentMap").target<CurrentMap>();[m
+       auto &gameMap = map.get_mut<GameMap>();[m
+[31m-      gameMap.update_fov(player);[m
+[32m+[m[32m      gameMap.update_fov(map, player);[m
+       Engine::handle_enemy_turns(ecs);[m
+       scent += {ScentType::player, ret.exertion};[m
+       gameMap.update_scent(map);[m
+[36m@@ -398,7 +398,7 @@[m [mActionResult MainHandler::handle_action(flecs::world ecs,[m
+     //   }[m
+     // }[m
+     if (player.get<Level>().requires_level_up()) {[m
+[31m-      make<LevelupHandler>(ecs);[m
+[32m+[m[32m      ::make<LevelupHandler>(ecs);[m
+     } else if (scent.power > 100) {[m
+       auto &warning = player.get_mut<ScentWarning>();[m
+       if (!warning.warned) {[m
+[36m@@ -606,12 +606,15 @@[m [mstd::unique_ptr<Action> LevelupHandler::keyDown(Command cmd, flecs::world ecs) {[m
+   auto msg = "";[m
+   switch (cmd.ch) {[m
+   case 'A':[m
+[32m+[m[32m  case 'a':[m
+     msg = level.increase_max_hp(player);[m
+     break;[m
+   case 'B':[m
+[32m+[m[32m  case 'b':[m
+     msg = level.increase_power(player);[m
+     break;[m
+   case 'C':[m
+[32m+[m[32m  case 'c':[m
+     msg = level.increase_defense(player);[m
+     break;[m
+   default:[m
+[36m@@ -640,13 +643,13 @@[m [mvoid LevelupHandler::on_render(flecs::world ecs, tcod::Console &console) {[m
+               std::nullopt, std::nullopt);[m
+ [m
+   auto fighter = player.get<Fighter>();[m
+[31m-  auto msg = tcod::stringf("%c) Constitution (+20 HP, from %d)",[m
+[32m+[m[32m  auto msg = tcod::stringf("%s) Constitution (+20 HP, from %d)",[m
+                            SDL_GetKeyName(SDLK_A), fighter.max_hp);[m
+   tcod::print(console, {x + 1, 4}, msg, std::nullopt, std::nullopt);[m
+[31m-  msg = tcod::stringf("%c) Strength (+1 attack, from %d)",[m
+[32m+[m[32m  msg = tcod::stringf("%s) Strength (+1 attack, from %d)",[m
+                       SDL_GetKeyName(SDLK_B), fighter.power(player, false));[m
+   tcod::print(console, {x + 1, 5}, msg, std::nullopt, std::nullopt);[m
+[31m-  msg = tcod::stringf("%c) Agility (+1 defense, from %d)",[m
+[32m+[m[32m  msg = tcod::stringf("%s) Agility (+1 defense, from %d)",[m
+                       SDL_GetKeyName(SDLK_C), fighter.defense(player));[m
+   tcod::print(console, {x + 1, 6}, msg, std::nullopt, std::nullopt);[m
+ }[m
+[1mdiff --git a/src/input_handler.hpp b/src/input_handler.hpp[m
+[1mindex 0ff0458..7b65141 100644[m
+[1m--- a/src/input_handler.hpp[m
+[1m+++ b/src/input_handler.hpp[m
+[36m@@ -240,7 +240,8 @@[m [mtemplate <bool useF> struct SelectInputHandler : AskUserInputHandler {[m
+       : AskUserInputHandler(handler){};[m
+   virtual ~SelectInputHandler() = default;[m
+ [m
+[31m-  std::unique_ptr<Action> keyDown(Command cmd, flecs::world ecs) {[m
+[32m+[m[32m  virtual std::unique_ptr<Action> keyDown(Command cmd,[m
+[32m+[m[32m                                          flecs::world ecs) override {[m
+     auto dxy = std::array<int, 2>{0, 0};[m
+ [m
+     switch (cmd.type) {[m
+[36m@@ -290,8 +291,8 @@[m [mtemplate <bool useF> struct SelectInputHandler : AskUserInputHandler {[m
+     return nullptr;[m
+   }[m
+ [m
+[31m-  std::unique_ptr<Action> click(SDL_MouseButtonEvent &button,[m
+[31m-                                flecs::world ecs) {[m
+[32m+[m[32m  virtual std::unique_ptr<Action> click(SDL_MouseButtonEvent &button,[m
+[32m+[m[32m                                        flecs::world ecs) override {[m
+     auto currentMap = ecs.lookup("currentMap").target<CurrentMap>();[m
+     auto &map = currentMap.get<GameMap>();[m
+     if (map.inBounds((int)button.x, (int)button.y)) {[m
+[36m@@ -302,7 +303,7 @@[m [mtemplate <bool useF> struct SelectInputHandler : AskUserInputHandler {[m
+     return AskUserInputHandler::click(button, ecs);[m
+   }[m
+ [m
+[31m-  void on_render(flecs::world ecs, tcod::Console &console) {[m
+[32m+[m[32m  virtual void on_render(flecs::world ecs, tcod::Console &console) override {[m
+     MainHandler::on_render(ecs, console);[m
+     auto &tile = console.at(mouse_loc);[m
+     tile.bg = color::white;[m
+[36m@@ -332,8 +333,9 @@[m [mtemplate <bool useF> struct TargetSelector : SelectInputHandler<useF> {[m
+   std::unique_ptr<Action> loc_selected(flecs::world ecs,[m
+                                        std::array<int, 2> xy) {[m
+ [m
+[32m+[m[32m    auto ret = callback(xy);[m
+     make<MainGameInputHandler>(ecs);[m
+[31m-    return callback(xy);[m
+[32m+[m[32m    return ret;[m
+   }[m
+ [m
+   std::function<std::unique_ptr<Action>(std::array<int, 2>)> callback;[m
+[1mdiff --git a/src/module.cpp b/src/module.cpp[m
+[1mindex 2b074cf..437c0d2 100644[m
+[1m--- a/src/module.cpp[m
+[1m+++ b/src/module.cpp[m
+[36m@@ -136,10 +136,6 @@[m [mmodule::module(flecs::world ecs) {[m
+       .member<std::optional<tcod::ColorRGB>>("bg")[m
+       .member<RenderOrder>("layer");[m
+   ecs.component<Named>().member<std::string>("name");[m
+[31m-  ecs.component<BlocksMovement>();[m
+[31m-  ecs.component<BlocksFov>();[m
+[31m-  ecs.component<Openable>();[m
+[31m-  ecs.component<Fountain>();[m
+   ecs.component<Fighter>()[m
+       .member<int>("max_hp")[m
+       .member<int>("_hp")[m
+[36m@@ -207,6 +203,11 @@[m [mmodule::module(flecs::world ecs) {[m
+       .is_a<Consumable>();[m
+ [m
+   // game_map.hpp[m
+[32m+[m[32m  ecs.component<BlocksMovement>();[m
+[32m+[m[32m  ecs.component<BlocksFov>();[m
+[32m+[m[32m  ecs.component<Openable>();[m
+[32m+[m[32m  ecs.component<Fountain>();[m
+[32m+[m[32m  ecs.component<Portal>().add(flecs::Symmetric);[m
+   ecs.component<CurrentMap>().add(flecs::Exclusive);[m
+   ecs.component<Tile>().member<uint8_t>("flags");[m
+   ecs.component<std::vector<Tile>>().opaque(std_vector_support<Tile>);[m
+[1mdiff --git a/src/room_accretion.cpp b/src/room_accretion.cpp[m
+[1mindex 4a2cf51..c38752f 100644[m
+[1m--- a/src/room_accretion.cpp[m
+[1m+++ b/src/room_accretion.cpp[m
+[36m@@ -7,6 +7,8 @@[m
+ [m
+ #include <libtcod.hpp>[m
+ [m
+[32m+[m[32m#include "actor.hpp"[m
+[32m+[m[32m#include "color.hpp"[m
+ #include "defines.hpp"[m
+ #include "engine.hpp"[m
+ #include "game_map.hpp"[m
+[36m@@ -488,6 +490,45 @@[m [mvoid random_shuffle(_RandomAccessIterator __first, _RandomAccessIterator __last,[m
+   }[m
+ }[m
+ [m
+[32m+[m[32mstatic void addPortals(flecs::entity map, GameMap &dungeon, TCODRandom &rng) {[m
+[32m+[m[32m  auto width = dungeon.getWidth();[m
+[32m+[m[32m  auto height = dungeon.getHeight();[m
+[32m+[m[32m  auto e1 = map.world()[m
+[32m+[m[32m                .entity()[m
+[32m+[m[32m                .add(flecs::ChildOf, map)[m
+[32m+[m[32m                .add<BlocksFov>()[m
+[32m+[m[32m                .set<Renderable>([m
+[32m+[m[32m                    {'A', color::red, std::nullopt, RenderOrder::Corpse});[m
+[32m+[m[32m  auto e2 = map.world()[m
+[32m+[m[32m                .entity()[m
+[32m+[m[32m                .add(flecs::ChildOf, map)[m
+[32m+[m[32m                .add<Portal>(e1)[m
+[32m+[m[32m                .add<BlocksFov>()[m
+[32m+[m[32m                .set<Renderable>([m
+[32m+[m[32m                    {'A', color::red, std::nullopt, RenderOrder::Corpse});[m
+[32m+[m[32m  while (true) {[m
+[32m+[m[32m    auto x = rng.getInt(0, width - 1);[m
+[32m+[m[32m    auto y = rng.getInt(0, height - 1);[m
+[32m+[m[32m    if (dungeon.isWalkable({x, y})) {[m
+[32m+[m[32m      assert(dungeon.isTransparent({x, y}));[m
+[32m+[m[32m      e1.set<Position>({x, y});[m
+[32m+[m[32m      break;[m
+[32m+[m[32m    }[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  while (true) {[m
+[32m+[m[32m    auto x = rng.getInt(0, width - 1);[m
+[32m+[m[32m    auto y = rng.getInt(0, height - 1);[m
+[32m+[m[32m    if (e1.get<Position>() == Position{x, y})[m
+[32m+[m[32m      continue;[m
+[32m+[m[32m    if (dungeon.isWalkable({x, y})) {[m
+[32m+[m[32m      assert(dungeon.isTransparent({x, y}));[m
+[32m+[m[32m      e2.set<Position>({x, y});[m
+[32m+[m[32m      break;[m
+[32m+[m[32m    }[m
+[32m+[m[32m  }[m
+[32m+[m[32m}[m
+[32m+[m
+ void roomAccretion::generateDungeon(flecs::entity map, GameMap &dungeon,[m
+                                     flecs::entity player,[m
+                                     bool generateEntities) {[m
+[36m@@ -521,6 +562,8 @@[m [mvoid roomAccretion::generateDungeon(flecs::entity map, GameMap &dungeon,[m
+                .with(flecs::ChildOf, map)[m
+                .build();[m
+ [m
+[32m+[m[32m  addPortals(map, dungeon, rng);[m
+[32m+[m
+   if (dungeon.level == MAX_DUNGEON_LEVEL) {[m
+     auto yendor = ecs.lookup("module::yendor");[m
+     assert(yendor);[m

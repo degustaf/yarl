@@ -420,7 +420,7 @@ ActionResult MainHandler::handle_action(flecs::world ecs,
     if (ret) {
       auto map = ecs.lookup("currentMap").target<CurrentMap>();
       auto &gameMap = map.get_mut<GameMap>();
-      gameMap.update_fov(player);
+      gameMap.update_fov(map, player);
       Engine::handle_enemy_turns(ecs);
       scent += {ScentType::player, ret.exertion};
       gameMap.update_scent(map);
@@ -438,7 +438,7 @@ ActionResult MainHandler::handle_action(flecs::world ecs,
     //   }
     // }
     if (player.get<Level>().requires_level_up()) {
-      make<LevelupHandler>(ecs);
+      ::make<LevelupHandler>(ecs);
     } else if (scent.power > 100) {
       auto &warning = player.get_mut<ScentWarning>();
       if (!warning.warned) {
@@ -705,12 +705,15 @@ std::unique_ptr<Action> LevelupHandler::keyDown(Command cmd, flecs::world ecs) {
   auto msg = "";
   switch (cmd.ch) {
   case 'A':
+  case 'a':
     msg = level.increase_max_hp(player);
     break;
   case 'B':
+  case 'b':
     msg = level.increase_power(player);
     break;
   case 'C':
+  case 'c':
     msg = level.increase_defense(player);
     break;
   default:
@@ -737,13 +740,13 @@ void LevelupHandler::on_render(flecs::world ecs, Console &console) {
                 std::nullopt);
 
   auto fighter = player.get<Fighter>();
-  auto msg = stringf("%c) Constitution (+20 HP, from %d)",
+  auto msg = stringf("%s) Constitution (+20 HP, from %d)",
                      SDL_GetKeyName(SDLK_A), fighter.max_hp);
   console.print({x + 1, 4}, msg, std::nullopt, std::nullopt);
-  msg = stringf("%c) Strength (+1 attack, from %d)", SDL_GetKeyName(SDLK_B),
+  msg = stringf("%s) Strength (+1 attack, from %d)", SDL_GetKeyName(SDLK_B),
                 fighter.power(player, false));
   console.print({x + 1, 5}, msg, std::nullopt, std::nullopt);
-  msg = stringf("%c) Agility (+1 defense, from %d)", SDL_GetKeyName(SDLK_C),
+  msg = stringf("%s) Agility (+1 defense, from %d)", SDL_GetKeyName(SDLK_C),
                 fighter.defense(player));
   console.print({x + 1, 6}, msg, std::nullopt, std::nullopt);
 }

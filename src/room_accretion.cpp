@@ -7,6 +7,8 @@
 
 #include <libtcod.hpp>
 
+#include "actor.hpp"
+#include "color.hpp"
 #include "defines.hpp"
 #include "engine.hpp"
 #include "game_map.hpp"
@@ -488,6 +490,45 @@ void random_shuffle(_RandomAccessIterator __first, _RandomAccessIterator __last,
   }
 }
 
+static void addPortals(flecs::entity map, GameMap &dungeon, TCODRandom &rng) {
+  auto width = dungeon.getWidth();
+  auto height = dungeon.getHeight();
+  auto e1 = map.world()
+                .entity()
+                .add(flecs::ChildOf, map)
+                .add<BlocksFov>()
+                .set<Renderable>(
+                    {'A', color::red, std::nullopt, RenderOrder::Corpse});
+  auto e2 = map.world()
+                .entity()
+                .add(flecs::ChildOf, map)
+                .add<Portal>(e1)
+                .add<BlocksFov>()
+                .set<Renderable>(
+                    {'A', color::red, std::nullopt, RenderOrder::Corpse});
+  while (true) {
+    auto x = rng.getInt(0, width - 1);
+    auto y = rng.getInt(0, height - 1);
+    if (dungeon.isWalkable({x, y})) {
+      assert(dungeon.isTransparent({x, y}));
+      e1.set<Position>({x, y});
+      break;
+    }
+  }
+
+  while (true) {
+    auto x = rng.getInt(0, width - 1);
+    auto y = rng.getInt(0, height - 1);
+    if (e1.get<Position>() == Position{x, y})
+      continue;
+    if (dungeon.isWalkable({x, y})) {
+      assert(dungeon.isTransparent({x, y}));
+      e2.set<Position>({x, y});
+      break;
+    }
+  }
+}
+
 void roomAccretion::generateDungeon(flecs::entity map, GameMap &dungeon,
                                     flecs::entity player,
                                     bool generateEntities) {
@@ -520,6 +561,8 @@ void roomAccretion::generateDungeon(flecs::entity map, GameMap &dungeon,
   auto q = ecs.query_builder<const Position>("module::position")
                .with(flecs::ChildOf, map)
                .build();
+
+  addPortals(map, dungeon, rng);
 
   if (dungeon.level == MAX_DUNGEON_LEVEL) {
     auto yendor = ecs.lookup("module::yendor");

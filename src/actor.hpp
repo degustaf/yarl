@@ -43,10 +43,6 @@ struct Named {
   std::string name;
 };
 
-struct BlocksFov {};
-struct Openable {};
-struct Fountain {};
-
 void toggleDoor(flecs::entity door);
 
 struct Fighter {
