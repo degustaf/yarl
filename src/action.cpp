@@ -81,6 +81,17 @@ ActionResult MoveAction::perform(flecs::entity e) const {
   if (map.inBounds(pos + dxy)) {
     if (map.isWalkable(pos + dxy)) {
       if (GameMap::get_blocking_entity(mapEntity, pos + dxy) == e.null()) {
+        auto portal =
+            e.world()
+                .query_builder<const Position>()
+                .with(flecs::ChildOf, mapEntity)
+                .with(e.world().component<Portal>(), flecs::Wildcard)
+                .build()
+                .find([&](const Position &p) { return p == pos + dxy; });
+        if (portal) {
+          pos = portal.target<Portal>().get<Position>();
+          return perform(e);
+        }
         pos.move(dxy);
         auto inventory = e.try_get<Inventory>();
         if (!inventory) {
