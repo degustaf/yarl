@@ -602,11 +602,30 @@ void roomAccretion::generateDungeon(flecs::entity map, GameMap &dungeon,
     }
   }
 
+  auto pos = player.get<Position>();
   auto dij = pathfinding::Dijkstra(
-      width, height,
-      pathfinding::map<int>::constructCost(map, dungeon, 1, 2, 10,
-                                           pathfinding::Dijkstra::infinity));
-  dij.set(player.get<Position>(), 0);
-  dij.set(stairs, 0);
+      {dungeon.getWidth(), dungeon.getHeight()},
+      [=](auto xy) { return pos == xy || stairs == xy; },
+      [&](auto &xy) {
+        auto ret = std::vector<pathfinding::Index>();
+        ret.reserve(9); // 8 directions plus a portal
+        for (auto &dir : directions) {
+          auto next = pathfinding::Index{xy[0] + dir[0], xy[1] + dir[1]};
+          if (dungeon.inBounds(next) && dungeon.isWalkable(next)) {
+            ret.push_back(next);
+          }
+        }
+        flecs::entity e = ecs.query_builder<Position>()
+                              .with(ecs.component<Portal>(), flecs::Wildcard)
+                              .with(flecs::ChildOf, map)
+                              .build()
+                              .find([xy](auto &p) { return p == xy; });
+        if (e) {
+          ret.push_back(e.target<Portal>().get<Position>());
+        }
+        return ret;
+      },
+      [](auto) { return 1; });
+
   dij.scan();
 }
