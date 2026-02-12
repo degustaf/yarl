@@ -3,6 +3,7 @@
 #include <array>
 #include <climits>
 #include <cmath>
+#include <limits>
 #include <memory>
 #include <queue>
 #include <vector>
@@ -134,34 +135,62 @@ std::vector<Index> aStar(const map<int> &cost, Index start, Index goal,
   return std::vector<Index>();
 }
 
-class Dijkstra {
-public:
-  Dijkstra(int width, int height, map<int> &&cost)
-      : width(width), height(height), distance({width, height}, infinity),
-        cost(std::move(cost)), cameFrom({width, height}) {};
-  inline void set(int x, int y, int value) { set({x, y}, value); };
-  void set(Index xy, int value);
-  void scan(void);
-  std::array<int, 2> roll(int x, int y) const;
-  Dijkstra &operator*=(float scale);
-  std::array<int, 2> findMin(void) const;
-  std::array<int, 2> findMax(void) const;
-  std::vector<std::array<int, 2>> pathDown(std::array<int, 2> start) const;
-  inline std::vector<std::array<int, 2>>
-  pathUp(std::array<int, 2> start) const {
-    return pathUp(start, findMax());
-  }
-  std::vector<std::array<int, 2>> pathUp(std::array<int, 2> start,
-                                         std::array<int, 2> goal) const;
+static constexpr auto Infinity = std::numeric_limits<int>::max();
 
-  static const int infinity;
+/******
+ * F: std::function<bool(Index)>
+ * G: std::function<RangedFor<Index>(Index)>
+ * H: std::function<int(Index)>
+ * *****/
+template <typename F, typename G, typename H> class Dijkstra {
+public:
+  Dijkstra(Index dimensions, F start, G adjacent, H cost)
+      : dimensions(dimensions), distance(dimensions, Infinity),
+        cameFrom(dimensions), adjacent(adjacent), cost(cost) {
+    for (auto y = 0; y < dimensions[1]; y++) {
+      for (auto x = 0; x < dimensions[0]; x++) {
+        if (start(Index{x, y})) {
+          distance[{x, y}] = 0;
+        }
+      }
+    }
+  };
+
+  void scan(void) {
+    auto order = [&](const auto &lhs, const auto &rhs) {
+      return distance[lhs] > distance[rhs];
+    };
+    std::priority_queue<Index, std::vector<Index>, decltype(order)> queue(
+        order);
+    for (auto y = 0; y < dimensions[1]; y++) {
+      for (auto x = 0; x < dimensions[0]; x++) {
+        queue.push({x, y});
+      }
+    }
+
+    auto next = queue.top();
+    queue.pop();
+    auto value = distance[next];
+    if (value == Infinity) {
+      return;
+    }
+
+    for (auto &v : adjacent(next)) {
+      auto alt = value + cost(v);
+      if (alt < distance[v]) {
+        distance[v] = alt;
+        queue.push(v);
+        cameFrom[v] = next;
+      }
+    }
+  }
 
 private:
-  int width;
-  int height;
+  Index dimensions;
   map<int> distance;
-  map<int> cost;
   map<Index> cameFrom;
+  G adjacent;
+  H cost;
 };
 
 class AutoExplore {
