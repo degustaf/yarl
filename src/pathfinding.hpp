@@ -146,15 +146,8 @@ template <typename F, typename G, typename H> class Dijkstra {
 public:
   Dijkstra(Index dimensions, F start, G adjacent, H cost)
       : dimensions(dimensions), distance(dimensions, Infinity),
-        cameFrom(dimensions), adjacent(adjacent), cost(cost) {
-    for (auto y = 0; y < dimensions[1]; y++) {
-      for (auto x = 0; x < dimensions[0]; x++) {
-        if (start(Index{x, y})) {
-          distance[{x, y}] = 0;
-        }
-      }
-    }
-  };
+        cameFrom(dimensions, {-1, -1}), start(start), adjacent(adjacent),
+        cost(cost) {};
 
   void scan(void) {
     auto order = [&](const auto &lhs, const auto &rhs) {
@@ -164,23 +157,30 @@ public:
         order);
     for (auto y = 0; y < dimensions[1]; y++) {
       for (auto x = 0; x < dimensions[0]; x++) {
-        queue.push({x, y});
+        if (start(Index{x, y})) {
+          distance[{x, y}] = 0;
+          queue.push({x, y});
+        } else {
+          distance[{x, y}] = Infinity;
+        }
       }
     }
 
-    auto next = queue.top();
-    queue.pop();
-    auto value = distance[next];
-    if (value == Infinity) {
-      return;
-    }
+    while (!queue.empty()) {
+      auto next = queue.top();
+      queue.pop();
+      auto value = distance[next];
+      if (value == Infinity) {
+        return;
+      }
 
-    for (auto &v : adjacent(next)) {
-      auto alt = value + cost(v);
-      if (alt < distance[v]) {
-        distance[v] = alt;
-        queue.push(v);
-        cameFrom[v] = next;
+      for (auto &v : adjacent(next)) {
+        auto alt = value + cost(v);
+        if (alt < distance[v]) {
+          distance[v] = alt;
+          queue.push(v);
+          cameFrom[v] = next;
+        }
       }
     }
   }
@@ -188,24 +188,14 @@ public:
 private:
   Index dimensions;
   map<int> distance;
-  map<Index> cameFrom;
-  G adjacent;
-  H cost;
-};
 
-class AutoExplore {
 public:
-  AutoExplore(flecs::entity map, const GameMap &gamemap)
-      : gamemap(gamemap), cost({gamemap.getWidth(), gamemap.getHeight()}, 0),
-        mapEntity(map) {};
-
-  Index run(Index start);
+  map<Index> cameFrom;
 
 private:
-  static constexpr auto Infinity = 1 << 30;
-  const GameMap &gamemap;
-  map<int> cost;
-  flecs::entity mapEntity;
+  F start;
+  G adjacent;
+  H cost;
 };
 
 } // namespace pathfinding

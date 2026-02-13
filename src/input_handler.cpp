@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <array>
 #include <cassert>
+#include <cstdlib>
 #include <cstring>
 #include <memory>
 #include <optional>
@@ -18,6 +19,7 @@
 #include "inventory.hpp"
 #include "level.hpp"
 #include "message_log.hpp"
+#include "pathfinding.hpp"
 #include "render_functions.hpp"
 #include "textBox.hpp"
 
@@ -783,12 +785,69 @@ void AutoMove::on_render(flecs::world ecs, tcod::Console &console) {
 void AutoExplore::on_render(flecs::world ecs, tcod::Console &console) {
   auto player = ecs.entity("player");
   auto pos = player.get<Position>();
-  auto xy = ae.run(pos);
-  if (pos == xy) {
+  auto &gameMap = map.get<GameMap>();
+  auto dij = pathfinding::Dijkstra(
+      {gameMap.getWidth(), gameMap.getHeight()},
+      [&](auto xy) {
+        if (!gameMap.isExplored(xy))
+          return true;
+        if (map.world()
+                .query_builder<const Position>()
+                .with<Item>()
+                .with(flecs::ChildOf, map)
+                .build()
+                .find([&](auto p) { return p == xy; })) {
+          return true;
+        }
+        return false;
+      },
+      [&](auto &xy) {
+        auto ret = std::vector<pathfinding::Index>();
+        ret.reserve(9); // 8 directions plus a portal
+        for (auto &dir : directions) {
+          auto next = pathfinding::Index{xy[0] + dir[0], xy[1] + dir[1]};
+          if (gameMap.inBounds(next) && gameMap.isWalkable(next)) {
+            ret.push_back(next);
+          } else if (map.world()
+                         .query_builder<const Position>()
+                         .with<Openable>()
+                         .with(flecs::ChildOf, map)
+                         .build()
+                         .find([next](auto &p) { return p == next; })) {
+            ret.push_back(next);
+          }
+        }
+        flecs::entity e = ecs.query_builder<const Position>()
+                              .with(ecs.component<Portal>(), flecs::Wildcard)
+                              .with(flecs::ChildOf, map)
+                              .build()
+                              .find([xy](auto &p) { return p == xy; });
+        if (e) {
+          ret.push_back(e.target<Portal>().get<Position>());
+        }
+        return ret;
+      },
+      [&](auto xy) {
+        if (ecs.query_builder<const Position>()
+                .with<Openable>()
+                .with(flecs::ChildOf, map)
+                .build()
+                .find([xy](auto &p) { return p == xy; })) {
+          if (!gameMap.isWalkable(xy)) {
+            return 2;
+          }
+        }
+        return 1;
+      });
+  dij.scan();
+  auto xy = dij.cameFrom[pos];
+  if (!gameMap.inBounds(xy)) {
     MainHandler::on_render(ecs, console);
     make<MainGameInputHandler>(ecs);
     return;
   }
+  assert(std::abs(xy[0] - pos.x) <= 1);
+  assert(std::abs(xy[1] - pos.y) <= 1);
   std::unique_ptr<Action> act =
       std::make_unique<BumpAction>(xy[0] - pos.x, xy[1] - pos.y, 1);
   auto ret = handle_action(ecs, std::move(act));
@@ -826,8 +885,8 @@ void PathFinder::on_render(flecs::world ecs, tcod::Console &console) {
     AutoMove::on_render(ecs, console);
     if (!ret) {
       assert(ret.type == ActionResultType::Failure);
-      // Verify that we haven't already replaced the current inputHanf=dler and
-      // freed this.
+      // Verify that we haven't already replaced the current inputHanf=dler
+      // and freed this.
       if (this == ecs.get<std::unique_ptr<InputHandler>>().get()) {
         make<MainGameInputHandler>(ecs);
       }
