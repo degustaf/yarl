@@ -386,13 +386,13 @@ struct AutoMove : MainAnimation {
 
 struct AutoExplore : AutoMove {
   AutoExplore(flecs::entity map, const InputHandler &handler)
-      : AutoMove(handler), ae(map, map.get<GameMap>()) {};
+      : AutoMove(handler), map(map) {};
 
   virtual ~AutoExplore() = default;
 
   virtual void on_render(flecs::world, Console &) override;
 
-  pathfinding::AutoExplore ae;
+  flecs::entity map;
 };
 
 struct PathFinder : AutoMove {
