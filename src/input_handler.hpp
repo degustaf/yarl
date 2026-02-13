@@ -397,21 +397,11 @@ struct AutoExplore : AutoMove {
 
 struct PathFinder : AutoMove {
   PathFinder(flecs::entity map, std::array<int, 2> orig,
-             std::array<int, 2> dest, const InputHandler &handler)
-      : AutoMove(handler) {
-    auto &gameMap = map.get<GameMap>();
-    pathCallback = std::make_unique<PathCallback>(map);
-    path = std::make_unique<TCODPath>(gameMap.getWidth(), gameMap.getHeight(),
-                                      pathCallback.get(), nullptr);
-    path->compute(orig[0], orig[1], dest[0], dest[1]);
-  }
-
+             std::array<int, 2> dest, const InputHandler &handler);
   virtual ~PathFinder() = default;
-
   virtual void on_render(flecs::world, Console &) override;
 
-  std::unique_ptr<PathCallback> pathCallback = nullptr;
-  std::unique_ptr<TCODPath> path = nullptr;
+  std::vector<std::array<int, 2>> path;
 };
 
 template <bool useRope> struct JumpConfirm : AskUserInputHandler {
