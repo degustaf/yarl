@@ -864,18 +864,58 @@ void AutoExplore::on_render(flecs::world ecs, tcod::Console &console) {
   }
 }
 
+PathFinder::PathFinder(flecs::entity map, std::array<int, 2> orig,
+                       std::array<int, 2> dest, const InputHandler &handler)
+    : AutoMove(handler) {
+  auto &gameMap = map.get<GameMap>();
+  auto ecs = map.world();
+  auto dij = pathfinding::Dijkstra(
+      {gameMap.getWidth(), gameMap.getHeight()},
+      [=](auto xy) { return orig == xy; },
+      [&](auto &xy) {
+        auto ret = std::vector<pathfinding::Index>();
+        ret.reserve(9); // 8 directions plus a portal
+        for (auto &dir : directions) {
+          auto next = pathfinding::Index{xy[0] + dir[0], xy[1] + dir[1]};
+          if (gameMap.inBounds(next) && gameMap.isExplored(next) &&
+              gameMap.isWalkable(next)) {
+            ret.push_back(next);
+          }
+        }
+        flecs::entity e = ecs.query_builder<Position>()
+                              .with(ecs.component<Portal>(), flecs::Wildcard)
+                              .with(flecs::ChildOf, map)
+                              .build()
+                              .find([xy](auto &p) { return p == xy; });
+        if (e) {
+          ret.push_back(e.target<Portal>().get<Position>());
+        }
+        return ret;
+      },
+      [&](auto xy) {
+        if (ecs.query_builder<const Position>()
+                .with<Openable>()
+                .with(flecs::ChildOf, map)
+                .build()
+                .find([xy](auto &p) { return p == xy; })) {
+          if (!gameMap.isWalkable(xy)) {
+            return 2;
+          }
+        }
+        return 1;
+      });
+  dij.scan();
+  path = pathfinding::constructPath(orig, dest, dij.cameFrom);
+}
+
 void PathFinder::on_render(flecs::world ecs, tcod::Console &console) {
-  if (path->isEmpty()) {
+  if (path.empty()) {
     MainHandler::on_render(ecs, console);
     make<MainGameInputHandler>(ecs);
     return;
   }
-  int x, y;
-  if (!path->walk(&x, &y, true)) {
-    MainHandler::on_render(ecs, console);
-    make<MainGameInputHandler>(ecs);
-    return;
-  }
+  auto [x, y] = *path.rbegin();
+  path.pop_back();
   auto player = ecs.entity("player");
   auto pos = player.get<Position>();
   std::unique_ptr<Action> act =
