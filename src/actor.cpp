@@ -4,6 +4,7 @@
 #include <cassert>
 
 #include "ai.hpp"
+#include "color.hpp"
 #include "game_map.hpp"
 #include "input_handler.hpp"
 #include "inventory.hpp"
@@ -62,7 +63,7 @@ void Fighter::take_damage(int amount, flecs::entity self) {
 void Fighter::die(flecs::entity self) {
   auto &render = self.get_mut<Renderable>();
   render.ch = '%';
-  render.fg = color::RGB{191, 0, 0};
+  render.fg = color::guardsmanRed;
   render.layer = RenderOrder::Corpse;
   self.remove<BlocksMovement>();
 

@@ -8,6 +8,7 @@
 
 #include "actor.hpp"
 #include "ai.hpp"
+#include "color.hpp"
 #include "game_map.hpp"
 #include "input_handler.hpp"
 #include "inventory.hpp"
@@ -103,7 +104,7 @@ void Engine::new_game(flecs::world ecs, int map_width, int map_height) {
   ecs.entity("turn").set<Turn>({0});
   auto player = ecs.entity("player")
                     .set<Position>({0, 0})
-                    .set<Renderable>({'@', color::RGB{0, 0, 100}, std::nullopt,
+                    .set<Renderable>({'@', color::navyBlue, std::nullopt,
                                       RenderOrder::Actor})
                     .set<Named>({"Player"})
                     .emplace<Fighter>(10, 1, 2)

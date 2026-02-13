@@ -1,3 +1,4 @@
+#include "color.hpp"
 #define SDL_MAIN_USE_CALLBACKS
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
@@ -14,8 +15,6 @@
 #include "input_handler.hpp"
 #include "module.hpp"
 #include "renderer.hpp"
-
-static constexpr auto clear_color = color::RGBA{0, 0, 0, 255};
 
 SDL_AppResult SDL_AppInit(void **data, [[maybe_unused]] int argc,
                           [[maybe_unused]] char **argv) {
@@ -85,6 +84,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
   auto &data = ecs.get_mut<SDLData>();
   auto renderer = data.renderer();
   SDL_SetRenderTarget(renderer, nullptr);
+  constexpr auto clear_color = color::RGBA(color::black);
   SDL_SetRenderDrawColor(renderer, clear_color.r, clear_color.g, clear_color.b,
                          clear_color.a);
   SDL_RenderClear(renderer);

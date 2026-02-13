@@ -296,20 +296,19 @@ module::module(flecs::world ecs) {
 
   ecs.prefab("corpse")
       .set<Renderable>(
-          {'%', color::darkerRed, std::nullopt, RenderOrder::Actor})
+          {'%', color::guardsmanRed, std::nullopt, RenderOrder::Actor})
       .set<Named>({"Rotting corpse"})
       .set<Scent>({ScentType::decay, 1000});
 
   ecs.prefab("healthPotion")
       .set<Renderable>(
-          {'!', color::RGB{127, 0, 255}, std::nullopt, RenderOrder::Item})
+          {'!', color::electricViolet, std::nullopt, RenderOrder::Item})
       .set<Named>({"Vitamyn syringe"})
       .add<Item>()
       .set<HealingConsumable>({4});
 
   ecs.prefab("deodorant")
-      .set<Renderable>(
-          {'!', color::RGB{255, 50, 50}, std::nullopt, RenderOrder::Item})
+      .set<Renderable>({'!', color::redOrange, std::nullopt, RenderOrder::Item})
       .set<Named>({"Deodorant"})
       .add<Item>()
       .set<DeodorantConsumable>({25});
@@ -323,7 +322,7 @@ module::module(flecs::world ecs) {
 
   ecs.prefab("confusionScroll")
       .set<Renderable>(
-          {'~', color::RGB{207, 63, 255}, std::nullopt, RenderOrder::Item})
+          {'~', color::heliotrope, std::nullopt, RenderOrder::Item})
       .set<Named>({"Confusion Scroll"})
       .add<Item>()
       .add<Flammable>()
@@ -366,36 +365,34 @@ module::module(flecs::world ecs) {
       .add<RopeConsumable>();
 
   ecs.prefab("dagger")
-      .set<Renderable>(
-          {'/', color::RGB{0, 191, 255}, std::nullopt, RenderOrder::Item})
+      .set<Renderable>({'/', color::cerulean, std::nullopt, RenderOrder::Item})
       .set<Named>({"Dagger"})
       .add<Item>()
       .set<Equippable>({EquipmentType::Weapon, 2, 0});
 
   ecs.prefab("sword")
-      .set<Renderable>(
-          {'/', color::RGB{0, 191, 255}, std::nullopt, RenderOrder::Item})
+      .set<Renderable>({'/', color::cerulean, std::nullopt, RenderOrder::Item})
       .set<Named>({"Sword"})
       .add<Item>()
       .set<Equippable>({EquipmentType::Weapon, 4, 0});
 
   ecs.prefab("leatherArmor")
       .set<Renderable>(
-          {'[', color::RGB{139, 69, 19}, std::nullopt, RenderOrder::Item})
+          {'[', color::copperCanyon, std::nullopt, RenderOrder::Item})
       .set<Named>({"Leather armor"})
       .add<Item>()
       .set<Equippable>({EquipmentType::Armor, 0, 1});
 
   ecs.prefab("chainMail")
       .set<Renderable>(
-          {'[', color::RGB{139, 69, 19}, std::nullopt, RenderOrder::Item})
+          {'[', color::copperCanyon, std::nullopt, RenderOrder::Item})
       .set<Named>({"Chain mail"})
       .add<Item>()
       .set<Equippable>({EquipmentType::Armor, 0, 3});
 
   ecs.prefab("22")
       .set<Renderable>(
-          {0x2310, color::RGB{0, 191, 255}, std::nullopt, RenderOrder::Item})
+          {0x2310, color::cerulean, std::nullopt, RenderOrder::Item})
       .set<Named>({".22"})
       .add<Item>()
       .set<Ranged>({8})
@@ -403,7 +400,7 @@ module::module(flecs::world ecs) {
 
   ecs.prefab("45")
       .set<Renderable>(
-          {0x2310, color::RGB{0, 191, 255}, std::nullopt, RenderOrder::Item})
+          {0x2310, color::cerulean, std::nullopt, RenderOrder::Item})
       .set<Named>({".45"})
       .add<Item>()
       .set<Ranged>({8})
@@ -411,7 +408,7 @@ module::module(flecs::world ecs) {
 
   ecs.prefab("taser")
       .set<Renderable>(
-          {0x2310, color::RGB{0, 191, 255}, std::nullopt, RenderOrder::Item})
+          {0x2310, color::cerulean, std::nullopt, RenderOrder::Item})
       .set<Named>({"taser"})
       .add<Item>()
       .set<Taser>({3})
@@ -426,7 +423,7 @@ module::module(flecs::world ecs) {
 
   ecs.prefab("door")
       .set<Renderable>(
-          {'+', color::black, color::darkerRed, RenderOrder::Actor, false})
+          {'+', color::black, color::darkred, RenderOrder::Actor, false})
       .set<Named>({"door"})
       .add<Openable>();
 
