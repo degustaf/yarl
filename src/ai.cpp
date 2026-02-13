@@ -27,13 +27,42 @@ std::unique_ptr<Action> HostileAi::act(flecs::entity self) {
       return std::make_unique<MeleeAction>(dx, dy);
     }
 
-    auto cost =
-        pathfinding::map<int>::constructCost(mapEntity, 1, 10, 2, INT_MAX);
-    path = pathfinding::aStar(cost, pos, target,
-                              [&](const std::array<int, 2> &xy) {
-                                return std::max(std::abs(xy[0] - target.x),
-                                                std::abs(xy[1] - target.y));
-                              });
+    auto dij = pathfinding::Dijkstra(
+        {map.getWidth(), map.getHeight()},
+        [=](auto xy) { return target == xy; },
+        [&](auto &xy) {
+          auto ret = std::vector<pathfinding::Index>();
+          ret.reserve(9); // 8 directions plus a portal
+          for (auto &dir : directions) {
+            auto next = pathfinding::Index{xy[0] + dir[0], xy[1] + dir[1]};
+            if (map.inBounds(next) && map.isWalkable(next)) {
+              ret.push_back(next);
+            }
+          }
+          flecs::entity e = ecs.query_builder<Position>()
+                                .with(ecs.component<Portal>(), flecs::Wildcard)
+                                .with(flecs::ChildOf, mapEntity)
+                                .build()
+                                .find([xy](auto &p) { return p == xy; });
+          if (e) {
+            ret.push_back(e.target<Portal>().get<Position>());
+          }
+          return ret;
+        },
+        [&](auto xy) {
+          if (ecs.query_builder<const Position>()
+                  .with<Openable>()
+                  .with(flecs::ChildOf, mapEntity)
+                  .build()
+                  .find([xy](auto &p) { return p == xy; })) {
+            if (!map.isWalkable(xy)) {
+              return 2;
+            }
+          }
+          return 1;
+        });
+    dij.scan();
+    path = pathfinding::constructPath(target, pos, dij.cameFrom);
   }
 
   if (path.size() > 0) {

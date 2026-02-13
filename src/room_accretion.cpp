@@ -625,7 +625,18 @@ void roomAccretion::generateDungeon(flecs::entity map, GameMap &dungeon,
         }
         return ret;
       },
-      [](auto) { return 1; });
+      [&](auto xy) {
+        if (ecs.query_builder<const Position>()
+                .with<Openable>()
+                .with(flecs::ChildOf, map)
+                .build()
+                .find([xy](auto &p) { return p == xy; })) {
+          if (!dungeon.isWalkable(xy)) {
+            return 2;
+          }
+        }
+        return 1;
+      });
 
   dij.scan();
 }
