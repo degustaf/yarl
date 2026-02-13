@@ -2,9 +2,9 @@
 
 #include <array>
 #include <memory>
+#include <vector>
 
 #include <flecs.h>
-#include <vector>
 
 #include "action.hpp"
 
@@ -26,7 +26,7 @@ struct HostileAi : Ai {
 };
 
 struct ConfusedAi : Ai {
-  ConfusedAi(int turns_remaining) : turns_remaining(turns_remaining){};
+  ConfusedAi(int turns_remaining) : turns_remaining(turns_remaining) {};
   virtual std::unique_ptr<Action> act(flecs::entity self) override;
   virtual ~ConfusedAi() = default;
 
