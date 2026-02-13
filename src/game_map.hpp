@@ -140,12 +140,3 @@ private:
 
 void computeFov(flecs::entity mapEntity, GameMap &map,
                 std::array<int, 2> origin, int maxRadius);
-
-struct PathCallback : ITCODPathCallback {
-  PathCallback(flecs::entity map) : map(map) {};
-
-  virtual float getWalkCost(int xFrom, int yFrom, int xTo, int yTo,
-                            void *) const override;
-
-  flecs::entity map;
-};

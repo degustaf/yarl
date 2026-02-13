@@ -229,10 +229,25 @@ static void addLoops(int width, int height, GameMap &map, TCODRandom &rng,
     }
 
     if (addLoop) {
-      auto path = map.path();
-      path.compute(x1, y1, x2, y2);
-      if (path.size() > MIN_LOOP_DISTANCE) {
+      auto dij = pathfinding::Dijkstra(
+          {map.getWidth(), map.getHeight()},
+          [=](auto xy) { return xy[0] == x1 && xy[1] == y1; },
+          [&](auto &xy) {
+            auto ret = std::vector<pathfinding::Index>();
+            ret.reserve(8);
+            for (auto &dir : directions) {
+              auto next = pathfinding::Index{xy[0] + dir[0], xy[1] + dir[1]};
+              if (map.inBounds(next) && map.isWalkable(next)) {
+                ret.push_back(next);
+              }
+            }
+            return ret;
+          },
+          [&](auto) { return 1; });
+      dij.scan();
 
+      auto path = pathfinding::constructPath({x1, y1}, {x2, y2}, dij.cameFrom);
+      if (path.size() > MIN_LOOP_DISTANCE) {
         for (auto i = 0; i < length; i++) {
           map.carveOut(x + i * dx, y + i * dy);
         }
