@@ -72,7 +72,7 @@ SDL_AppResult SDL_AppInit(void **data, [[maybe_unused]] int argc,
 SDL_AppResult SDL_AppIterate(void *appstate) {
   auto ecs = *static_cast<flecs::world *>(appstate);
   auto &console = ecs.get_mut<tcod::Console>();
-  console.clear();
+  console.clear({' ', color::white, color::black});
 
   auto &handler = ecs.get_mut<std::unique_ptr<InputHandler>>();
   handler->animate(ecs, SDL_GetTicks());

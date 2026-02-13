@@ -28,7 +28,7 @@ static constexpr auto COMMAND_MENU_HEIGHT = 28;
 
 static tcod::Console buildCommandMenu(void) {
   auto con = tcod::Console(COMMAND_MENU_WIDTH, COMMAND_MENU_HEIGHT);
-  con.clear();
+  con.clear({' ', color::white, color::black});
   tcod::draw_frame(con, {0, 0, COMMAND_MENU_WIDTH, COMMAND_MENU_HEIGHT},
                    DECORATION, color::menu_border, std::nullopt);
 
