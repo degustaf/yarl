@@ -1,6 +1,7 @@
 #include "ai.hpp"
 
 #include <algorithm>
+#include <cassert>
 #include <cstdlib>
 #include <memory>
 
@@ -98,4 +99,61 @@ std::unique_ptr<Action> ConfusedAi::act(flecs::entity self) {
   auto dxy = directions[idx];
   turns_remaining--;
   return std::make_unique<BumpAction>(dxy[0], dxy[1], 1);
+}
+
+std::unique_ptr<Action> FleeAi::act(flecs::entity self) {
+  auto ecs = self.world();
+  auto player = ecs.lookup("player");
+  auto &playerPos = player.get<Position>();
+  auto mapEntity = ecs.lookup("currentMap").target<CurrentMap>();
+  const auto &map = mapEntity.get<GameMap>();
+
+  auto dij = pathfinding::Dijkstra(
+      {map.getWidth(), map.getHeight()},
+      [=](auto xy) { return playerPos == xy; },
+      [&](auto &xy) {
+        auto ret = std::vector<pathfinding::Index>();
+        ret.reserve(9); // 8 directions plus a portal
+        for (auto &dir : directions) {
+          auto next = pathfinding::Index{xy[0] + dir[0], xy[1] + dir[1]};
+          if (map.inBounds(next) && map.isWalkable(next)) {
+            ret.push_back(next);
+          } else if (ecs.query_builder<const Position>()
+                         .with<Openable>()
+                         .with(flecs::ChildOf, mapEntity)
+                         .build()
+                         .find([next](auto &p) { return p == next; })) {
+            ret.push_back(next);
+          }
+        }
+        flecs::entity e = ecs.query_builder<Position>()
+                              .with(ecs.component<Portal>(), flecs::Wildcard)
+                              .with(flecs::ChildOf, mapEntity)
+                              .build()
+                              .find([xy](auto &p) { return p == xy; });
+        if (e) {
+          ret.push_back(e.target<Portal>().get<Position>());
+        }
+        return ret;
+      },
+      [&](auto xy) {
+        if (ecs.query_builder<const Position>()
+                .with<Openable>()
+                .with(flecs::ChildOf, mapEntity)
+                .build()
+                .find([xy](auto &p) { return p == xy; })) {
+          if (!map.isWalkable(xy)) {
+            return 2;
+          }
+        }
+        return 1;
+      });
+  dij.scan();
+  dij *= -1.2f;
+  dij.rescan();
+  auto pos = self.get<Position>();
+  auto xy = dij.cameFrom[pos];
+  assert(xy[0] >= 0);
+  assert(xy[1] >= 0);
+  return std::make_unique<MoveAction>(xy[0] - pos.x, xy[1] - pos.y);
 }

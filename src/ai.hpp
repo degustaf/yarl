@@ -32,3 +32,8 @@ struct ConfusedAi : Ai {
 
   int turns_remaining;
 };
+
+struct FleeAi : Ai {
+  virtual std::unique_ptr<Action> act(flecs::entity self);
+  virtual ~FleeAi() = default;
+};
