@@ -63,7 +63,7 @@ void Fighter::take_damage(int amount, flecs::entity self) {
 void Fighter::die(flecs::entity self) {
   auto &render = self.get_mut<Renderable>();
   render.ch = '%';
-  render.fg = color::guardsmanRed;
+  render.fg = color::blood;
   render.layer = RenderOrder::Corpse;
   self.remove<BlocksMovement>();
 

@@ -15,7 +15,7 @@ struct Message {
 };
 
 struct MessageLog {
-  void addMessage(const std::string &text, color::RGB fg = color::white,
+  void addMessage(const std::string &text, color::RGB fg = color::text,
                   bool stack = true);
   size_t size(void) const { return messages.size(); };
   void render(Console &console, int x, int y, int width, int height) const;

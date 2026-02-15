@@ -13,6 +13,7 @@
 
 #include "action.hpp"
 #include "actor.hpp"
+#include "color.hpp"
 #include "command.hpp"
 #include "console.hpp"
 #include "game_map.hpp"
@@ -328,7 +329,7 @@ template <bool useF> struct SelectInputHandler : AskUserInputHandler {
   virtual void on_render(flecs::world ecs, Console &console) override {
     AskUserInputHandler::on_render(ecs, console);
     auto &tile = console.at(mouse_loc);
-    tile.bg = color::white;
+    tile.bg = color::text;
   }
 
   virtual std::unique_ptr<Action> loc_selected(flecs::world ecs,
@@ -437,16 +438,16 @@ template <bool useRope> struct JumpConfirm : AskUserInputHandler {
     if (useRope) {
       console.print({console.get_width() / 2, console.get_height() / 2},
                     "Are you sure you want to climb into the chasm?",
-                    color::white, color::black, Console::Alignment::CENTER);
+                    color::text, color::background, Console::Alignment::CENTER);
       console.print({console.get_width() / 2, console.get_height() / 2 + 2},
-                    "(Y)es     (N)o     (J)ump", color::red, color::black,
+                    "(Y)es     (N)o     (J)ump", color::jump, color::background,
                     Console::Alignment::CENTER);
     } else {
       console.print({console.get_width() / 2, console.get_height() / 2},
                     "Are you sure you want to jump into the chasm?",
-                    color::white, color::black, Console::Alignment::CENTER);
+                    color::text, color::background, Console::Alignment::CENTER);
       console.print({console.get_width() / 2, console.get_height() / 2 + 2},
-                    "(Y)es     (N)o", color::red, color::black,
+                    "(Y)es     (N)o", color::jump, color::background,
                     Console::Alignment::CENTER);
     }
   }

@@ -31,19 +31,19 @@ void renderSmell(Console &console, flecs::entity player, int x, int y,
   auto bg = [](auto scent) {
     switch (scent.type) {
     case ScentType::player:
-      return scent.power < 25.0f   ? color::green
-             : scent.power < 50.0f ? color::yellow
-             : scent.power < 75.0f ? color::orange
-                                   : color::red;
+      return scent.power < 25.0f   ? color::go
+             : scent.power < 50.0f ? color::caution
+             : scent.power < 75.0f ? color::extraCaution
+                                   : color::stop;
     case ScentType::fiend:
     case ScentType::decay:
-      return color::brown;
+      return color::dung;
     case ScentType::none:
     case ScentType::MAX:
       break;
     }
     assert(false);
-    return color::white;
+    return color::text;
   }(scent);
   auto bar_width =
       std::min((int)((scent.power * (float)totalWidth) / 100.0f), totalWidth);
@@ -55,9 +55,9 @@ void renderSmell(Console &console, flecs::entity player, int x, int y,
 
   auto msg = stringf("Scent: %d", (int)scent.power);
   console.print({x + 1, y}, msg, color::barText, std::nullopt);
-  if (bg == color::yellow) {
+  if (bg == color::caution) {
     for (x++; x < bar_width; x++) {
-      console.at({x, y}).fg = color::black;
+      console.at({x, y}).fg = color::background;
     }
   }
 }
@@ -98,7 +98,8 @@ void renderNamesAtMouseLocation(Console &console, const std::array<int, 2> &xy,
 }
 
 void renderCommandButton(Console &console, const std::array<int, 4> &xywh) {
-  console.draw_frame(xywh, DECORATION, color::menu_border, color::darkGrey);
+  console.draw_frame(xywh, DECORATION, color::menu_border,
+                     color::menu_background);
   auto key = *SDL_GetKeyName(
       SDL_GetKeyFromScancode(SDL_SCANCODE_C, SDL_KMOD_NONE, true));
   auto str = key == 'C' ? "(C)ommands" : tcod::stringf("(%c)Commands", key);

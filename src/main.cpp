@@ -84,7 +84,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
   auto &data = ecs.get_mut<SDLData>();
   auto renderer = data.renderer();
   SDL_SetRenderTarget(renderer, nullptr);
-  constexpr auto clear_color = color::RGBA(color::black);
+  constexpr auto clear_color = color::RGBA(color::background);
   SDL_SetRenderDrawColor(renderer, clear_color.r, clear_color.g, clear_color.b,
                          clear_color.a);
   SDL_RenderClear(renderer);

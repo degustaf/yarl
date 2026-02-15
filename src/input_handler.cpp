@@ -36,23 +36,23 @@ static Console buildCommandMenu(void) {
   con.draw_frame({0, 0, COMMAND_MENU_WIDTH, COMMAND_MENU_HEIGHT}, DECORATION,
                  color::menu_border, std::nullopt);
 
-  con.print({COMMAND_MENU_WIDTH / 2 - 4, 1}, "Commands", color::white,
+  con.print({COMMAND_MENU_WIDTH / 2 - 4, 1}, "Commands", color::text,
             std::nullopt);
 
   // vim directions
-  con.print({2, 3}, "y k u", color::white, std::nullopt);
-  con.print({2, 4}, " \\|/ ", color::white, std::nullopt);
-  con.print({2, 5}, "h-*-l", color::white, std::nullopt);
-  con.print({2, 6}, " /|\\ ", color::white, std::nullopt);
-  con.print({2, 7}, "b j n", color::white, std::nullopt);
+  con.print({2, 3}, "y k u", color::text, std::nullopt);
+  con.print({2, 4}, " \\|/ ", color::text, std::nullopt);
+  con.print({2, 5}, "h-*-l", color::text, std::nullopt);
+  con.print({2, 6}, " /|\\ ", color::text, std::nullopt);
+  con.print({2, 7}, "b j n", color::text, std::nullopt);
 
   // numpad directions.
-  con.print({10, 2}, "numpad", color::white, std::nullopt);
-  con.print({10, 3}, "7 8 9", color::white, std::nullopt);
-  con.print({10, 4}, " \\|/", color::white, std::nullopt);
-  con.print({10, 5}, "4-*-6", color::white, std::nullopt);
-  con.print({10, 6}, " /|\\", color::white, std::nullopt);
-  con.print({10, 7}, "1 2 3", color::white, std::nullopt);
+  con.print({10, 2}, "numpad", color::text, std::nullopt);
+  con.print({10, 3}, "7 8 9", color::text, std::nullopt);
+  con.print({10, 4}, " \\|/", color::text, std::nullopt);
+  con.print({10, 5}, "4-*-6", color::text, std::nullopt);
+  con.print({10, 6}, " /|\\", color::text, std::nullopt);
+  con.print({10, 7}, "1 2 3", color::text, std::nullopt);
 
   auto y = 9;
 
@@ -68,51 +68,51 @@ static Console buildCommandMenu(void) {
     case CommandType::UL: {
       auto buffer = stringf("%s", SDL_GetKeyName(SDL_GetKeyFromScancode(
                                       cmd.first, SDL_KMOD_NONE, true)));
-      con.print({2, 3}, buffer, color::white, std::nullopt);
+      con.print({2, 3}, buffer, color::text, std::nullopt);
       break;
     }
     case CommandType::UP: {
       auto buffer = stringf("%s", SDL_GetKeyName(SDL_GetKeyFromScancode(
                                       cmd.first, SDL_KMOD_NONE, true)));
-      con.print({4, 3}, buffer, color::white, std::nullopt);
+      con.print({4, 3}, buffer, color::text, std::nullopt);
       break;
     }
     case CommandType::UR: {
       auto buffer = stringf("%s", SDL_GetKeyName(SDL_GetKeyFromScancode(
                                       cmd.first, SDL_KMOD_NONE, true)));
-      con.print({6, 3}, buffer, color::white, std::nullopt);
+      con.print({6, 3}, buffer, color::text, std::nullopt);
       break;
     }
 
     case CommandType::LEFT: {
       auto buffer = stringf("%s", SDL_GetKeyName(SDL_GetKeyFromScancode(
                                       cmd.first, SDL_KMOD_NONE, true)));
-      con.print({2, 5}, buffer, color::white, std::nullopt);
+      con.print({2, 5}, buffer, color::text, std::nullopt);
       break;
     }
     case CommandType::RIGHT: {
       auto buffer = stringf("%s", SDL_GetKeyName(SDL_GetKeyFromScancode(
                                       cmd.first, SDL_KMOD_NONE, true)));
-      con.print({6, 5}, buffer, color::white, std::nullopt);
+      con.print({6, 5}, buffer, color::text, std::nullopt);
       break;
     }
 
     case CommandType::DL: {
       auto buffer = stringf("%s", SDL_GetKeyName(SDL_GetKeyFromScancode(
                                       cmd.first, SDL_KMOD_NONE, true)));
-      con.print({2, 7}, buffer, color::white, std::nullopt);
+      con.print({2, 7}, buffer, color::text, std::nullopt);
       break;
     }
     case CommandType::DOWN: {
       auto buffer = stringf("%s", SDL_GetKeyName(SDL_GetKeyFromScancode(
                                       cmd.first, SDL_KMOD_NONE, true)));
-      con.print({4, 7}, buffer, color::white, std::nullopt);
+      con.print({4, 7}, buffer, color::text, std::nullopt);
       break;
     }
     case CommandType::DR: {
       auto buffer = stringf("%s", SDL_GetKeyName(SDL_GetKeyFromScancode(
                                       cmd.first, SDL_KMOD_NONE, true)));
-      con.print({6, 7}, buffer, color::white, std::nullopt);
+      con.print({6, 7}, buffer, color::text, std::nullopt);
       break;
     }
 
@@ -121,7 +121,7 @@ static Console buildCommandMenu(void) {
                             SDL_GetKeyName(SDL_GetKeyFromScancode(
                                 cmd.first, SDL_KMOD_NONE, true)),
                             CommandTypeDescription(cmd.second));
-      con.print({2, y}, buffer, color::white, std::nullopt);
+      con.print({2, y}, buffer, color::text, std::nullopt);
       y++;
     }
     }
@@ -239,7 +239,8 @@ void MainMenuInputHandler::on_render(flecs::world, Console &console) {
   for (auto i = 0; i < (int)choices.size(); i++) {
     auto str = i == idx ? stringf("\u2020 %s", choices[i]) : choices[i];
     console.print({printY, console.get_height() / 2 - 2 + i}, str,
-                  color::menu_text, color::black, Console::Alignment::CENTER);
+                  color::menu_text, color::background,
+                  Console::Alignment::CENTER);
   }
 }
 
@@ -291,7 +292,7 @@ void KeybindMenu::on_render(flecs::world ecs, Console &console) {
         "%-25s: %s", CommandTypeDescription(Command::mapping[key]),
         SDL_GetKeyName(SDL_GetKeyFromScancode(key, SDL_KMOD_NONE, true)));
     console.print({frameX + 2, frameY + y + 2}, buffer,
-                  y == idx ? color::black : color::white,
+                  y == idx ? color::background : color::text,
                   y == idx ? std::optional(color::menu_border) : std::nullopt);
     y++;
   }
@@ -446,10 +447,10 @@ ActionResult MainHandler::handle_action(flecs::world ecs,
       if (!warning.warned) {
         auto f = [](auto, auto &c) {
           c.print({c.get_width() / 2, c.get_height() / 2 - 1}, "Be careful...",
-                  color::red, color::black, Console::Alignment::CENTER);
+                  color::blood, color::background, Console::Alignment::CENTER);
           c.print({c.get_width() / 2, c.get_height() / 2 + 1},
-                  "The Fiend can track you by your scent.", color::white,
-                  color::black, Console::Alignment::CENTER);
+                  "The Fiend can track you by your scent.", color::text,
+                  color::background, Console::Alignment::CENTER);
         };
         ecs.set<std::unique_ptr<InputHandler>>(
             std::make_unique<
@@ -670,7 +671,7 @@ void InventoryInputHandler::on_render(flecs::world ecs, Console &console) {
   auto x = menuXLocation(ecs.lookup("player"));
 
   console.draw_frame({x, 0, (int)title.size(), std::max(count + 2, 3)},
-                     DECORATION, color::white, color::black);
+                     DECORATION, color::text, color::background);
   console.print_rect({x, 0, (int)title.size(), 1}, title);
   if (count > 0) {
     auto player = ecs.lookup("player");
@@ -734,7 +735,7 @@ void LevelupHandler::on_render(flecs::world ecs, Console &console) {
   AskUserInputHandler::on_render(ecs, console);
   auto player = ecs.lookup("player");
   auto x = menuXLocation(player);
-  console.draw_frame({x, 0, 35, 8}, DECORATION, color::white, color::black);
+  console.draw_frame({x, 0, 35, 8}, DECORATION, color::text, color::background);
   console.print_rect({x, 0, 35, 1}, "Level Up");
   console.print({x + 1, 1}, "Congratulations! You level up!", std::nullopt,
                 std::nullopt);
@@ -808,8 +809,8 @@ void CharacterScreenInputHandler::on_render(flecs::world ecs,
   auto player = ecs.lookup("player");
   auto x = menuXLocation(player);
   auto title = std::string{"Character Information"};
-  console.draw_frame({x, 0, (int)title.size() + 4, 5}, DECORATION, color::white,
-                     color::black);
+  console.draw_frame({x, 0, (int)title.size() + 4, 5}, DECORATION, color::text,
+                     color::background);
   console.print_rect({x, 0, (int)title.size() + 4, 1}, title);
 
   // auto level = player.get<Level>();
@@ -845,7 +846,7 @@ void AreaTargetSelector::on_render(flecs::world ecs, Console &console) {
       auto dx = mouse_loc[0] - x;
       if (dx * dx + dy * dy <= radius * radius &&
           gm.isInFov(std::array<int, 2>{x, y})) {
-        console.at({x, y}).bg = color::red;
+        console.at({x, y}).bg = color::areaTarget;
       }
     }
   }
@@ -1061,7 +1062,7 @@ void WinScreen::animate(flecs::world ecs, uint64_t t) {
     break;
   }
   case 1: {
-    ecs.lookup("defeated").get_mut<CenterTextBox>().fg = color::white;
+    ecs.lookup("defeated").get_mut<CenterTextBox>().fg = color::text;
 
     auto e = ecs.lookup("win");
     if (e) {
@@ -1076,7 +1077,7 @@ void WinScreen::animate(flecs::world ecs, uint64_t t) {
     break;
   }
   case 2:
-    ecs.lookup("win").get_mut<CenterTextBox>().fg = color::white;
+    ecs.lookup("win").get_mut<CenterTextBox>().fg = color::text;
     break;
   case 5: {
     auto &tb = ecs.lookup("win").get_mut<CenterTextBox>();
@@ -1106,7 +1107,7 @@ void WinScreen::animate(flecs::world ecs, uint64_t t) {
     break;
   }
   case 8:
-    ecs.lookup("for now").get_mut<CenterTextBox>().fg = color::white;
+    ecs.lookup("for now").get_mut<CenterTextBox>().fg = color::text;
     break;
   default:
     auto rng = TCODRandom::getInstance();

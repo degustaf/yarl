@@ -513,14 +513,14 @@ static void addPortals(flecs::entity map, GameMap &dungeon, TCODRandom &rng) {
                 .add(flecs::ChildOf, map)
                 .add<BlocksFov>()
                 .set<Renderable>(
-                    {'A', color::red, std::nullopt, RenderOrder::Corpse});
+                    {'A', color::portal, std::nullopt, RenderOrder::Corpse});
   auto e2 = map.world()
                 .entity()
                 .add(flecs::ChildOf, map)
                 .add<Portal>(e1)
                 .add<BlocksFov>()
                 .set<Renderable>(
-                    {'A', color::red, std::nullopt, RenderOrder::Corpse});
+                    {'A', color::portal, std::nullopt, RenderOrder::Corpse});
   while (true) {
     auto x = rng.getInt(0, width - 1);
     auto y = rng.getInt(0, height - 1);

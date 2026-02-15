@@ -56,40 +56,41 @@ void GameMap::nextFloor(flecs::entity player) const {
 }
 
 static constexpr auto floor_light =
-    Console::Tile{'.', color::himalaya, color::roti};
+    Console::Tile{'.', color::lightFG, color::lightFloor};
 static constexpr auto floor_dark =
-    Console::Tile{'.', color::bunting, color::minsk};
+    Console::Tile{'.', color::darkFG, color::darkFloor};
 static constexpr auto floor_sensed =
-    Console::Tile{'.', color::darkerGrey, color::doveGrey};
+    Console::Tile{'.', color::sensedFG, color::sensedFloor};
 
 static constexpr auto bloody_floor_light =
-    Console::Tile{'.', color::red, color::oldGold};
+    Console::Tile{'.', color::blood, color::lightFloor};
 static constexpr auto bloody_floor_dark =
-    Console::Tile{'.', color::maroon, color::minsk};
+    Console::Tile{'.', color::blood, color::darkFloor};
 
 static constexpr auto wall_light =
-    Console::Tile{'#', color::black, color::pesto};
+    Console::Tile{'#', color::walls, color::lightWallbg};
 static constexpr auto wall_dark =
-    Console::Tile{'#', color::black, color::navyBlue};
+    Console::Tile{'#', color::walls, color::darkWallbg};
 
 static constexpr auto stairs_light =
-    Console::Tile{'>', color::white, color::oldGold};
+    Console::Tile{'>', color::stairs, color::lightFloor};
 static constexpr auto stairs_dark =
-    Console::Tile{'>', color::white, color::minsk};
+    Console::Tile{'>', color::stairs, color::darkFloor};
 static constexpr auto stairs_sensed =
-    Console::Tile{'>', color::white, color::doveGrey};
+    Console::Tile{'>', color::stairs, color::sensedFloor};
 
-static constexpr auto shroud = Console::Tile{' ', color::white, color::black};
+static constexpr auto shroud =
+    Console::Tile{' ', color::text, color::background};
 
 static constexpr auto water_light =
-    Console::Tile{'~', color::blue, color::blueRibbon};
+    Console::Tile{'~', color::water_fg, color::water_bg};
 static constexpr auto water_dark =
-    Console::Tile{'~', color::navyBlue, color::stratosBlue};
+    Console::Tile{'~', color::dark_water_fg, color::dark_water_bg};
 
 static constexpr auto chasm_light =
-    Console::Tile{0x2591, color::doveGrey, color::mineShaft};
+    Console::Tile{0x2591, color::chasmFG, color::chasm};
 static constexpr auto chasm_dark =
-    Console::Tile{0x2591, color::doveGrey, color::minsk};
+    Console::Tile{0x2591, color::chasmFG, color::darkFloor};
 
 void GameMap::render(Console &console, uint64_t time) {
   float vec[3] = {0, 0, (float)time / (1000.0f)};

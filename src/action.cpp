@@ -200,7 +200,7 @@ ActionResult BatheAction::perform(flecs::entity e) const {
     auto msg = std::string("You bathe and feel refreshingly clean.");
     if (TCODRandom::getInstance()->getInt(1, 3) == 1) {
       fountain.remove<Fountain>();
-      fountain.get_mut<Renderable>().fg = color::lightGrey;
+      fountain.get_mut<Renderable>().fg = color::dryFountain;
       msg += " The fountain dries up.";
     }
     return {ActionResultType::Success, msg, 0.0f};

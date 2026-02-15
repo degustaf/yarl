@@ -75,7 +75,8 @@ ActionResult LightningDamageConsumable::activate(flecs::entity item,
   ecs.entity()
       .set<Position>(tp)
       .set<MoveAnimation>({(float)consumerPos.x, (float)consumerPos.y, 0.05f})
-      .set<Renderable>({0x3df, color::yellow, std::nullopt, RenderOrder::Item})
+      .set<Renderable>(
+          {0x3df, color::lightning, std::nullopt, RenderOrder::Item})
       .add<DisappearOnHit>()
       .add(flecs::ChildOf, map);
 
@@ -218,7 +219,8 @@ FireballDamageConsumable::selected(flecs::entity item,
         .set<FPosition>(center)
         .set<Velocity>({2 * dx, 2 * dy})
         .set<RadialLimit>({center, (float)radius})
-        .set<Renderable>({0x2022, color::RGB{255, (uint8_t)(255 - 255 * r2), 0},
+        .set<Renderable>({0x2022,
+                          color::lerp(color::fireball, color::lightning, r2),
                           std::nullopt, RenderOrder::Actor, scale})
         .set<Fade>({0.25f, 0.3f})
         .add(flecs::ChildOf, map);
@@ -277,7 +279,7 @@ void TrackerConsumable<T>::render(Console &console, flecs::entity map) const {
   q.each([&](auto p, auto r) {
     if (!gMap.isInFov(p)) {
       r.render(console, p, true);
-      console.at(p).bg = color::neonGreen;
+      console.at(p).bg = color::sensed;
     }
   });
 }

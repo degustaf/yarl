@@ -19,7 +19,7 @@ struct ActionResult {
   ActionResultType type;
   std::string msg;
   float exertion;
-  color::RGB fg = color::white;
+  color::RGB fg = color::text;
 
   inline operator bool() {
     switch (type) {
@@ -156,7 +156,7 @@ struct TargetedItemAction : ItemAction {
 };
 
 struct MessageAction : Action {
-  MessageAction(std::string msg, color::RGB fg = color::white)
+  MessageAction(std::string msg, color::RGB fg = color::text)
       : msg(msg), fg(fg) {};
   std::string msg;
   color::RGB fg;
