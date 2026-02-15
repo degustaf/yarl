@@ -13,6 +13,7 @@
 
 #include "action.hpp"
 #include "actor.hpp"
+#include "color.hpp"
 #include "command.hpp"
 #include "game_map.hpp"
 #include "inventory.hpp"
@@ -306,7 +307,7 @@ template <bool useF> struct SelectInputHandler : AskUserInputHandler {
   virtual void on_render(flecs::world ecs, tcod::Console &console) override {
     MainHandler::on_render(ecs, console);
     auto &tile = console.at(mouse_loc);
-    tile.bg = color::white;
+    tile.bg = color::text;
   }
 
   virtual std::unique_ptr<Action> loc_selected(flecs::world ecs,
@@ -414,18 +415,19 @@ template <bool useRope> struct JumpConfirm : AskUserInputHandler {
 
     if (useRope) {
       tcod::print(console, {console.get_width() / 2, console.get_height() / 2},
-                  "Are you sure you want to climb into the chasm?",
-                  color::white, color::black, TCOD_CENTER);
-      tcod::print(
-          console, {console.get_width() / 2, console.get_height() / 2 + 2},
-          "(Y)es     (N)o     (J)ump", color::red, color::black, TCOD_CENTER);
-    } else {
-      tcod::print(console, {console.get_width() / 2, console.get_height() / 2},
-                  "Are you sure you want to jump into the chasm?", color::white,
-                  color::black, TCOD_CENTER);
+                  "Are you sure you want to climb into the chasm?", color::text,
+                  color::background, TCOD_CENTER);
       tcod::print(console,
                   {console.get_width() / 2, console.get_height() / 2 + 2},
-                  "(Y)es     (N)o", color::red, color::black, TCOD_CENTER);
+                  "(Y)es     (N)o     (J)ump", color::jump, color::background,
+                  TCOD_CENTER);
+    } else {
+      tcod::print(console, {console.get_width() / 2, console.get_height() / 2},
+                  "Are you sure you want to jump into the chasm?", color::text,
+                  color::background, TCOD_CENTER);
+      tcod::print(
+          console, {console.get_width() / 2, console.get_height() / 2 + 2},
+          "(Y)es     (N)o", color::jump, color::background, TCOD_CENTER);
     }
   }
 

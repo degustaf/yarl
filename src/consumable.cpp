@@ -245,7 +245,7 @@ void TrackerConsumable<T>::render(tcod::Console &console,
   q.each([&](auto p, auto r) {
     if (!gMap.isInFov(p)) {
       r.render(console, p, true);
-      console.at(p).bg = color::neonGreen;
+      console.at(p).bg = color::sensed;
     }
   });
 }

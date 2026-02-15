@@ -19,5 +19,5 @@ void BloodDrop::render(tcod::Console &console, int y_offset) const {
   auto &tile =
       console.at(console.get_width() / 2 + x_offset, y_offset + (int)integer);
   tile.ch = ch;
-  tile.fg = color::red;
+  tile.fg = color::blood;
 }

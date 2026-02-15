@@ -55,41 +55,41 @@ void GameMap::nextFloor(flecs::entity player) const {
 }
 
 static constexpr auto floor_light =
-    TCOD_ConsoleTile{'.', color::himalaya, color::roti};
+    TCOD_ConsoleTile{'.', color::lightFG, color::lightFloor};
 static constexpr auto floor_dark =
-    TCOD_ConsoleTile{'.', color::bunting, color::minsk};
+    TCOD_ConsoleTile{'.', color::darkFG, color::darkFloor};
 static constexpr auto floor_sensed =
-    TCOD_ConsoleTile{'.', color::darkerGrey, color::doveGrey};
+    TCOD_ConsoleTile{'.', color::sensedFG, color::sensedFloor};
 
 static constexpr auto bloody_floor_light =
-    TCOD_ConsoleTile{'.', color::red, color::oldGold};
+    TCOD_ConsoleTile{'.', color::blood, color::lightFloor};
 static constexpr auto bloody_floor_dark =
-    TCOD_ConsoleTile{'.', color::maroon, color::minsk};
+    TCOD_ConsoleTile{'.', color::blood, color::darkFloor};
 
 static constexpr auto wall_light =
-    TCOD_ConsoleTile{'#', color::black, color::pesto};
+    TCOD_ConsoleTile{'#', color::walls, color::lightWallbg};
 static constexpr auto wall_dark =
-    TCOD_ConsoleTile{'#', color::black, color::navyBlue};
+    TCOD_ConsoleTile{'#', color::walls, color::darkWallbg};
 
 static constexpr auto stairs_light =
-    TCOD_ConsoleTile{'>', color::white, color::oldGold};
+    TCOD_ConsoleTile{'>', color::stairs, color::lightFloor};
 static constexpr auto stairs_dark =
-    TCOD_ConsoleTile{'>', color::white, color::minsk};
+    TCOD_ConsoleTile{'>', color::stairs, color::darkFloor};
 static constexpr auto stairs_sensed =
-    TCOD_ConsoleTile{'>', color::white, color::doveGrey};
+    TCOD_ConsoleTile{'>', color::stairs, color::sensedFloor};
 
 static constexpr auto shroud =
-    TCOD_ConsoleTile{' ', color::white, color::black};
+    TCOD_ConsoleTile{' ', color::text, color::background};
 
 static constexpr auto water_light =
-    TCOD_ConsoleTile{'~', color::blue, color::blueRibbon};
+    TCOD_ConsoleTile{'~', color::water_fg, color::water_bg};
 static constexpr auto water_dark =
-    TCOD_ConsoleTile{'~', color::navyBlue, color::stratosBlue};
+    TCOD_ConsoleTile{'~', color::dark_water_fg, color::dark_water_bg};
 
 static constexpr auto chasm_light =
-    TCOD_ConsoleTile{0x2591, color::doveGrey, color::mineShaft};
+    TCOD_ConsoleTile{0x2591, color::chasmFG, color::chasm};
 static constexpr auto chasm_dark =
-    TCOD_ConsoleTile{0x2591, color::doveGrey, color::minsk};
+    TCOD_ConsoleTile{0x2591, color::chasmFG, color::darkFloor};
 
 void GameMap::render(tcod::Console &console, uint64_t time) {
   float vec[3] = {0, 0, (float)time / (1000.0f)};

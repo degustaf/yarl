@@ -60,7 +60,7 @@ bool Engine::load(flecs::world ecs, const std::filesystem::path &file_name,
   if (input.fail()) {
     auto f = [](auto, auto &c) {
       tcod::print(c, {c.get_width() / 2, c.get_height() / 2},
-                  "No saved game to load.", color::white, color::black,
+                  "No saved game to load.", color::text, color::background,
                   TCOD_CENTER);
     };
     makePopup<decltype(f)>(ecs, f, handler);
@@ -72,7 +72,7 @@ bool Engine::load(flecs::world ecs, const std::filesystem::path &file_name,
   if (ecs.from_json(buffer.str().c_str()) == nullptr) {
     auto f = [](auto, auto &c) {
       tcod::print(c, {c.get_width() / 2, c.get_height() / 2},
-                  "Failed to load save.", color::white, color::black,
+                  "Failed to load save.", color::text, color::background,
                   TCOD_CENTER);
     };
     makePopup<decltype(f)>(ecs, f, handler);
@@ -83,7 +83,7 @@ bool Engine::load(flecs::world ecs, const std::filesystem::path &file_name,
   if (currentmap == currentmap.null()) {
     auto f = [](auto, auto &c) {
       tcod::print(c, {c.get_width() / 2, c.get_height() / 2},
-                  "Failed to load save.", color::white, color::black,
+                  "Failed to load save.", color::text, color::background,
                   TCOD_CENTER);
     };
     makePopup<decltype(f)>(ecs, f, handler);

@@ -28,34 +28,34 @@ static constexpr auto COMMAND_MENU_HEIGHT = 28;
 
 static tcod::Console buildCommandMenu(void) {
   auto con = tcod::Console(COMMAND_MENU_WIDTH, COMMAND_MENU_HEIGHT);
-  con.clear({' ', color::white, color::black});
+  con.clear({' ', color::text, color::background});
   tcod::draw_frame(con, {0, 0, COMMAND_MENU_WIDTH, COMMAND_MENU_HEIGHT},
                    DECORATION, color::menu_border, std::nullopt);
 
-  tcod::print(con, {COMMAND_MENU_WIDTH / 2 - 4, 1}, "Commands", color::white,
+  tcod::print(con, {COMMAND_MENU_WIDTH / 2 - 4, 1}, "Commands", color::text,
               std::nullopt);
 
   // vim directions
-  tcod::print(con, {2, 3}, "y k u", color::white, std::nullopt);
-  tcod::print(con, {2, 4}, " \\|/ ", color::white, std::nullopt);
-  tcod::print(con, {2, 5}, "h-*-l", color::white, std::nullopt);
-  tcod::print(con, {2, 6}, " /|\\ ", color::white, std::nullopt);
-  tcod::print(con, {2, 7}, "b j n", color::white, std::nullopt);
+  tcod::print(con, {2, 3}, "y k u", color::text, std::nullopt);
+  tcod::print(con, {2, 4}, " \\|/ ", color::text, std::nullopt);
+  tcod::print(con, {2, 5}, "h-*-l", color::text, std::nullopt);
+  tcod::print(con, {2, 6}, " /|\\ ", color::text, std::nullopt);
+  tcod::print(con, {2, 7}, "b j n", color::text, std::nullopt);
 
   // numpad directions.
-  tcod::print(con, {10, 2}, "numpad", color::white, std::nullopt);
-  tcod::print(con, {10, 3}, "7 8 9", color::white, std::nullopt);
-  tcod::print(con, {10, 4}, " \\|/", color::white, std::nullopt);
-  tcod::print(con, {10, 5}, "4-*-6", color::white, std::nullopt);
-  tcod::print(con, {10, 6}, " /|\\", color::white, std::nullopt);
-  tcod::print(con, {10, 7}, "1 2 3", color::white, std::nullopt);
+  tcod::print(con, {10, 2}, "numpad", color::text, std::nullopt);
+  tcod::print(con, {10, 3}, "7 8 9", color::text, std::nullopt);
+  tcod::print(con, {10, 4}, " \\|/", color::text, std::nullopt);
+  tcod::print(con, {10, 5}, "4-*-6", color::text, std::nullopt);
+  tcod::print(con, {10, 6}, " /|\\", color::text, std::nullopt);
+  tcod::print(con, {10, 7}, "1 2 3", color::text, std::nullopt);
 
   auto y = 9;
 
-  // tcod::print(con, {2, y++}, "Hold <shift> to move 2 spaces", color::white,
-  //             std::nullopt);
-  // tcod::print(con, {2, y++}, "Hold <ctrl> to move 3 spaces", color::white,
-  //             std::nullopt);
+  // tcod::print(con, {2, y++}, "Hold <shift> to move 2 spaces", color::text,
+  // std::nullopt);
+  // tcod::print(con, {2, y++}, "Hold <ctrl> to move 3 spaces", color::text,
+  // std::nullopt);
   // y++;
 
   // Remappable commands
@@ -64,51 +64,51 @@ static tcod::Console buildCommandMenu(void) {
     case CommandType::UL: {
       auto buffer = tcod::stringf("%s", SDL_GetKeyName(SDL_GetKeyFromScancode(
                                             cmd.first, SDL_KMOD_NONE, true)));
-      tcod::print(con, {2, 3}, buffer, color::white, std::nullopt);
+      tcod::print(con, {2, 3}, buffer, color::text, std::nullopt);
       break;
     }
     case CommandType::UP: {
       auto buffer = tcod::stringf("%s", SDL_GetKeyName(SDL_GetKeyFromScancode(
                                             cmd.first, SDL_KMOD_NONE, true)));
-      tcod::print(con, {4, 3}, buffer, color::white, std::nullopt);
+      tcod::print(con, {4, 3}, buffer, color::text, std::nullopt);
       break;
     }
     case CommandType::UR: {
       auto buffer = tcod::stringf("%s", SDL_GetKeyName(SDL_GetKeyFromScancode(
                                             cmd.first, SDL_KMOD_NONE, true)));
-      tcod::print(con, {6, 3}, buffer, color::white, std::nullopt);
+      tcod::print(con, {6, 3}, buffer, color::text, std::nullopt);
       break;
     }
 
     case CommandType::LEFT: {
       auto buffer = tcod::stringf("%s", SDL_GetKeyName(SDL_GetKeyFromScancode(
                                             cmd.first, SDL_KMOD_NONE, true)));
-      tcod::print(con, {2, 5}, buffer, color::white, std::nullopt);
+      tcod::print(con, {2, 5}, buffer, color::text, std::nullopt);
       break;
     }
     case CommandType::RIGHT: {
       auto buffer = tcod::stringf("%s", SDL_GetKeyName(SDL_GetKeyFromScancode(
                                             cmd.first, SDL_KMOD_NONE, true)));
-      tcod::print(con, {6, 5}, buffer, color::white, std::nullopt);
+      tcod::print(con, {6, 5}, buffer, color::text, std::nullopt);
       break;
     }
 
     case CommandType::DL: {
       auto buffer = tcod::stringf("%s", SDL_GetKeyName(SDL_GetKeyFromScancode(
                                             cmd.first, SDL_KMOD_NONE, true)));
-      tcod::print(con, {2, 7}, buffer, color::white, std::nullopt);
+      tcod::print(con, {2, 7}, buffer, color::text, std::nullopt);
       break;
     }
     case CommandType::DOWN: {
       auto buffer = tcod::stringf("%s", SDL_GetKeyName(SDL_GetKeyFromScancode(
                                             cmd.first, SDL_KMOD_NONE, true)));
-      tcod::print(con, {4, 7}, buffer, color::white, std::nullopt);
+      tcod::print(con, {4, 7}, buffer, color::text, std::nullopt);
       break;
     }
     case CommandType::DR: {
       auto buffer = tcod::stringf("%s", SDL_GetKeyName(SDL_GetKeyFromScancode(
                                             cmd.first, SDL_KMOD_NONE, true)));
-      tcod::print(con, {6, 7}, buffer, color::white, std::nullopt);
+      tcod::print(con, {6, 7}, buffer, color::text, std::nullopt);
       break;
     }
 
@@ -117,7 +117,7 @@ static tcod::Console buildCommandMenu(void) {
                                   SDL_GetKeyName(SDL_GetKeyFromScancode(
                                       cmd.first, SDL_KMOD_NONE, true)),
                                   CommandTypeDescription(cmd.second));
-      tcod::print(con, {2, y}, buffer, color::white, std::nullopt);
+      tcod::print(con, {2, y}, buffer, color::text, std::nullopt);
       y++;
     }
     }
@@ -235,7 +235,7 @@ void MainMenuInputHandler::on_render(flecs::world, tcod::Console &console) {
   for (auto i = 0; i < (int)choices.size(); i++) {
     auto str = i == idx ? tcod::stringf("\u25BA %s", choices[i]) : choices[i];
     tcod::print(console, {printY, console.get_height() / 2 - 2 + i}, str,
-                color::menu_text, color::black, TCOD_CENTER);
+                color::menu_text, color::background, TCOD_CENTER);
   }
 }
 
@@ -286,7 +286,7 @@ void KeybindMenu::on_render(flecs::world ecs, tcod::Console &console) {
         "%-25s: %s", CommandTypeDescription(Command::mapping[key]),
         SDL_GetKeyName(SDL_GetKeyFromScancode(key, SDL_KMOD_NONE, true)));
     tcod::print(console, {frameX + 2, frameY + y + 2}, buffer,
-                y == idx ? color::black : color::white,
+                y == idx ? color::background : color::text,
                 y == idx ? std::optional(color::menu_border) : std::nullopt);
     y++;
   }
@@ -406,10 +406,11 @@ ActionResult MainHandler::handle_action(flecs::world ecs,
       if (!warning.warned) {
         auto f = [](auto, auto &c) {
           tcod::print(c, {c.get_width() / 2, c.get_height() / 2 - 1},
-                      "Be careful...", color::red, color::black, TCOD_CENTER);
+                      "Be careful...", color::blood, color::background,
+                      TCOD_CENTER);
           tcod::print(c, {c.get_width() / 2, c.get_height() / 2 + 1},
-                      "The Fiend can track you by your scent.", color::white,
-                      color::black, TCOD_CENTER);
+                      "The Fiend can track you by your scent.", color::text,
+                      color::background, TCOD_CENTER);
         };
         ecs.set<std::unique_ptr<InputHandler>>(
             std::make_unique<
@@ -570,7 +571,7 @@ void InventoryInputHandler::on_render(flecs::world ecs,
   auto x = menuXLocation(ecs.lookup("player"));
 
   tcod::draw_frame(console, {x, 0, (int)title.size(), std::max(count + 2, 3)},
-                   DECORATION, color::white, color::black);
+                   DECORATION, color::text, color::background);
   tcod::print_rect(console, {x, 0, (int)title.size(), 1}, title, std::nullopt,
                    std::nullopt, TCOD_CENTER);
   if (count > 0) {
@@ -635,8 +636,8 @@ void LevelupHandler::on_render(flecs::world ecs, tcod::Console &console) {
   MainHandler::on_render(ecs, console);
   auto player = ecs.lookup("player");
   auto x = menuXLocation(player);
-  tcod::draw_frame(console, {x, 0, 35, 8}, DECORATION, color::white,
-                   color::black);
+  tcod::draw_frame(console, {x, 0, 35, 8}, DECORATION, color::text,
+                   color::background);
   tcod::print_rect(console, {x, 0, 35, 1}, "Level Up", std::nullopt,
                    std::nullopt, TCOD_CENTER);
   tcod::print(console, {x + 1, 1}, "Congratulations! You level up!",
@@ -716,7 +717,7 @@ void CharacterScreenInputHandler::on_render(flecs::world ecs,
   auto x = menuXLocation(player);
   auto title = std::string{"Character Information"};
   tcod::draw_frame(console, {x, 0, (int)title.size() + 4, 5}, DECORATION,
-                   color::white, color::black);
+                   color::text, color::background);
   tcod::print_rect(console, {x, 0, (int)title.size() + 4, 1}, title,
                    std::nullopt, std::nullopt, TCOD_CENTER);
 
@@ -751,7 +752,7 @@ void AreaTargetSelector::on_render(flecs::world ecs, tcod::Console &console) {
     for (auto x = 0; x < console.get_width(); x++) {
       auto dx = mouse_loc[0] - x;
       if (dx * dx + dy * dy <= radius * radius && gm.isInFov({x, y})) {
-        console.at({x, y}).bg = color::red;
+        console.at({x, y}).bg = color::areaTarget;
       }
     }
   }
@@ -966,7 +967,7 @@ void WinScreen::animate(flecs::world ecs, uint64_t t) {
     break;
   }
   case 1: {
-    ecs.lookup("defeated").get_mut<CenterTextBox>().fg = color::white;
+    ecs.lookup("defeated").get_mut<CenterTextBox>().fg = color::text;
 
     auto e = ecs.lookup("win");
     if (e) {
@@ -979,7 +980,7 @@ void WinScreen::animate(flecs::world ecs, uint64_t t) {
     break;
   }
   case 2:
-    ecs.lookup("win").get_mut<CenterTextBox>().fg = color::white;
+    ecs.lookup("win").get_mut<CenterTextBox>().fg = color::text;
     break;
   case 5: {
     auto &tb = ecs.lookup("win").get_mut<CenterTextBox>();
@@ -1007,7 +1008,7 @@ void WinScreen::animate(flecs::world ecs, uint64_t t) {
     break;
   }
   case 8:
-    ecs.lookup("for now").get_mut<CenterTextBox>().fg = color::white;
+    ecs.lookup("for now").get_mut<CenterTextBox>().fg = color::text;
     break;
   default:
     auto rng = TCODRandom::getInstance();
