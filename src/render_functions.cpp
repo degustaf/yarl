@@ -102,7 +102,7 @@ void renderCommandButton(Console &console, const std::array<int, 4> &xywh) {
                      color::menu_background);
   auto key = *SDL_GetKeyName(
       SDL_GetKeyFromScancode(SDL_SCANCODE_C, SDL_KMOD_NONE, true));
-  auto str = key == 'C' ? "(C)ommands" : tcod::stringf("(%c)Commands", key);
+  auto str = key == 'C' ? "(C)ommands" : stringf("(%c)Commands", key);
   assert(str.size() + 2 <= (size_t)xywh[2]);
   console.print({xywh[0] + 1, xywh[1] + 1}, str, std::nullopt, std::nullopt);
 }

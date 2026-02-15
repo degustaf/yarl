@@ -288,7 +288,7 @@ void KeybindMenu::on_render(flecs::world ecs, Console &console) {
 
   auto y = 0;
   for (auto &key : keys) {
-    auto buffer = tcod::stringf(
+    auto buffer = stringf(
         "%-25s: %s", CommandTypeDescription(Command::mapping[key]),
         SDL_GetKeyName(SDL_GetKeyFromScancode(key, SDL_KMOD_NONE, true)));
     console.print({frameX + 2, frameY + y + 2}, buffer,
@@ -325,7 +325,7 @@ void KeyBinding::on_render(flecs::world ecs, Console &console) {
     tile.bg /= 8;
   }
 
-  auto str = tcod::stringf("Press a key for %s", CommandTypeDescription(c));
+  auto str = stringf("Press a key for %s", CommandTypeDescription(c));
 
   auto frameX = (int)console.get_width() / 2;
   auto frameY = (int)(console.get_height() - 3) / 2;

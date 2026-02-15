@@ -1,7 +1,6 @@
 #include "consumable.hpp"
 
 #include <cassert>
-#include <cstdint>
 #include <memory>
 #include <optional>
 
@@ -197,7 +196,7 @@ FireballDamageConsumable::selected(flecs::entity item,
   flammableQ.each([&](auto e, const Position &p, const Named &n) {
     if (p.distanceSquared(target) <= radius * radius) {
       targets_hit = true;
-      auto msg = tcod::stringf("The %s burns up.", n.name.c_str());
+      auto msg = stringf("The %s burns up.", n.name.c_str());
       e.destruct();
     }
   });

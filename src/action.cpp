@@ -114,8 +114,8 @@ ActionResult MoveAction::perform(flecs::entity e) const {
         if (item) {
           item.add<ContainedBy>(e).remove<Position>().remove(flecs::ChildOf,
                                                              mapEntity);
-          auto msg = tcod::stringf("You picked up the %s!",
-                                   item.get<Named>().name.c_str());
+          auto msg =
+              stringf("You picked up the %s!", item.get<Named>().name.c_str());
           return {ActionResultType::Success, msg, 1.0f};
         }
         return {ActionResultType::Success, "", 1.0f};
@@ -359,7 +359,7 @@ ActionResult SeedAction::perform(flecs::entity e) const {
   auto seed = e.world().lookup("seed");
   auto turn = e.world().lookup("turn");
 
-  auto str = tcod::stringf("Seed: %" PRIu32 ", Turn: %" PRId64,
-                           seed.get<Seed>().seed, turn.get<Turn>().turn);
+  auto str = stringf("Seed: %" PRIu32 ", Turn: %" PRId64, seed.get<Seed>().seed,
+                     turn.get<Turn>().turn);
   return {ActionResultType::Failure, str, 0.0f};
 }
