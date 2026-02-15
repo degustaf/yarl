@@ -10,8 +10,6 @@
 
 #include <flecs.h>
 
-#include "game_map.hpp"
-
 namespace pathfinding {
 
 using Index = std::array<int, 2>;
@@ -47,41 +45,6 @@ public:
 
   Index dimensions;
 
-  static map constructCost(flecs::entity mapEntity, T initial, T blocked,
-                           T openable, T infinity) {
-    return constructCost(mapEntity, mapEntity.get<GameMap>(), initial, blocked,
-                         openable, infinity);
-  }
-
-  static map constructCost(flecs::entity mapEntity, const GameMap &gameMap,
-                           T initial, T blocked, T openable, T infinity) {
-    auto cost =
-        map<int>(std::array{gameMap.getWidth(), gameMap.getHeight()}, initial);
-    for (auto y = 0; y < gameMap.getHeight(); y++) {
-      for (auto x = 0; x < gameMap.getWidth(); x++) {
-        if (!gameMap.isWalkable({x, y})) {
-          cost[{x, y}] = infinity;
-        }
-      }
-    }
-
-    auto q = mapEntity.world()
-                 .query_builder<const Position>("module::blocks")
-                 .with<BlocksMovement>()
-                 .with(flecs::ChildOf, mapEntity)
-                 .build();
-
-    q.each([&](flecs::entity e, const Position &p) {
-      if (e.has<Openable>()) {
-        cost[p] = openable;
-      } else {
-        cost[p] = blocked;
-      }
-    });
-
-    return cost;
-  };
-
 private:
   std::unique_ptr<T[]> cost;
 };
@@ -111,6 +74,15 @@ public:
         cameFrom(dimensions, {-1, -1}), start(start), adjacent(adjacent),
         cost(cost) {};
 
+  Dijkstra &operator*=(float f) {
+    for (auto &d : distance) {
+      if (d != Infinity) {
+        d = (int)((float)d * f);
+      }
+    }
+    return *this;
+  }
+
   void scan(void) {
     auto order = [&](const auto &lhs, const auto &rhs) {
       return distance[lhs] > distance[rhs];
@@ -128,6 +100,28 @@ public:
       }
     }
 
+    scanPrivate(queue);
+  }
+
+  void rescan(void) {
+    auto order = [&](const auto &lhs, const auto &rhs) {
+      return distance[lhs] > distance[rhs];
+    };
+    std::priority_queue<Index, std::vector<Index>, decltype(order)> queue(
+        order);
+    for (auto y = 0; y < dimensions[1]; y++) {
+      for (auto x = 0; x < dimensions[0]; x++) {
+        if (start(Index{x, y})) {
+          queue.push({x, y});
+        }
+      }
+    }
+
+    scanPrivate(queue);
+  }
+
+private:
+  template <typename Q> inline void scanPrivate(Q &queue) {
     while (!queue.empty()) {
       auto next = queue.top();
       queue.pop();
@@ -147,7 +141,6 @@ public:
     }
   }
 
-private:
   Index dimensions;
   map<int> distance;
 
