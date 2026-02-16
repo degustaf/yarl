@@ -18,7 +18,6 @@
 #include "game_map.hpp"
 #include "inventory.hpp"
 #include "message_log.hpp"
-#include "pathfinding.hpp"
 
 struct InputHandler {
   virtual ~InputHandler() = default;
@@ -62,12 +61,17 @@ struct MainMenuInputHandler : InputHandler {
   virtual ~MainMenuInputHandler() = default;
 
   virtual std::unique_ptr<Action> keyDown(Command, flecs::world) override;
+  virtual std::unique_ptr<Action> click(SDL_MouseButtonEvent &,
+                                        flecs::world) override;
   virtual void on_render(flecs::world, tcod::Console &) override;
 
+private:
+  std::unique_ptr<Action> processChoice(int idx, flecs::world ecs);
   int idx;
   static constexpr auto choices =
       std::array{"Play a new game   ", "Continue last game",
                  "Options           ", "Quit              "};
+  static constexpr auto ImageWidth = 100;
 };
 
 struct KeybindMenu : MainMenuInputHandler {

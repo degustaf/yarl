@@ -189,27 +189,7 @@ std::unique_ptr<Action> MainMenuInputHandler::keyDown(Command cmd,
     break;
 
   case CommandType::ENTER:
-    switch (idx) {
-    case 0:
-      Engine::clear_game_data(ecs);
-      Engine::new_game(ecs);
-      make<MainGameInputHandler>(ecs);
-      return nullptr;
-    case 1:
-      if (Engine::load(ecs, data_dir / saveFilename, *this)) {
-        make<MainGameInputHandler>(ecs);
-        return nullptr;
-      }
-      break;
-    case 2:
-      make<KeybindMenu>(ecs);
-      return nullptr;
-    case 3:
-      return std::make_unique<ExitAction>();
-    default:
-      assert(false);
-      break;
-    }
+    return processChoice(idx, ecs);
     break;
 
   default:
@@ -219,24 +199,68 @@ std::unique_ptr<Action> MainMenuInputHandler::keyDown(Command cmd,
   return nullptr;
 }
 
+std::unique_ptr<Action>
+MainMenuInputHandler::click(SDL_MouseButtonEvent &button, flecs::world ecs) {
+  auto &console = ecs.get<tcod::Console>();
+  const auto printX = (ImageWidth / 2.0f + (float)console.get_width()) / 2.0f;
+  for (auto i = 0; i < (int)choices.size(); i++) {
+    auto printY = (float)console.get_height() / 2.0f - 2 + (float)i;
+    if (button.x >= (float)(printX - (float)strlen(choices[i]) / 2) &&
+        printY <= button.y && button.y < printY + 1) {
+      return processChoice(i, ecs);
+    }
+  }
+  return nullptr;
+}
+
 void MainMenuInputHandler::on_render(flecs::world, tcod::Console &console) {
-  static constexpr auto ImageWidth = 100;
   // static const auto background_image = TCODImage("assets/teeth.png");
   // assert(background_image.getSize()[0] == ImageWidth);
   // tcod::draw_quartergraphics(console, background_image);
 
-  const auto printY = (ImageWidth / 2 + console.get_width()) / 2;
-  tcod::print(console, {printY, console.get_height() / 2 - 4},
+  const auto printX = (ImageWidth / 2 + console.get_width()) / 2;
+  tcod::print(console, {printX, console.get_height() / 2 - 4},
               "The Fiend in Facility 14", color::menu_title, std::nullopt,
               TCOD_CENTER);
-  tcod::print(console, {printY, console.get_height() - 2}, "By degustaf",
+  tcod::print(console, {printX, console.get_height() - 2}, "By degustaf",
               color::menu_title, std::nullopt, TCOD_CENTER);
 
   for (auto i = 0; i < (int)choices.size(); i++) {
+    auto printY = console.get_height() / 2 - 2 + i;
+    if (mouse_loc[0] >= printX - (int)strlen(choices[i]) / 2 &&
+        mouse_loc[1] == printY) {
+      idx = i;
+    }
     auto str = i == idx ? tcod::stringf("\u25BA %s", choices[i]) : choices[i];
-    tcod::print(console, {printY, console.get_height() / 2 - 2 + i}, str,
-                color::menu_text, color::background, TCOD_CENTER);
+    tcod::print(console, {printX, printY}, str, color::menu_text,
+                color::background, TCOD_CENTER);
   }
+}
+
+std::unique_ptr<Action> MainMenuInputHandler::processChoice(int idx,
+                                                            flecs::world ecs) {
+  switch (idx) {
+  case 0:
+    Engine::clear_game_data(ecs);
+    Engine::new_game(ecs);
+    make<MainGameInputHandler>(ecs);
+    return nullptr;
+  case 1:
+    if (Engine::load(ecs, data_dir / saveFilename, *this)) {
+      make<MainGameInputHandler>(ecs);
+      return nullptr;
+    }
+    break;
+  case 2:
+    make<KeybindMenu>(ecs);
+    return nullptr;
+  case 3:
+    return std::make_unique<ExitAction>();
+  default:
+    assert(false);
+    break;
+  }
+  return nullptr;
 }
 
 std::unique_ptr<Action> KeybindMenu::keyDown(Command cmd, flecs::world ecs) {
