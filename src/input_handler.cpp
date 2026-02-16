@@ -192,29 +192,7 @@ std::unique_ptr<Action> MainMenuInputHandler::keyDown(Command cmd,
     break;
 
   case CommandType::ENTER:
-    switch (idx) {
-    case 0:
-      assert(mouse_loc[0] >= 0);
-      assert(mouse_loc[1] >= 0);
-      Engine::clear_game_data(ecs);
-      Engine::new_game(ecs, dim[0], dim[1] - HUD_HEIGHT - 2);
-      make<MainGameInputHandler>(ecs);
-      return nullptr;
-    case 1:
-      if (Engine::load(ecs, data_dir / saveFilename, *this)) {
-        make<MainGameInputHandler>(ecs);
-        return nullptr;
-      }
-      break;
-    case 2:
-      make<KeybindMenu>(ecs);
-      return nullptr;
-    case 3:
-      return std::make_unique<ExitAction>();
-    default:
-      assert(false);
-      break;
-    }
+    return processChoice(idx, ecs);
     break;
 
   default:
@@ -224,8 +202,20 @@ std::unique_ptr<Action> MainMenuInputHandler::keyDown(Command cmd,
   return nullptr;
 }
 
+std::unique_ptr<Action>
+MainMenuInputHandler::click(SDL_MouseButtonEvent &button, flecs::world ecs) {
+  const auto printX = (ImageWidth / 2.0f + (float)dim[0]) / 2.0f;
+  for (auto i = 0; i < (int)choices.size(); i++) {
+    auto printY = (float)dim[1] / 2.0f - 2 + (float)i;
+    if (button.x >= (float)(printX - (float)strlen(choices[i]) / 2) &&
+        printY <= button.y && button.y < printY + 1) {
+      return processChoice(i, ecs);
+    }
+  }
+  return nullptr;
+}
+
 void MainMenuInputHandler::on_render(flecs::world, Console &console) {
-  static constexpr auto ImageWidth = 100;
   // static const auto background_image = TCODImage("assets/teeth.png");
   // assert(background_image.getSize()[0] == ImageWidth);
   // tcod::draw_quartergraphics(console, background_image);
@@ -242,6 +232,34 @@ void MainMenuInputHandler::on_render(flecs::world, Console &console) {
                   color::menu_text, color::background,
                   Console::Alignment::CENTER);
   }
+}
+
+std::unique_ptr<Action> MainMenuInputHandler::processChoice(int idx,
+                                                            flecs::world ecs) {
+  switch (idx) {
+  case 0:
+    assert(mouse_loc[0] >= 0);
+    assert(mouse_loc[1] >= 0);
+    Engine::clear_game_data(ecs);
+    Engine::new_game(ecs, dim[0], dim[1] - HUD_HEIGHT - 2);
+    make<MainGameInputHandler>(ecs);
+    return nullptr;
+  case 1:
+    if (Engine::load(ecs, data_dir / saveFilename, *this)) {
+      make<MainGameInputHandler>(ecs);
+      return nullptr;
+    }
+    break;
+  case 2:
+    make<KeybindMenu>(ecs);
+    return nullptr;
+  case 3:
+    return std::make_unique<ExitAction>();
+  default:
+    assert(false);
+    break;
+  }
+  return nullptr;
 }
 
 std::unique_ptr<Action> KeybindMenu::keyDown(Command cmd, flecs::world ecs) {

@@ -120,7 +120,6 @@ struct GameMap {
   void update_fov(flecs::entity mapEntity, flecs::entity player);
   void update_scent(flecs::entity map);
   void reveal();
-  inline TCODPath path(void) const { return TCODPath(&map); };
   inline const TCODMap &get(void) const { return map; };
   inline void setProperties(int x, int y, bool isTransparent, bool isWalkable) {
     map.setProperties(x, y, isTransparent, isWalkable);
