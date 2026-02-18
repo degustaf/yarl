@@ -230,6 +230,7 @@ module::module(flecs::world ecs) {
   ecs.component<Openable>();
   ecs.component<Fountain>();
   ecs.component<Portal>().add(flecs::Symmetric);
+  ecs.component<Light>().member<int>("radius").member<float>("decayFactor");
   ecs.component<CurrentMap>().add(flecs::Exclusive);
   ecs.component<Tile>().member<uint8_t>("flags");
   ecs.component<std::vector<Tile>>().opaque(std_vector_support<Tile>);

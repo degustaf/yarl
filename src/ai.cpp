@@ -24,7 +24,7 @@ std::unique_ptr<Action> HostileAi::act(flecs::entity self) {
   auto mapEntity = ecs.lookup("currentMap").target<CurrentMap>();
   const auto &map = mapEntity.get<GameMap>();
 
-  if (map.isInFov(pos) && (!inv || inv->paused)) {
+  if (map.canSeePlayer(pos, target) && (!inv || inv->paused)) {
     if (distance <= 1) {
       return std::make_unique<MeleeAction>(dx, dy);
     }

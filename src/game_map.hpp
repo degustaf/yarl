@@ -13,6 +13,10 @@ struct BlocksFov {};
 struct Openable {};
 struct Fountain {};
 struct Portal {};
+struct Light {
+  int radius;
+  float decayFactor;
+};
 
 struct CurrentMap {};
 
@@ -32,10 +36,10 @@ void deleteMapEntity(flecs::entity map);
 void deleteMapEntity(flecs::world ecs);
 
 struct GameMap {
-  GameMap(int width = 0, int height = 0, int level = 1)
-      : width(width), height(height), level(level),
+  GameMap(int width = 0, int height = 0, int level = 1, bool lit = true)
+      : width(width), height(height), level(level), lit(lit),
         tiles(width * height, Tile()), scent(width * height, Scent()),
-        map(width, height), noise(3) {
+        luminosity(width * height, 0.0f), map(width, height), noise(3) {
     map.clear();
   };
 
@@ -49,8 +53,18 @@ struct GameMap {
   }
   inline int getWidth() const { return width; }
   inline int getHeight() const { return height; }
-  inline bool isInFov(std::array<int, 2> xy) const {
-    return map.isInFov(xy[0], xy[1]);
+  inline bool inLight(std::array<int, 2> xy, float brightness = 0.0f) const {
+    return luminosity[xy[1] * width + xy[0]] > brightness;
+  }
+  inline bool canSeePlayer(std::array<int, 2> xy,
+                           std::array<int, 2> player) const {
+    return map.isInFov(xy[0], xy[1]) && inLight(player);
+  }
+  inline bool isVisible(std::array<int, 2> xy) const {
+    return isVisible(xy[0], xy[1]);
+  }
+  inline bool isVisible(int x, int y) const {
+    return map.isInFov(x, y) && inLight({x, y});
   }
   inline bool isInFov(std::array<float, 2> xy) const {
     return map.isInFov((int)xy[0], (int)xy[1]);
@@ -119,9 +133,15 @@ struct GameMap {
   inline const Scent &getScent(std::array<int, 2> xy) const {
     return scent[xy[1] * width + xy[0]];
   }
+  inline void addLuminosity(std::array<int, 2> xy, float lumens) {
+    assert(0 <= xy[0] && xy[0] < width);
+    assert(0 <= xy[1] && xy[1] < height);
+    auto &l = luminosity[xy[1] * width + xy[0]];
+    l = std::clamp(l + lumens, 0.0f, 1.0f);
+  }
 
   void carveOut(int x, int y);
-  void nextFloor(flecs::entity player) const;
+  void nextFloor(flecs::entity player, bool lit) const;
   void render(Console &console, uint64_t);
   void update_fov(flecs::entity mapEntity, flecs::entity player);
   void update_scent(flecs::entity map);
@@ -139,8 +159,10 @@ struct GameMap {
   int width;
   int height;
   int level;
+  bool lit;
   std::vector<Tile> tiles;
   std::vector<Scent> scent;
+  std::vector<float> luminosity;
 
 private:
   TCODMap map;
@@ -149,3 +171,4 @@ private:
 
 void computeFov(flecs::entity mapEntity, GameMap &map,
                 std::array<int, 2> origin, int maxRadius);
+void addLight(flecs::entity mapEntity, GameMap &map);

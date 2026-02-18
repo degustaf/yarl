@@ -45,11 +45,11 @@ void deleteMapEntity(flecs::world ecs) {
 
 void GameMap::carveOut(int x, int y) { map.setProperties(x, y, true, true); }
 
-void GameMap::nextFloor(flecs::entity player) const {
+void GameMap::nextFloor(flecs::entity player, bool lit) const {
   auto ecs = player.world();
   auto newMap = ecs.entity();
-  newMap.set<GameMap>(
-      roomAccretion::generateDungeon(newMap, width, height, level + 1, player));
+  newMap.set<GameMap>(roomAccretion::generateDungeon(newMap, width, height,
+                                                     level + 1, player, lit));
   auto oldMap = ecs.lookup("currentMap").target<CurrentMap>();
   ecs.lookup("currentMap").add<CurrentMap>(newMap);
   deleteMapEntity(oldMap);
@@ -98,7 +98,7 @@ void GameMap::render(Console &console, uint64_t time) {
     vec[1] = (float)y;
     for (auto x = 0; x < width; x++) {
       vec[0] = (float)x;
-      if (map.isInFov(x, y)) {
+      if (isVisible(x, y)) {
         console.at({x, y}) = isStairs({x, y})          ? stairs_light
                              : isKnownBloody({x, y})   ? bloody_floor_light
                              : map.isWalkable(x, y)    ? floor_light
@@ -137,9 +137,16 @@ void GameMap::render(Console &console, uint64_t time) {
 void GameMap::update_fov(flecs::entity mapEntity, flecs::entity player) {
   auto pos = player.get<Position>();
   computeFov(mapEntity, *this, pos, 8);
+  if (lit) {
+    for (auto &l : luminosity) {
+      l = 1.0f;
+    }
+  } else {
+    addLight(mapEntity, *this);
+  }
   for (auto y = 0; y < height; y++) {
     for (auto x = 0; x < width; x++) {
-      if (map.isInFov(x, y)) {
+      if (isVisible(x, y)) {
         auto &tile = tiles[(size_t)(y * width + x)];
         tile.flags |= Tile::Explored;
         if (tile.flags & Tile::Bloody)

@@ -380,7 +380,7 @@ void MainHandler::on_render(flecs::world ecs, Console &console) {
   q.each([&](auto p, auto ma, auto aa, auto r, auto openable, auto inv) {
     if (inv && !inv->paused) {
       // Don't render invisible enemies
-    } else if (gMap.isInFov(p)) {
+    } else if (gMap.isVisible(p)) {
       if (ma) {
         r.render(console, *ma, true, inv);
       } else if (aa) {
@@ -873,8 +873,7 @@ void AreaTargetSelector::on_render(flecs::world ecs, Console &console) {
     auto dy = mouse_loc[1] - y;
     for (auto x = 0; x < console.get_width(); x++) {
       auto dx = mouse_loc[0] - x;
-      if (dx * dx + dy * dy <= radius * radius &&
-          gm.isInFov(std::array<int, 2>{x, y})) {
+      if (dx * dx + dy * dy <= radius * radius && gm.isVisible({x, y})) {
         console.at({x, y}).bg = color::areaTarget;
       }
     }
@@ -900,7 +899,7 @@ void AutoMove::on_render(flecs::world ecs, Console &console) {
                .build();
   auto seen = false;
   q.each([&](auto &p, auto &f, auto i) {
-    seen |= gm.isInFov(p) && f.isAlive() && (!i || i->paused);
+    seen |= gm.isVisible(p) && f.isAlive() && (!i || i->paused);
   });
   MainHandler::on_render(ecs, console);
   if (seen) {

@@ -95,7 +95,7 @@ bool Engine::load(flecs::world ecs, const std::filesystem::path &file_name,
   auto &gamemap = map.get_mut<GameMap>();
   gamemap.init();
   auto player = ecs.lookup("player");
-  roomAccretion::generateDungeon(map, gamemap, player, false);
+  roomAccretion::generateDungeon(map, gamemap, player, false, gamemap.lit);
   gamemap.update_fov(map, player);
 
   return true;
@@ -122,8 +122,8 @@ void Engine::new_game(flecs::world ecs, int map_width, int map_height) {
   toggleEquip<false>(player, sword);
 
   auto map = ecs.entity();
-  map.emplace<GameMap>(
-      roomAccretion::generateDungeon(map, map_width, map_height, 1, player));
+  map.emplace<GameMap>(roomAccretion::generateDungeon(
+      map, map_width, map_height, 1, player, false));
   ecs.entity("currentMap").add<CurrentMap>(map);
   map.get_mut<GameMap>().update_fov(map, player);
 
