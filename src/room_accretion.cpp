@@ -438,12 +438,23 @@ static constexpr auto monster_weights =
                                   WeightsByFloor{4, 20, "module::cysts"}};
 
 static void populateRoom(flecs::entity map, flecs::entity player,
-                         TCODRandom &rng, bool &first, const GameMap &dungeon,
-                         const RectangularRoom &room,
+                         TCODRandom &rng, bool &first, bool lit,
+                         const GameMap &dungeon, const RectangularRoom &room,
                          flecs::query<const Position> q) {
   auto ecs = map.world();
   if (first && dungeon.isWalkable(room.center())) {
     player.get_mut<Position>() = room.center();
+    if (!lit) {
+      auto x = rng.getInt(room.x1, room.x2);
+      auto y = rng.getInt(room.y1, room.y2);
+      ecs.entity()
+          .set<Light>({3, 0.8f})
+          .set<Position>({x, y})
+          .add(flecs::ChildOf, map)
+          .set<Renderable>(
+              {'*', color::lightning, std::nullopt, RenderOrder::Corpse})
+          .set<Named>({"light"});
+    }
     first = false;
   } else {
     const auto item_count =
@@ -477,13 +488,28 @@ static void populateRoom(flecs::entity map, flecs::entity player,
                                                             map);
       }
     }
+
+    if (!lit) {
+      if (rng.get(0.0, 1.0) > 0.75) {
+        auto x = rng.getInt(room.x1, room.x2);
+        auto y = rng.getInt(room.y1, room.y2);
+        ecs.entity()
+            .set<Light>({3, 0.8f})
+            .set<Position>({x, y})
+            .add(flecs::ChildOf, map)
+            .set<Renderable>(
+                {'*', color::lightning, std::nullopt, RenderOrder::Corpse})
+            .set<Named>({"light"});
+      }
+    }
   }
 }
 
 GameMap roomAccretion::generateDungeon(flecs::entity map, int width, int height,
-                                       int level, flecs::entity player) {
-  auto dungeon = GameMap(width, height, level);
-  generateDungeon(map, dungeon, player, true);
+                                       int level, flecs::entity player,
+                                       bool lit) {
+  auto dungeon = GameMap(width, height, level, lit);
+  generateDungeon(map, dungeon, player, true, lit);
   return dungeon;
 }
 
@@ -545,8 +571,8 @@ static void addPortals(flecs::entity map, GameMap &dungeon, TCODRandom &rng) {
 }
 
 void roomAccretion::generateDungeon(flecs::entity map, GameMap &dungeon,
-                                    flecs::entity player,
-                                    bool generateEntities) {
+                                    flecs::entity player, bool generateEntities,
+                                    bool lit) {
   auto ecs = map.world();
   auto seed = ecs.lookup("seed").get<Seed>();
   auto rng = TCODRandom(seed.seed + dungeon.level);
@@ -587,7 +613,7 @@ void roomAccretion::generateDungeon(flecs::entity map, GameMap &dungeon,
 
   auto firstRoom = true;
   for (auto i = 0; i < roomCount; i++) {
-    populateRoom(map, player, rng, firstRoom, dungeon, rooms[i], q);
+    populateRoom(map, player, rng, firstRoom, lit, dungeon, rooms[i], q);
   }
 
   for (auto i = roomCount - 1; i > 0; i--) {

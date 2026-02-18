@@ -55,7 +55,7 @@ ActionResult LightningDamageConsumable::activate(flecs::entity item,
                .with(flecs::ChildOf, map)
                .build();
   q.each([&](auto e, auto &p) {
-    if ((e != consumer) && (gameMap.isInFov(p))) {
+    if ((e != consumer) && (gameMap.isVisible(p))) {
       auto d2 = consumerPos.distanceSquared(p);
       if (d2 < closestDistanceSq) {
         target = e;
@@ -93,7 +93,7 @@ ActionResult ConfusionConsumable::selected(flecs::entity item,
   auto ecs = item.world();
   auto map = ecs.lookup("currentMap").target<CurrentMap>();
   auto &gameMap = map.get<GameMap>();
-  if (!gameMap.isInFov(target)) {
+  if (!gameMap.isVisible(target)) {
     return {ActionResultType::Failure,
             "You cannot target an area that you cannot see.", 0.0f,
             color::impossible};
@@ -154,7 +154,7 @@ FireballDamageConsumable::selected(flecs::entity item,
   auto ecs = item.world();
   auto map = ecs.lookup("currentMap").target<CurrentMap>();
   auto &gameMap = map.get<GameMap>();
-  if (!gameMap.isInFov(target)) {
+  if (!gameMap.isVisible(target)) {
     return {ActionResultType::Failure,
             "You cannot target an area that you cannot see.", 0.0f,
             color::impossible};
@@ -244,7 +244,7 @@ void TrackerConsumable<T>::render(tcod::Console &console,
           .with<T>()
           .build();
   q.each([&](auto &p, auto &r, auto i) {
-    if (!gMap.isInFov(p) || (i && !i->paused)) {
+    if (!gMap.isVisible(p) || (i && !i->paused)) {
       r.render(console, p, true);
       console.at(p).bg = color::sensed;
     }

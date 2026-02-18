@@ -293,7 +293,7 @@ ActionResult TakeStairsAction::perform(flecs::entity e) const {
   auto currentMap = ecs.lookup("currentMap").target<CurrentMap>();
   auto &gameMap = currentMap.get<GameMap>();
   if (gameMap.isStairs(pos)) {
-    gameMap.nextFloor(e);
+    gameMap.nextFloor(e, false);
 
     return {ActionResultType::Success, "You descend the staircase.", 0.0f,
             color::descend};
@@ -305,7 +305,7 @@ ActionResult TakeStairsAction::perform(flecs::entity e) const {
 ActionResult JumpAction::perform(flecs::entity e) const {
   auto currentMap = e.world().lookup("currentMap").target<CurrentMap>();
   auto &gameMap = currentMap.get<GameMap>();
-  gameMap.nextFloor(e);
+  gameMap.nextFloor(e, false);
 
   constexpr auto fallDamage = 4;
 
