@@ -237,13 +237,14 @@ void TrackerConsumable<T>::render(tcod::Console &console,
                                   flecs::entity map) const {
   auto ecs = map.world();
   auto &gMap = map.get<GameMap>();
-  auto q = ecs.query_builder<const Position, const Renderable>(
-                  std::string("module::Tracker ") + typeid(T).name())
-               .with(flecs::ChildOf, map)
-               .with<T>()
-               .build();
-  q.each([&](auto p, auto r) {
-    if (!gMap.isInFov(p)) {
+  auto q =
+      ecs.query_builder<const Position, const Renderable, const Invisible *>(
+             std::string("module::Tracker ") + typeid(T).name())
+          .with(flecs::ChildOf, map)
+          .with<T>()
+          .build();
+  q.each([&](auto &p, auto &r, auto i) {
+    if (!gMap.isInFov(p) || (i && !i->paused)) {
       r.render(console, p, true);
       console.at(p).bg = color::sensed;
     }

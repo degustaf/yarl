@@ -45,6 +45,9 @@ using Position = Pos<int>;
 using FPosition = Pos<float>;
 
 struct Flying {};
+struct Invisible {
+  bool paused = false;
+};
 
 enum class RenderOrder /*: uint8_t*/ {
   Corpse,
@@ -60,7 +63,8 @@ struct Renderable {
   RenderOrder layer;
   bool fovOnly = true;
 
-  void render(tcod::Console &console, const Position &pos, bool inFov) const;
+  void render(tcod::Console &console, const Position &pos, bool inFov,
+              bool invis) const;
 };
 
 struct Named {

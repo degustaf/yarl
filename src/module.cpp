@@ -128,6 +128,7 @@ module::module(flecs::world ecs) {
   ecs.component<Position>().member<int>("x").member<int>("y");
   ecs.component<FPosition>();
   ecs.component<Flying>();
+  ecs.component<Invisible>().member<bool>("paused");
   ecs.component<RenderOrder>();
   ecs.component<std::optional<tcod::ColorRGB>>().opaque(
       std_optional_support<tcod::ColorRGB>);

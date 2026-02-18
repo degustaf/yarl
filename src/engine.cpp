@@ -36,6 +36,10 @@ void Engine::handle_enemy_turns(flecs::world ecs) {
         } else {
           auto action = ai_type->act(e);
           if (action) {
+            auto in = e.try_get_mut<Invisible>();
+            if (in) {
+              in->paused = false;
+            }
             action->perform(e);
           }
         }

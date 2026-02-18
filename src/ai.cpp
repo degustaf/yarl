@@ -15,6 +15,7 @@ std::unique_ptr<Action> HostileAi::act(flecs::entity self) {
   auto ecs = self.world();
   const auto &pos = self.get<Position>();
   auto player = ecs.lookup("player");
+  auto inv = player.try_get_mut<Invisible>();
   const auto &target = player.get<Position>();
   const auto dx = target.x - pos.x;
   const auto dy = target.y - pos.y;
@@ -22,7 +23,7 @@ std::unique_ptr<Action> HostileAi::act(flecs::entity self) {
   auto mapEntity = ecs.lookup("currentMap").target<CurrentMap>();
   const auto &map = mapEntity.get<GameMap>();
 
-  if (map.isInFov(pos)) {
+  if (map.isInFov(pos) && (!inv || inv->paused)) {
     if (distance <= 1) {
       return std::make_unique<MeleeAction>(dx, dy);
     }
@@ -112,6 +113,7 @@ std::unique_ptr<Action> FleeAi::act(flecs::entity self) {
   auto mapEntity = ecs.lookup("currentMap").target<CurrentMap>();
   const auto &map = mapEntity.get<GameMap>();
 
+  // TODO handle invisibility
   auto dij = pathfinding::Dijkstra(
       {map.getWidth(), map.getHeight()},
       [=](auto xy) { return playerPos == xy; },

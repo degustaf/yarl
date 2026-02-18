@@ -9,6 +9,7 @@
 #include <optional>
 
 #include "action.hpp"
+#include "actor.hpp"
 #include "blood.hpp"
 #include "color.hpp"
 #include "command.hpp"
@@ -364,26 +365,29 @@ void MainHandler::on_render(flecs::world ecs, tcod::Console &console) {
   ecs.lookup("messageLog").get<MessageLog>().render(console, 21, 45, 40, 5);
 
   auto q =
-      ecs.query_builder<const Position, const Renderable, const Openable *>(
-             "module::renderable")
+      ecs.query_builder<const Position, const Renderable, const Openable *,
+                        const Invisible *>("module::renderable")
           .with(flecs::ChildOf, map)
           .order_by<const Renderable>([](auto, auto r1, auto, auto r2) {
             return static_cast<int>(r1->layer) - static_cast<int>(r2->layer);
           })
           .build();
 
-  q.each([&](auto p, auto r, auto openable) {
-    if (gMap.isInFov(p)) {
-      r.render(console, p, true);
+  q.each([&](auto &p, auto &r, auto openable, auto invisible) {
+    if (invisible && !invisible->paused) {
+      // Don't render invisible enemies
+    } else if (gMap.isInFov(p)) {
+      r.render(console, p, true, invisible);
     } else if (gMap.isSensed(p) && openable) {
-      r.render(console, p, true);
+      r.render(console, p, true, false);
     } else if (gMap.isExplored(p)) {
-      r.render(console, p, false);
+      r.render(console, p, false, false);
     }
   });
 
   auto player = ecs.lookup("player");
-  player.get<Renderable>().render(console, player.get<Position>(), true);
+  player.get<Renderable>().render(console, player.get<Position>(), true,
+                                  player.has<Invisible>());
 
   auto fighter = player.get<Fighter>();
   renderBar(console, fighter.hp(), fighter.max_hp, 20);
@@ -397,6 +401,10 @@ ActionResult MainHandler::handle_action(flecs::world ecs,
                                         std::unique_ptr<Action> action) {
   if (action) {
     auto player = ecs.entity("player");
+    auto invis = player.try_get_mut<Invisible>();
+    if (invis) {
+      invis->paused = false;
+    }
     auto ret = action->perform(player);
     auto &log = ecs.lookup("messageLog").get_mut<MessageLog>();
     if (ret.msg.size() > 0) {
@@ -796,11 +804,13 @@ std::unique_ptr<Action> AutoMove::keyDown(Command cmd, flecs::world ecs) {
 void AutoMove::on_render(flecs::world ecs, tcod::Console &console) {
   auto map = ecs.lookup("currentMap").target<CurrentMap>();
   auto &gm = map.get<GameMap>();
-  auto q = ecs.query_builder<const Position, const Fighter>()
+  auto q = ecs.query_builder<const Position, const Fighter, const Invisible *>()
                .with(flecs::ChildOf, map)
                .build();
   auto seen = false;
-  q.each([&](auto &p, auto &f) { seen |= gm.isInFov(p) && f.isAlive(); });
+  q.each([&](auto &p, auto &f, auto i) {
+    seen |= gm.isInFov(p) && f.isAlive() && (!i || i->paused);
+  });
   MainHandler::on_render(ecs, console);
   if (seen) {
     make<MainGameInputHandler>(ecs);
