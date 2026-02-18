@@ -44,6 +44,8 @@ template <typename T> struct Pos {
 using Position = Pos<int>;
 using FPosition = Pos<float>;
 
+struct Flying {};
+
 enum class RenderOrder /*: uint8_t*/ {
   Corpse,
   Item,

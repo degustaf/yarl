@@ -831,7 +831,9 @@ void AutoExplore::on_render(flecs::world ecs, tcod::Console &console) {
         ret.reserve(9); // 8 directions plus a portal
         for (auto &dir : directions) {
           auto next = pathfinding::Index{xy[0] + dir[0], xy[1] + dir[1]};
-          if (gameMap.inBounds(next) && gameMap.isWalkable(next)) {
+          if (gameMap.inBounds(next) &&
+              (gameMap.isWalkable(next) ||
+               (player.has<Flying>() && gameMap.isFlyable(next)))) {
             ret.push_back(next);
           } else if (map.world()
                          .query_builder<const Position>()
@@ -894,6 +896,7 @@ PathFinder::PathFinder(flecs::entity map, std::array<int, 2> orig,
     : AutoMove(handler) {
   auto &gameMap = map.get<GameMap>();
   auto ecs = map.world();
+  auto player = ecs.lookup("player");
   auto dij = pathfinding::Dijkstra(
       {gameMap.getWidth(), gameMap.getHeight()},
       [=](auto xy) { return orig == xy; },
@@ -903,7 +906,8 @@ PathFinder::PathFinder(flecs::entity map, std::array<int, 2> orig,
         for (auto &dir : directions) {
           auto next = pathfinding::Index{xy[0] + dir[0], xy[1] + dir[1]};
           if (gameMap.inBounds(next) && gameMap.isExplored(next) &&
-              gameMap.isWalkable(next)) {
+              (gameMap.isWalkable(next) ||
+               (player.has<Flying>() && gameMap.isFlyable(next)))) {
             ret.push_back(next);
           }
         }
