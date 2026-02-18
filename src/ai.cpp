@@ -66,6 +66,9 @@ std::unique_ptr<Action> HostileAi::act(flecs::entity self) {
         });
     dij.scan();
     path = pathfinding::constructPath(target, pos, dij.cameFrom);
+    assert(pos == path[0]);
+    std::reverse(path.begin(), path.end());
+    path.pop_back();
   }
 
   if (path.size() > 0) {
