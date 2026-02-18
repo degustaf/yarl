@@ -65,9 +65,15 @@ struct GameMap {
     return inBounds(x, y) && map.isTransparent(x, y);
   }
   inline bool isWalkable(std::array<int, 2> xy) const {
-    return isWalkable(xy[0], xy[1]);
+    return inBounds(xy) && isWalkable(xy[0], xy[1]);
   }
   inline bool isWalkable(int x, int y) const { return map.isWalkable(x, y); }
+  inline bool isFlyable(std::array<int, 2> xy) const {
+    return isFlyable(xy[0], xy[1]);
+  }
+  inline bool isFlyable(int x, int y) const {
+    return inBounds(x, y) && isTransparent(x, y);
+  }
   inline void makeStairs(std::array<int, 2> xy) {
     return makeStairs(xy[0], xy[1]);
   }

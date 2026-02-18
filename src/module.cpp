@@ -129,6 +129,7 @@ module::module(flecs::world ecs) {
       .member<uint8_t>("a");
 
   // actor.hpp
+  ecs.component<Flying>();
   ecs.component<RenderOrder>();
   ecs.component<std::optional<color::RGB>>().opaque(
       std_optional_support<color::RGB>);

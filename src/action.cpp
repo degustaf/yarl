@@ -79,7 +79,8 @@ ActionResult MoveAction::perform(flecs::entity e) const {
   auto mapEntity = e.world().lookup("currentMap").target<CurrentMap>();
   auto &map = mapEntity.get<GameMap>();
   if (map.inBounds(pos + dxy)) {
-    if (map.isWalkable(pos + dxy)) {
+    if (map.isWalkable(pos + dxy) ||
+        (e.has<Flying>() && map.isFlyable(pos + dxy))) {
       if (GameMap::get_blocking_entity(mapEntity, pos + dxy) == e.null()) {
         auto portal =
             e.world()

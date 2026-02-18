@@ -10,6 +10,8 @@
 #include "console.hpp"
 #include "position.hpp"
 
+struct Flying {};
+
 enum class RenderOrder /*: uint8_t*/ {
   Corpse,
   Item,

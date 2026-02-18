@@ -36,7 +36,9 @@ std::unique_ptr<Action> HostileAi::act(flecs::entity self) {
           ret.reserve(9); // 8 directions plus a portal
           for (auto &dir : directions) {
             auto next = pathfinding::Index{xy[0] + dir[0], xy[1] + dir[1]};
-            if (map.inBounds(next) && map.isWalkable(next)) {
+            if (map.inBounds(next) &&
+                (map.isWalkable(next) ||
+                 (self.has<Flying>() && map.isFlyable(next)))) {
               ret.push_back(next);
             }
           }
@@ -116,7 +118,9 @@ std::unique_ptr<Action> FleeAi::act(flecs::entity self) {
         ret.reserve(9); // 8 directions plus a portal
         for (auto &dir : directions) {
           auto next = pathfinding::Index{xy[0] + dir[0], xy[1] + dir[1]};
-          if (map.inBounds(next) && map.isWalkable(next)) {
+          if (map.inBounds(next) &&
+              (map.isWalkable(next) ||
+               (self.has<Flying>() && map.isFlyable(next)))) {
             ret.push_back(next);
           } else if (ecs.query_builder<const Position>()
                          .with<Openable>()
