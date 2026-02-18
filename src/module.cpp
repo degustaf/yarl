@@ -130,6 +130,7 @@ module::module(flecs::world ecs) {
 
   // actor.hpp
   ecs.component<Flying>();
+  ecs.component<Invisible>().member<bool>("paused");
   ecs.component<RenderOrder>();
   ecs.component<std::optional<color::RGB>>().opaque(
       std_optional_support<color::RGB>);

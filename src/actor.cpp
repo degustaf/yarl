@@ -135,14 +135,18 @@ int Fighter::power(flecs::entity self, bool ranged) const {
   return power;
 }
 
-void Renderable::render(Console &console, const Position &pos,
-                        bool inFov) const {
+void Renderable::render(Console &console, const Position &pos, bool inFov,
+                        bool invis) const {
   if (fovOnly && !inFov) {
     return;
   }
   auto &tile = console.at(pos);
   tile.encodeChar(ch);
-  tile.fg = inFov ? fg : (fg / darknessFactor);
+  auto color = inFov ? fg : (fg / darknessFactor);
+  if (invis) {
+    color.a /= 2;
+  }
+  tile.fg = color;
   if (bg) {
     tile.bg = inFov ? *bg : (*bg / darknessFactor);
   }

@@ -27,6 +27,7 @@ static ActionResult attack(flecs::entity e, std::array<int, 2> pos,
       (e == ecs.lookup("player")) ? color::playerAtk : color::enemyAtk;
 
   if (target != target.null()) {
+    auto inv = e.try_get_mut<Invisible>();
     auto weapon = e.target<Weapon>();
     if (weapon && weapon.has<Taser>()) {
       auto taser = weapon.get<Taser>();
@@ -34,6 +35,9 @@ static ActionResult attack(flecs::entity e, std::array<int, 2> pos,
       auto msg =
           stringf("%s tases %s for %d turns", e.get<Named>().name.c_str(),
                   target.get<Named>().name.c_str(), taser.turns);
+      if (inv) {
+        inv->paused = true;
+      }
       return {ActionResultType::Success, msg, 1.0f, attack_color};
     }
     const auto &attacker = e.get<Fighter>();
@@ -52,6 +56,9 @@ static ActionResult attack(flecs::entity e, std::array<int, 2> pos,
       }
     }();
     defender.take_damage(damage, target);
+    if (inv) {
+      inv->paused = true;
+    }
     return {ActionResultType::Success, msg, 1.0f, attack_color};
   } else {
     return {ActionResultType::Failure, "Nothing to attack.", 0.0f,

@@ -369,51 +369,58 @@ void MainHandler::on_render(flecs::world ecs, Console &console) {
   auto q =
       ecs.query_builder<const Position, const MoveAnimation *,
                         const AttackAnimation *, const Renderable,
-                        const Openable *>("module::renderable")
+                        const Openable *, const Invisible *>(
+             "module::renderable")
           .with(flecs::ChildOf, map)
           .order_by<const Renderable>([](auto, auto r1, auto, auto r2) {
             return static_cast<int>(r1->layer) - static_cast<int>(r2->layer);
           })
           .build();
 
-  q.each([&](auto p, auto ma, auto aa, auto r, auto openable) {
-    if (gMap.isInFov(p)) {
+  q.each([&](auto p, auto ma, auto aa, auto r, auto openable, auto inv) {
+    if (inv && !inv->paused) {
+      // Don't render invisible enemies
+    } else if (gMap.isInFov(p)) {
       if (ma) {
-        r.render(console, *ma, true);
+        r.render(console, *ma, true, inv);
       } else if (aa) {
-        r.render(console, *aa, true);
+        r.render(console, *aa, true, inv);
       } else {
-        r.render(console, p, true);
+        r.render(console, p, true, inv);
       }
     } else if (gMap.isSensed(p) && openable) {
       assert(ma == nullptr);
       assert(aa == nullptr);
-      r.render(console, p, true);
+      r.render(console, p, true, false);
     } else if (gMap.isExplored(p)) {
       if (ma) {
-        r.render(console, *ma, false);
+        r.render(console, *ma, false, inv);
       } else if (aa) {
-        r.render(console, *aa, false);
+        r.render(console, *aa, false, inv);
       } else {
-        r.render(console, p, false);
+        r.render(console, p, false, inv);
       }
     }
   });
 
-  auto q2 = ecs.query_builder<const FPosition, const Renderable>("module::fpos")
-                .with(flecs::ChildOf, map)
-                .build();
-  q2.each([&](auto &p, auto &r) {
-    if (gMap.isInFov(p)) {
-      r.render(console, p, true);
+  auto q2 =
+      ecs.query_builder<const FPosition, const Renderable, const Invisible *>(
+             "module::fpos")
+          .with(flecs::ChildOf, map)
+          .build();
+  q2.each([&](auto &p, auto &r, auto inv) {
+    if (gMap.isInFov(p) && (!inv || inv->paused)) {
+      r.render(console, p, true, inv);
     }
   });
 
   auto player = ecs.lookup("player");
   if (player.has<MoveAnimation>()) {
-    player.get<Renderable>().render(console, player.get<MoveAnimation>(), true);
+    player.get<Renderable>().render(console, player.get<MoveAnimation>(), true,
+                                    player.has<Invisible>());
   } else {
-    player.get<Renderable>().render(console, player.get<Position>(), true);
+    player.get<Renderable>().render(console, player.get<Position>(), true,
+                                    player.has<Invisible>());
   }
 
   auto fighter = player.get<Fighter>();
@@ -432,6 +439,10 @@ ActionResult MainHandler::handle_action(flecs::world ecs,
                                         std::unique_ptr<Action> action) {
   if (action) {
     auto player = ecs.entity("player");
+    auto invis = player.try_get_mut<Invisible>();
+    if (invis) {
+      invis->paused = false;
+    }
     auto ret = action->perform(player);
     auto &log = ecs.lookup("messageLog").get_mut<MessageLog>();
     if (ret.msg.size() > 0) {
@@ -884,11 +895,13 @@ std::unique_ptr<Action> AutoMove::keyDown(Command cmd, flecs::world ecs) {
 void AutoMove::on_render(flecs::world ecs, Console &console) {
   auto map = ecs.lookup("currentMap").target<CurrentMap>();
   auto &gm = map.get<GameMap>();
-  auto q = ecs.query_builder<const Position, const Fighter>()
+  auto q = ecs.query_builder<const Position, const Fighter, const Invisible *>()
                .with(flecs::ChildOf, map)
                .build();
   auto seen = false;
-  q.each([&](auto &p, auto &f) { seen |= gm.isInFov(p) && f.isAlive(); });
+  q.each([&](auto &p, auto &f, auto i) {
+    seen |= gm.isInFov(p) && f.isAlive() && (!i || i->paused);
+  });
   MainHandler::on_render(ecs, console);
   if (seen) {
     make<MainGameInputHandler>(ecs);
@@ -970,8 +983,8 @@ void AutoExplore::on_render(flecs::world ecs, Console &console) {
     AutoMove::on_render(ecs, console);
     if (!ret) {
       assert(ret.type == ActionResultType::Failure);
-      // Verify that we haven't already replaced the current inputHandler and
-      // freed this.
+      // Verify that we haven't already replaced the current inputHandler
+      // and freed this.
       if (this == ecs.get<std::unique_ptr<InputHandler>>().get()) {
         make<MainGameInputHandler>(ecs);
       }
