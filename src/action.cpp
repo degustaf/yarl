@@ -94,7 +94,11 @@ ActionResult MoveAction::perform(flecs::entity e) const {
           if (e.has<MoveAnimation>()) {
             e.remove<MoveAnimation>();
           }
-          return perform(e);
+          auto ret = perform(e);
+          assert(ret.type == ActionResultType::Success ||
+                 ret.type == ActionResultType::Failure);
+          ret.type = ActionResultType::Success;
+          return ret;
         }
         e.world().defer_begin();
         if (!e.has<MoveAnimation>()) {
@@ -107,7 +111,7 @@ ActionResult MoveAction::perform(flecs::entity e) const {
           return {ActionResultType::Success, "", 1.0f};
         }
         if (!inventory->hasRoom(e)) {
-          return {ActionResultType::Failure, "Your inventory is full.", 1.0f,
+          return {ActionResultType::Success, "Your inventory is full.", 1.0f,
                   color::impossible};
         }
 
