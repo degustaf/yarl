@@ -523,15 +523,15 @@ static void addPortals(const Config &cfg, flecs::entity map, GameMap &dungeon,
                   .entity()
                   .add(flecs::ChildOf, map)
                   .add<BlocksFov>()
-                  .set<Renderable>(
-                      {'A', color::portal, std::nullopt, RenderOrder::Corpse});
+                  .set<Renderable>({'A', color::portal, std::nullopt,
+                                    RenderOrder::Corpse, false});
     auto e2 = map.world()
                   .entity()
                   .add(flecs::ChildOf, map)
                   .add<Portal>(e1)
                   .add<BlocksFov>()
-                  .set<Renderable>(
-                      {'A', color::portal, std::nullopt, RenderOrder::Corpse});
+                  .set<Renderable>({'A', color::portal, std::nullopt,
+                                    RenderOrder::Corpse, false});
     while (true) {
       auto x = rng.getInt(0, width - 1);
       auto y = rng.getInt(0, height - 1);
