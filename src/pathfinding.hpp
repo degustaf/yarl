@@ -56,6 +56,9 @@ inline std::vector<Index> constructPath(Index start, Index goal,
   while (current != start) {
     path.push_back(current);
     current = cameFrom[current];
+    if (current == Index{-1, -1}) {
+      return {};
+    }
   }
   return path;
 }

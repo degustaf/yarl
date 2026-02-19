@@ -29,6 +29,9 @@ template <typename T> struct Pos {
   inline bool operator==(const Pos &rhs) const {
     return x == rhs.x && y == rhs.y;
   };
+  inline bool operator!=(const Pos &rhs) const {
+    return x != rhs.x || y != rhs.y;
+  };
 
   T distanceSquared(const Pos &other) const {
     auto dx = x - other.x;

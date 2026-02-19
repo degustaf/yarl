@@ -16,19 +16,8 @@
 #include "pathfinding.hpp"
 #include "scent.hpp"
 
-static constexpr auto ROOM_MAX_SIZE = 9;
-static constexpr auto ROOM_MIN_SIZE = 4;
-static constexpr auto MAX_ITER = 600;
-static constexpr auto CORRIDOR_PERCENT = 0.50;
-static constexpr auto MIN_LOOP_DISTANCE = 15;
-static constexpr auto LOOP_ITER = 5;
-static constexpr auto LAKE_ITER = 10;
-static constexpr auto CELLULAR_AUTOMATA_PERCENT = 0.55;
-static constexpr auto CELLULAR_AUTOMATA_ITER = 5;
-static constexpr auto MIN_LAKE_DIMENSION = 4;
-static constexpr auto MAX_LAKE_WIDTH = 30;
-static constexpr auto MAX_LAKE_HEIGHT = 20;
-static constexpr auto DOOR_PERCENTAGE = 0.50;
+using namespace roomAccretion;
+
 static constexpr auto MAX_DUNGEON_LEVEL = 10;
 
 static void dig(int x1, int y1, int x2, int y2, GameMap &map) {
@@ -51,13 +40,13 @@ static void dig(int x1, int y1, int x2, int y2, GameMap &map) {
   }
 }
 
-static RectangularRoom firstRoom(int width, int height, GameMap &map,
-                                 TCODRandom &rng) {
+static RectangularRoom firstRoom(const Config &cfg, int width, int height,
+                                 GameMap &map, TCODRandom &rng) {
   while (true) {
     auto x = rng.getInt(0, width - 1);
     auto y = rng.getInt(0, height - 1);
-    auto w = rng.getInt(ROOM_MIN_SIZE, ROOM_MAX_SIZE);
-    auto h = rng.getInt(ROOM_MIN_SIZE, ROOM_MAX_SIZE);
+    auto w = rng.getInt(cfg.ROOM_MIN_SIZE, cfg.ROOM_MAX_SIZE);
+    auto h = rng.getInt(cfg.ROOM_MIN_SIZE, cfg.ROOM_MAX_SIZE);
 
     if (x + w >= width - 1 || y + h >= height - 1) {
       continue;
@@ -99,7 +88,8 @@ static bool canDig(int width, int height, int x1, int y1, int x2, int y2,
   return true;
 }
 
-std::optional<RectangularRoom> addRoom(int width, int height, GameMap &map,
+std::optional<RectangularRoom> addRoom(const Config &cfg, int width, int height,
+                                       GameMap &map,
                                        std::vector<std::array<int, 2>> &doors,
                                        TCODRandom &rng) {
   auto idx = rng.getInt(0, nFourDirections - 1);
@@ -122,8 +112,8 @@ std::optional<RectangularRoom> addRoom(int width, int height, GameMap &map,
   auto edge = edges[rng.getInt(0, (int)edges.size() - 1)];
   auto corridor_length = 1;
 
-  if (rng.getDouble(0, 1.0) <= CORRIDOR_PERCENT) {
-    corridor_length = rng.getInt(ROOM_MIN_SIZE, ROOM_MAX_SIZE);
+  if (rng.getDouble(0, 1.0) <= cfg.CORRIDOR_PERCENT) {
+    corridor_length = rng.get(cfg.ROOM_MIN_SIZE, cfg.ROOM_MAX_SIZE);
     for (auto i = 1; i < corridor_length; i++) {
       if (map.isWalkable(edge[0] + i * dir[0], edge[1] + i * dir[1])) {
         return std::nullopt;
@@ -131,8 +121,8 @@ std::optional<RectangularRoom> addRoom(int width, int height, GameMap &map,
     }
   }
 
-  auto w = rng.getInt(ROOM_MIN_SIZE, ROOM_MAX_SIZE);
-  auto h = rng.getInt(ROOM_MIN_SIZE, ROOM_MAX_SIZE);
+  auto w = rng.getInt(cfg.ROOM_MIN_SIZE, cfg.ROOM_MAX_SIZE);
+  auto h = rng.getInt(cfg.ROOM_MIN_SIZE, cfg.ROOM_MAX_SIZE);
   auto x1 = 0, y1 = 0, x2 = 0, y2 = 0;
   if (dir[0] == 0 && dir[1] == 1) {
     x1 = edge[0] - w / 2;
@@ -178,24 +168,22 @@ std::optional<RectangularRoom> addRoom(int width, int height, GameMap &map,
   return RectangularRoom{x1, y1, x2 - x1, y2 - y1};
 }
 
-static void addRooms(int width, int height, GameMap &map,
-                     std::array<RectangularRoom, MAX_ROOMS> &rooms,
-                     int &roomCount, std::vector<std::array<int, 2>> &doors,
-                     TCODRandom &rng) {
-  for (auto i = 0; i < MAX_ITER; i++) {
-    if (auto rm = addRoom(width, height, map, doors, rng)) {
-      rooms[roomCount] = *rm;
-      roomCount++;
+static void addRooms(const Config &cfg, int width, int height, GameMap &map,
+                     std::vector<RectangularRoom> &rooms,
+                     std::vector<std::array<int, 2>> &doors, TCODRandom &rng) {
+  for (auto i = 0; i < cfg.MAX_ITER; i++) {
+    if (auto rm = addRoom(cfg, width, height, map, doors, rng)) {
+      rooms.push_back(*rm);
     }
 
-    if (roomCount == MAX_ROOMS) {
+    if (rooms.size() == cfg.MAX_ROOMS) {
       return;
     }
   }
 }
 
-static void addLoops(int width, int height, GameMap &map, TCODRandom &rng,
-                     int length) {
+static void addLoops(const Config &cfg, int width, int height, GameMap &map,
+                     TCODRandom &rng, int length) {
   static const int dirs[2][2] = {{1, 0}, {0, 1}};
   std::vector<std::array<int, 3>> thinWalls;
 
@@ -247,7 +235,7 @@ static void addLoops(int width, int height, GameMap &map, TCODRandom &rng,
       dij.scan();
 
       auto path = pathfinding::constructPath({x1, y1}, {x2, y2}, dij.cameFrom);
-      if (path.size() > MIN_LOOP_DISTANCE) {
+      if (path.size() > cfg.MIN_LOOP_DISTANCE) {
         for (auto i = 0; i < length; i++) {
           map.carveOut(x + i * dx, y + i * dy);
         }
@@ -319,14 +307,14 @@ static void floodFill(TCODMap &m, int x, int y) {
   }
 }
 
-static void addLake(int width, int height, TCODRandom &rng, GameMap &map,
-                    bool water) {
+static void addLake(const Config &cfg, int width, int height, TCODRandom &rng,
+                    GameMap &map, bool water) {
   auto area = std::vector<bool>(width * height, false);
   for (auto i = 0; i < width * height; i++) {
-    area[i] = rng.getDouble(0.0, 1.0) < CELLULAR_AUTOMATA_PERCENT;
+    area[i] = rng.getDouble(0.0, 1.0) < cfg.CELLULAR_AUTOMATA_PERCENT;
   }
 
-  for (auto i = 0; i < CELLULAR_AUTOMATA_ITER; i++) {
+  for (auto i = 0; i < cfg.CELLULAR_AUTOMATA_ITER; i++) {
     auto count = std::vector<int>(width * height, 0);
     for (auto y = 0; y < height; y++) {
       for (auto x = 0; x < width; x++) {
@@ -342,9 +330,9 @@ static void addLake(int width, int height, TCODRandom &rng, GameMap &map,
 
     for (auto j = 0; j < width * height; j++) {
       if (area[j]) {
-        area[j] = count[j] > 4;
+        area[j] = count[j] > cfg.STAY_WALL;
       } else {
-        area[j] = count[j] > 5;
+        area[j] = count[j] > cfg.BECOME_WALL;
       }
     }
   }
@@ -354,10 +342,10 @@ static void addLake(int width, int height, TCODRandom &rng, GameMap &map,
     for (auto x = 0; x < width; x++) {
       if (area[y * width + x]) {
         auto l = floodFill(area, width, height, x, y);
-        if (l.maxx - l.minx + 1 >= MIN_LAKE_DIMENSION &&
-            l.maxy - l.miny + 1 >= MIN_LAKE_DIMENSION &&
-            l.maxx - l.minx + 1 <= MAX_LAKE_WIDTH &&
-            l.maxy - l.miny + 1 <= MAX_LAKE_HEIGHT &&
+        if (l.maxx - l.minx + 1 >= cfg.MIN_LAKE_DIMENSION &&
+            l.maxy - l.miny + 1 >= cfg.MIN_LAKE_DIMENSION &&
+            l.maxx - l.minx + 1 <= cfg.MAX_LAKE_WIDTH &&
+            l.maxy - l.miny + 1 <= cfg.MAX_LAKE_HEIGHT &&
             l.tiles.size() > best.tiles.size()) {
           best = l;
         }
@@ -369,21 +357,23 @@ static void addLake(int width, int height, TCODRandom &rng, GameMap &map,
     return;
   }
 
-  TCODMap m(width, height);
-  m.copy(&map.get());
-  for (auto &xy : best.tiles) {
-    m.setProperties(xy[0], xy[1], true, false);
-  }
-  auto found = false;
-  for (auto y = 0; y < height; y++) {
-    for (auto x = 0; x < width; x++) {
-      if (m.isWalkable(x, y)) {
-        if (found) {
-          // Lake disconnects the map. reject it;
-          return;
-        } else {
-          floodFill(m, x, y);
-          found = true;
+  if (cfg.FORCE_CONNECTED) {
+    TCODMap m(width, height);
+    m.copy(&map.get());
+    for (auto &xy : best.tiles) {
+      m.setProperties(xy[0], xy[1], true, false);
+    }
+    auto found = false;
+    for (auto y = 0; y < height; y++) {
+      for (auto x = 0; x < width; x++) {
+        if (m.isWalkable(x, y)) {
+          if (found) {
+            // Lake disconnects the map. reject it;
+            return;
+          } else {
+            floodFill(m, x, y);
+            found = true;
+          }
         }
       }
     }
@@ -400,11 +390,10 @@ static void addLake(int width, int height, TCODRandom &rng, GameMap &map,
   }
 }
 
-static std::array<int, 2>
-generateStairs(std::array<RectangularRoom, MAX_ROOMS> &rooms, GameMap &map,
-               int roomCount) {
-  for (auto i = roomCount - 1; i >= 0; i--) {
-    auto &rm = rooms[i];
+static std::array<int, 2> generateStairs(std::vector<RectangularRoom> &rooms,
+                                         GameMap &map) {
+  for (auto i = rooms.rbegin(); i != rooms.rend(); i++) {
+    auto &rm = *i;
 
     auto [x, y] = rm.center();
     assert(map.isTransparent(x, y));
@@ -437,23 +426,20 @@ static constexpr auto monster_weights =
     std::array<WeightsByFloor, 2>{WeightsByFloor{1, 20, "module::orc"},
                                   WeightsByFloor{4, 20, "module::cysts"}};
 
-static void populateRoom(flecs::entity map, flecs::entity player,
-                         TCODRandom &rng, bool &first, bool lit,
+static void populateRoom(const Config &cfg, flecs::entity map,
+                         flecs::entity player, TCODRandom &rng, bool &first,
                          const GameMap &dungeon, const RectangularRoom &room,
                          flecs::query<const Position> q) {
   auto ecs = map.world();
   if (first && dungeon.isWalkable(room.center())) {
     player.get_mut<Position>() = room.center();
-    if (!lit) {
+    if (!cfg.lit) {
       auto x = rng.getInt(room.x1, room.x2);
       auto y = rng.getInt(room.y1, room.y2);
       ecs.entity()
-          .set<Light>({3, 0.8f})
+          .is_a(ecs.lookup("module::light"))
           .set<Position>({x, y})
-          .add(flecs::ChildOf, map)
-          .set<Renderable>(
-              {'*', color::lightning, std::nullopt, RenderOrder::Corpse})
-          .set<Named>({"light"});
+          .add(flecs::ChildOf, map);
     }
     first = false;
   } else {
@@ -489,27 +475,24 @@ static void populateRoom(flecs::entity map, flecs::entity player,
       }
     }
 
-    if (!lit) {
-      if (rng.get(0.0, 1.0) > 0.75) {
+    if (!cfg.lit) {
+      if (rng.get(0.0, 1.0) > cfg.LIGHT_PERCENT) {
         auto x = rng.getInt(room.x1, room.x2);
         auto y = rng.getInt(room.y1, room.y2);
         ecs.entity()
-            .set<Light>({3, 0.8f})
+            .is_a(ecs.lookup("module::light"))
             .set<Position>({x, y})
-            .add(flecs::ChildOf, map)
-            .set<Renderable>(
-                {'*', color::lightning, std::nullopt, RenderOrder::Corpse})
-            .set<Named>({"light"});
+            .add(flecs::ChildOf, map);
       }
     }
   }
 }
 
-GameMap roomAccretion::generateDungeon(flecs::entity map, int width, int height,
-                                       int level, flecs::entity player,
-                                       bool lit) {
-  auto dungeon = GameMap(width, height, level, lit);
-  generateDungeon(map, dungeon, player, true, lit);
+GameMap roomAccretion::generateDungeon(const Config &cfg, flecs::entity map,
+                                       int width, int height, int level,
+                                       flecs::entity player) {
+  auto dungeon = GameMap(width, height, level, cfg.lit);
+  generateDungeon(cfg, map, dungeon, player, true);
   return dungeon;
 }
 
@@ -531,69 +514,71 @@ void random_shuffle(_RandomAccessIterator __first, _RandomAccessIterator __last,
   }
 }
 
-static void addPortals(flecs::entity map, GameMap &dungeon, TCODRandom &rng) {
+static void addPortals(const Config &cfg, flecs::entity map, GameMap &dungeon,
+                       TCODRandom &rng) {
   auto width = dungeon.getWidth();
   auto height = dungeon.getHeight();
-  auto e1 = map.world()
-                .entity()
-                .add(flecs::ChildOf, map)
-                .add<BlocksFov>()
-                .set<Renderable>(
-                    {'A', color::portal, std::nullopt, RenderOrder::Corpse});
-  auto e2 = map.world()
-                .entity()
-                .add(flecs::ChildOf, map)
-                .add<Portal>(e1)
-                .add<BlocksFov>()
-                .set<Renderable>(
-                    {'A', color::portal, std::nullopt, RenderOrder::Corpse});
-  while (true) {
-    auto x = rng.getInt(0, width - 1);
-    auto y = rng.getInt(0, height - 1);
-    if (dungeon.isWalkable({x, y})) {
-      assert(dungeon.isTransparent({x, y}));
-      e1.set<Position>({x, y});
-      break;
+  for (auto i = 0; i < cfg.PORTALS; i++) {
+    auto e1 = map.world()
+                  .entity()
+                  .add(flecs::ChildOf, map)
+                  .add<BlocksFov>()
+                  .set<Renderable>(
+                      {'A', color::portal, std::nullopt, RenderOrder::Corpse});
+    auto e2 = map.world()
+                  .entity()
+                  .add(flecs::ChildOf, map)
+                  .add<Portal>(e1)
+                  .add<BlocksFov>()
+                  .set<Renderable>(
+                      {'A', color::portal, std::nullopt, RenderOrder::Corpse});
+    while (true) {
+      auto x = rng.getInt(0, width - 1);
+      auto y = rng.getInt(0, height - 1);
+      if (dungeon.isWalkable({x, y})) {
+        assert(dungeon.isTransparent({x, y}));
+        e1.set<Position>({x, y});
+        break;
+      }
     }
-  }
 
-  while (true) {
-    auto x = rng.getInt(0, width - 1);
-    auto y = rng.getInt(0, height - 1);
-    if (e1.get<Position>() == Position{x, y})
-      continue;
-    if (dungeon.isWalkable({x, y})) {
-      assert(dungeon.isTransparent({x, y}));
-      e2.set<Position>({x, y});
-      break;
+    while (true) {
+      auto x = rng.getInt(0, width - 1);
+      auto y = rng.getInt(0, height - 1);
+      if (e1.get<Position>() == Position{x, y})
+        continue;
+      if (dungeon.isWalkable({x, y})) {
+        assert(dungeon.isTransparent({x, y}));
+        e2.set<Position>({x, y});
+        break;
+      }
     }
   }
 }
 
-void roomAccretion::generateDungeon(flecs::entity map, GameMap &dungeon,
-                                    flecs::entity player, bool generateEntities,
-                                    bool lit) {
+void roomAccretion::generateDungeon(const Config &cfg, flecs::entity map,
+                                    GameMap &dungeon, flecs::entity player,
+                                    bool generateEntities) {
   auto ecs = map.world();
   auto seed = ecs.lookup("seed").get<Seed>();
   auto rng = TCODRandom(seed.seed + dungeon.level);
   auto width = dungeon.getWidth();
   auto height = dungeon.getHeight();
 
-  auto rooms = std::array<RectangularRoom, MAX_ROOMS>();
-  rooms[0] = firstRoom(width, height, dungeon, rng);
-  auto roomCount = 1;
+  auto rooms = std::vector<RectangularRoom>();
+  rooms.push_back(firstRoom(cfg, width, height, dungeon, rng));
 
   auto doors = std::vector<std::array<int, 2>>();
-  addRooms(width, height, dungeon, rooms, roomCount, doors, rng);
-  for (auto i = 1; i <= LOOP_ITER; i++) {
-    addLoops(width, height, dungeon, rng, i);
+  addRooms(cfg, width, height, dungeon, rooms, doors, rng);
+  for (auto i = 1; i <= cfg.LOOP_ITER; i++) {
+    addLoops(cfg, width, height, dungeon, rng, i);
   }
   if (dungeon.level < MAX_DUNGEON_LEVEL) {
-    for (auto i = 0; i < LAKE_ITER; i++) {
-      addLake(width, height, rng, dungeon, rng.get(0, 1) == 0);
+    for (auto i = 0; i < cfg.LAKE_ITER; i++) {
+      addLake(cfg, width, height, rng, dungeon, rng.get(0, 1) == 0);
     }
   }
-  auto stairs = generateStairs(rooms, dungeon, roomCount);
+  auto stairs = generateStairs(rooms, dungeon);
 
   if (!generateEntities) {
     return;
@@ -603,7 +588,7 @@ void roomAccretion::generateDungeon(flecs::entity map, GameMap &dungeon,
                .with(flecs::ChildOf, map)
                .build();
 
-  addPortals(map, dungeon, rng);
+  addPortals(cfg, map, dungeon, rng);
 
   if (dungeon.level == MAX_DUNGEON_LEVEL) {
     auto yendor = ecs.lookup("module::yendor");
@@ -612,16 +597,16 @@ void roomAccretion::generateDungeon(flecs::entity map, GameMap &dungeon,
   }
 
   auto firstRoom = true;
-  for (auto i = 0; i < roomCount; i++) {
-    populateRoom(map, player, rng, firstRoom, lit, dungeon, rooms[i], q);
+  for (auto &rm : rooms) {
+    populateRoom(cfg, map, player, rng, firstRoom, dungeon, rm, q);
   }
 
-  for (auto i = roomCount - 1; i > 0; i--) {
+  for (auto i = rooms.size() - 1; i > 0; i--) {
     // i > 0 is intentional. We don't want a fountain in the first roomwith the
     // player.
     auto center = rooms[i].center();
     if (dungeon.isWalkable(center) && !dungeon.isStairs(center) &&
-        rng.getInt(1, 7) == 1) {
+        rng.get(0.0, 0.1) < cfg.FOUNTAIN_PERCENT) {
       ecs.entity()
           .set<Position>(center)
           .is_a(ecs.lookup("module::fountain"))
@@ -630,7 +615,7 @@ void roomAccretion::generateDungeon(flecs::entity map, GameMap &dungeon,
   }
 
   for (auto d : doors) {
-    if (rng.getDouble(0.0, 1.0) < DOOR_PERCENTAGE) {
+    if (rng.getDouble(0.0, 1.0) < cfg.DOOR_PERCENTAGE) {
       if (dungeon.isWalkable(d) && dungeon.isTransparent(d)) {
         auto e = ecs.entity()
                      .is_a(ecs.lookup("module::door"))
