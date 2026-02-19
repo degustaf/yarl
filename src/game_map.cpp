@@ -47,8 +47,10 @@ void GameMap::carveOut(int x, int y) { map.setProperties(x, y, true, true); }
 void GameMap::nextFloor(flecs::entity player, bool lit) const {
   auto ecs = player.world();
   auto newMap = ecs.entity();
-  newMap.set<GameMap>(roomAccretion::generateDungeon(newMap, width, height,
-                                                     level + 1, player, lit));
+  auto cfg = roomAccretion::Config{};
+  cfg.lit = lit;
+  newMap.set<GameMap>(roomAccretion::generateDungeon(cfg, newMap, width, height,
+                                                     level + 1, player));
   auto oldMap = ecs.lookup("currentMap").target<CurrentMap>();
   ecs.lookup("currentMap").add<CurrentMap>(newMap);
   deleteMapEntity(oldMap);

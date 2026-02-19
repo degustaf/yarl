@@ -403,4 +403,10 @@ module::module(flecs::world ecs) {
       .set<Named>({"fountain"})
       .add<BlocksMovement>()
       .add<Fountain>();
+
+  ecs.prefab("light")
+      .set<Renderable>(
+          {'*', color::lightning, std::nullopt, RenderOrder::Corpse})
+      .set<Named>({"light"})
+      .set<Light>({3, 0.8f});
 }

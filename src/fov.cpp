@@ -70,7 +70,8 @@ static void scan(GameMap &map, flecs::query<const Position> &q, Row row,
        col <= (int)std::ceil(row.depth * row.endSlope - 0.5); col++) {
     auto r2 = row.dx * row.dx + (row.dy + col) * (row.dy + col);
     auto tile = std::array{row.depth, col};
-    assert(map.inBounds(row.transform(tile)));
+    if (!map.inBounds(row.transform(tile)))
+      continue;
     if (isWall(map, row, tile) || row.is_symmetric(tile)) {
       callback(row.transform(tile), r2);
     }
@@ -86,6 +87,7 @@ static void scan(GameMap &map, flecs::query<const Position> &q, Row row,
     q.each([&](flecs::iter &it, size_t, const Position &p) {
       if (p == row.transform(tile)) {
         auto otherSide = it.pair(1).second();
+        assert(p != otherSide.get<Position>());
         portals.push_back(otherSide.get<Position>());
       }
     });
