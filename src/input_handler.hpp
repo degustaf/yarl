@@ -36,6 +36,7 @@ struct InputHandler {
 
   std::array<int, 2> mouse_loc = {0, 0};
   uint64_t time;
+  bool hud = true;
 
 protected:
   template <typename T> inline void make(flecs::world ecs) {

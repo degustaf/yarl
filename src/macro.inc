@@ -31,11 +31,12 @@
   X(OPEN, SDL_SCANCODE_O, "open/close a door") SEP \
   X(PEEK, SDL_SCANCODE_P, "peek a tile") SEP \
   X(SHOOT, SDL_SCANCODE_S, "shoot a ranged weapon") SEP \
+  X(TURN, SDL_SCANCODE_T, "display turn and seed") SEP \
   X(UR, SDL_SCANCODE_U, "up-right") SEP \
   X(CHARACTER, SDL_SCANCODE_X, "character screen") SEP \
   X(UL, SDL_SCANCODE_Y, "up-left") SEP \
+  X(HUD, SDL_SCANCODE_Z, "toggle hud") SEP \
   X(WAIT, SDL_SCANCODE_SPACE, "wait a turn") SEP \
-  X(TURN, SDL_SCANCODE_T, "display turn and seed") SEP \
   X(STAIRS, SDL_SCANCODE_PERIOD, "use the stairs")
 
   // X(EQUIP, SDL_SCANCODE_E, "equip item") SEP

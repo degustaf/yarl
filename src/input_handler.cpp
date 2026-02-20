@@ -362,8 +362,6 @@ void MainHandler::on_render(flecs::world ecs, tcod::Console &console) {
   auto &gMap = map.get_mut<GameMap>();
   gMap.render(console, time);
 
-  ecs.lookup("messageLog").get<MessageLog>().render(console, 21, 45, 40, 5);
-
   auto q =
       ecs.query_builder<const Position, const Renderable, const Openable *,
                         const Invisible *>("module::renderable")
@@ -389,12 +387,15 @@ void MainHandler::on_render(flecs::world ecs, tcod::Console &console) {
   player.get<Renderable>().render(console, player.get<Position>(), true,
                                   player.has<Invisible>());
 
-  auto fighter = player.get<Fighter>();
-  renderBar(console, fighter.hp(), fighter.max_hp, 20);
-  renderSmell(console, player, 20);
-  renderDungeonLevel(console, gMap.level, {0, 49});
-  renderNamesAtMouseLocation(console, {21, 44}, mouse_loc, map, gMap);
-  renderCommandButton(console, commandBox);
+  if (hud) {
+    ecs.lookup("messageLog").get<MessageLog>().render(console, 21, 45, 40, 5);
+    auto fighter = player.get<Fighter>();
+    renderBar(console, fighter.hp(), fighter.max_hp, 20);
+    renderSmell(console, player, 20);
+    renderDungeonLevel(console, gMap.level, {0, 49});
+    renderNamesAtMouseLocation(console, {21, 44}, mouse_loc, map, gMap);
+    renderCommandButton(console, commandBox);
+  }
 }
 
 ActionResult MainHandler::handle_action(flecs::world ecs,
@@ -516,6 +517,9 @@ std::unique_ptr<Action> MainGameInputHandler::keyDown(Command cmd,
     return nullptr;
   case CommandType::TURN:
     return std::make_unique<SeedAction>();
+  case CommandType::HUD:
+    hud = !hud;
+    return nullptr;
 
   case CommandType::ESCAPE:
     make<MainMenuInputHandler>(ecs);
