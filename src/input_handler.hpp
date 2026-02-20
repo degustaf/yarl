@@ -48,6 +48,7 @@ struct InputHandler {
   std::array<int, 2> dim;
   std::array<int, 4> commandBox;
   uint64_t time = 0;
+  bool hud = true;
 
 protected:
   template <typename T> inline void make(flecs::world ecs) {

@@ -360,12 +360,6 @@ void MainHandler::on_render(flecs::world ecs, Console &console) {
   auto &gMap = map.get_mut<GameMap>();
   gMap.render(console, time);
 
-  ecs.lookup("messageLog")
-      .get<MessageLog>()
-      .render(console, BAR_WIDTH + 1, dim[1] - HUD_HEIGHT,
-              dim[0] - (BAR_WIDTH + 1) - (COMMAND_BUTTON_WIDTH + 1) - 1,
-              HUD_HEIGHT);
-
   auto q =
       ecs.query_builder<const Position, const MoveAnimation *,
                         const AttackAnimation *, const Renderable,
@@ -423,16 +417,24 @@ void MainHandler::on_render(flecs::world ecs, Console &console) {
                                     player.has<Invisible>());
   }
 
-  auto fighter = player.get<Fighter>();
-  renderBar(console, fighter.hp(), fighter.max_hp, 0, dim[1] - HUD_HEIGHT,
-            BAR_WIDTH);
-  renderSmell(console, player, 0, dim[1] - HUD_HEIGHT + 2, BAR_WIDTH);
-  renderDungeonLevel(console, gMap.level, {0, dim[1] - HUD_HEIGHT + 4});
-  assert(mouse_loc[0] >= 0);
-  assert(mouse_loc[1] >= 0);
-  renderNamesAtMouseLocation(console, {BAR_WIDTH + 1, dim[1] - HUD_HEIGHT - 1},
-                             mouse_loc, map, gMap);
-  renderCommandButton(console, commandBox);
+  if (hud) {
+    ecs.lookup("messageLog")
+        .get<MessageLog>()
+        .render(console, BAR_WIDTH + 1, dim[1] - HUD_HEIGHT,
+                dim[0] - (BAR_WIDTH + 1) - (COMMAND_BUTTON_WIDTH + 1) - 1,
+                HUD_HEIGHT);
+    auto fighter = player.get<Fighter>();
+    renderBar(console, fighter.hp(), fighter.max_hp, 0, dim[1] - HUD_HEIGHT,
+              BAR_WIDTH);
+    renderSmell(console, player, 0, dim[1] - HUD_HEIGHT + 2, BAR_WIDTH);
+    renderDungeonLevel(console, gMap.level, {0, dim[1] - HUD_HEIGHT + 4});
+    assert(mouse_loc[0] >= 0);
+    assert(mouse_loc[1] >= 0);
+    renderNamesAtMouseLocation(console,
+                               {BAR_WIDTH + 1, dim[1] - HUD_HEIGHT - 1},
+                               mouse_loc, map, gMap);
+    renderCommandButton(console, commandBox);
+  }
 }
 
 ActionResult MainHandler::handle_action(flecs::world ecs,
@@ -612,6 +614,9 @@ std::unique_ptr<Action> MainGameInputHandler::keyDown(Command cmd,
     return nullptr;
   case CommandType::TURN:
     return std::make_unique<SeedAction>();
+  case CommandType::HUD:
+    hud = !hud;
+    return nullptr;
 
   case CommandType::ESCAPE:
     make<MainMenuInputHandler>(ecs);
