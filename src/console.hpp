@@ -140,3 +140,10 @@ private:
   float trauma;
   std::unique_ptr<Tile[]> tiles;
 };
+
+static constexpr inline Console::Tile lerp(const Console::Tile &x,
+                                           const Console::Tile &y, float t) {
+  assert(x.ch == y.ch);
+  assert(x.flipped == y.flipped);
+  return {x.ch, lerp(x.fg, y.fg, t), lerp(x.bg, y.bg, t), x.flipped};
+}

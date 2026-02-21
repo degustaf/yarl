@@ -31,13 +31,13 @@ struct RGB {
     return *this;
   }
 
-  constexpr inline RGB operator*(float t) {
+  constexpr inline RGB operator*(float t) const {
     return {(uint8_t)std::clamp(r * t, 0.0f, 255.0f),
             (uint8_t)std::clamp(g * t, 0.0f, 255.0f),
             (uint8_t)std::clamp(b * t, 0.0f, 255.0f)};
   }
 
-  constexpr inline RGB operator+(RGB rhs) {
+  constexpr inline RGB operator+(RGB rhs) const {
     return {(uint8_t)std::clamp(r + rhs.r, 0, 255),
             (uint8_t)std::clamp(g + rhs.g, 0, 255),
             (uint8_t)std::clamp(b + rhs.b, 0, 255)};
@@ -77,9 +77,23 @@ struct RGBA {
     b /= rhs;
     return *this;
   }
+
+  constexpr inline RGBA operator*(float t) const {
+    return {(uint8_t)std::clamp(r * t, 0.0f, 255.0f),
+            (uint8_t)std::clamp(g * t, 0.0f, 255.0f),
+            (uint8_t)std::clamp(b * t, 0.0f, 255.0f),
+            (uint8_t)std::clamp(a * t, 0.0f, 255.0f)};
+  }
+
+  constexpr inline RGBA operator+(RGBA rhs) {
+    return {(uint8_t)std::clamp(r + rhs.r, 0, 255),
+            (uint8_t)std::clamp(g + rhs.g, 0, 255),
+            (uint8_t)std::clamp(b + rhs.b, 0, 255),
+            (uint8_t)std::clamp(a + rhs.a, 0, 255)};
+  }
 };
 
-static constexpr inline RGB lerp(RGB x, RGB y, float t) {
+template <typename T> static constexpr inline T lerp(T x, T y, float t) {
   return x * t + y * (1 - t);
 }
 

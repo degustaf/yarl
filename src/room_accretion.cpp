@@ -476,7 +476,7 @@ static void populateRoom(const Config &cfg, flecs::entity map,
     }
 
     if (!cfg.lit) {
-      if (rng.get(0.0, 1.0) > cfg.LIGHT_PERCENT) {
+      if (rng.get(0.0, 1.0) < cfg.LIGHT_PERCENT) {
         auto x = rng.getInt(room.x1, room.x2);
         auto y = rng.getInt(room.y1, room.y2);
         ecs.entity()

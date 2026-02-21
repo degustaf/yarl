@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cassert>
 #include <cstdint>
 #include <vector>
 
@@ -14,7 +15,8 @@ struct Openable {};
 struct Fountain {};
 struct Portal {};
 struct Light {
-  int radius;
+  int innerRadius;
+  int outerRadius;
   float decayFactor;
 };
 

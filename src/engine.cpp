@@ -124,6 +124,7 @@ void Engine::new_game(flecs::world ecs, int map_width, int map_height) {
 
   auto map = ecs.entity();
   auto cfg = roomAccretion::Config{};
+  cfg.lit = false;
   cfg.ROOM_MIN_SIZE = 2;
   cfg.MAX_ROOMS = 300;
   cfg.MAX_ITER = 1000;
