@@ -99,25 +99,19 @@ void GameMap::render(tcod::Console &console, uint64_t time) {
     vec[1] = (float)y;
     for (auto x = 0; x < width; x++) {
       vec[0] = (float)x;
-      if (isVisible(x, y)) {
-        console.at(x, y) = isStairs({x, y})          ? stairs_light
-                           : isKnownBloody({x, y})   ? bloody_floor_light
-                           : map.isWalkable(x, y)    ? floor_light
-                           : isWater(x, y)           ? water_light
-                           : map.isTransparent(x, y) ? chasm_light
-                                                     : wall_light;
+      if (isExplored(x, y)) {
+        auto t = luminosity[y * width + x];
+        console.at(x, y) =
+            isStairs({x, y}) ? lerp(stairs_light, stairs_dark, t)
+            : isKnownBloody({x, y})
+                ? lerp(bloody_floor_light, bloody_floor_dark, t)
+            : map.isWalkable(x, y)    ? lerp(floor_light, floor_dark, t)
+            : isWater(x, y)           ? lerp(water_light, water_dark, t)
+            : map.isTransparent(x, y) ? lerp(chasm_light, chasm_dark, t)
+                                      : lerp(wall_light, wall_dark, t);
         if (isWater(x, y)) {
-          console.at(x, y).bg += (int8_t)(63 * noise.get(vec));
-        }
-      } else if (isExplored(x, y)) {
-        console.at(x, y) = isStairs({x, y})          ? stairs_dark
-                           : isKnownBloody({x, y})   ? bloody_floor_dark
-                           : map.isWalkable(x, y)    ? floor_dark
-                           : isWater(x, y)           ? water_dark
-                           : map.isTransparent(x, y) ? chasm_dark
-                                                     : wall_dark;
-        if (isWater(x, y)) {
-          console.at(x, y).bg += (int8_t)(31 * noise.get(vec));
+          auto scale = 63.0f * t + 31.0f * (1 - t);
+          console.at(x, y).bg += (int8_t)(scale * noise.get(vec));
         }
       } else if (isSensed(x, y)) {
         console.at(x, y) = isStairs({x, y})          ? stairs_sensed

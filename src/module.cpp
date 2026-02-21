@@ -210,7 +210,10 @@ module::module(flecs::world ecs) {
   ecs.component<Openable>();
   ecs.component<Fountain>();
   ecs.component<Portal>().add(flecs::Symmetric);
-  ecs.component<Light>().member<int>("radius").member<float>("decayFactor");
+  ecs.component<Light>()
+      .member<int>("innerRadius")
+      .member<int>("outerRadius")
+      .member<float>("decayFactor");
   ecs.component<CurrentMap>().add(flecs::Exclusive);
   ecs.component<Tile>().member<uint8_t>("flags");
   ecs.component<std::vector<Tile>>().opaque(std_vector_support<Tile>);
@@ -408,5 +411,5 @@ module::module(flecs::world ecs) {
       .set<Renderable>(
           {'*', color::lightning, std::nullopt, RenderOrder::Corpse})
       .set<Named>({"light"})
-      .set<Light>({3, 0.8f});
+      .set<Light>({3, 6, 0.8f});
 }

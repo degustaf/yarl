@@ -178,3 +178,21 @@ static inline TCOD_ColorRGB operator+(TCOD_ColorRGB x, TCOD_ColorRGB y) {
 static inline TCOD_ColorRGB lerp(TCOD_ColorRGB x, TCOD_ColorRGB y, float t) {
   return t * x + (1 - t) * y;
 }
+
+static inline TCOD_ColorRGBA operator*(float t, TCOD_ColorRGBA c) {
+  return {(uint8_t)std::clamp(c.r * t, 0.0f, 255.0f),
+          (uint8_t)std::clamp(c.g * t, 0.0f, 255.0f),
+          (uint8_t)std::clamp(c.b * t, 0.0f, 255.0f),
+          (uint8_t)std::clamp(c.a * t, 0.0f, 255.0f)};
+}
+
+static inline TCOD_ColorRGBA operator+(TCOD_ColorRGBA x, TCOD_ColorRGBA y) {
+  return {(uint8_t)std::clamp(x.r + y.r, 0, 255),
+          (uint8_t)std::clamp(x.g + y.g, 0, 255),
+          (uint8_t)std::clamp(x.b + y.b, 0, 255),
+          (uint8_t)std::clamp(x.a + y.a, 0, 255)};
+}
+
+static inline TCOD_ColorRGBA lerp(TCOD_ColorRGBA x, TCOD_ColorRGBA y, float t) {
+  return t * x + (1 - t) * y;
+}

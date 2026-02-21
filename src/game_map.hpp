@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cassert>
 #include <cstdint>
 #include <vector>
 
@@ -7,6 +8,7 @@
 #include <libtcod.hpp>
 
 #include "actor.hpp"
+#include "color.hpp"
 #include "scent.hpp"
 
 struct BlocksMovement {};
@@ -15,7 +17,8 @@ struct Openable {};
 struct Fountain {};
 struct Portal {};
 struct Light {
-  int radius;
+  int innerRadius;
+  int outerRadius;
   float decayFactor;
 };
 
@@ -169,3 +172,9 @@ private:
 void computeFov(flecs::entity mapEntity, GameMap &map,
                 std::array<int, 2> origin, int maxRadius);
 void addLight(flecs::entity mapEntity, GameMap &map);
+
+static inline TCOD_ConsoleTile lerp(const TCOD_ConsoleTile &x,
+                                    const TCOD_ConsoleTile &y, float t) {
+  assert(x.ch == y.ch);
+  return {x.ch, lerp(x.fg, y.fg, t), lerp(x.bg, y.bg, t)};
+}

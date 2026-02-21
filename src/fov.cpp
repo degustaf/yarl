@@ -142,10 +142,14 @@ void computeFov(flecs::entity mapEntity, GameMap &map,
 
 static void addLumens(flecs::entity mapEntity, GameMap &map,
                       std::array<int, 2> origin, Light l) {
-  auto maxR2 = (float)(l.radius * l.radius);
+  auto minR2 = l.innerRadius * l.innerRadius;
+  auto maxR2 = (float)(l.outerRadius * l.outerRadius);
   computeFov(mapEntity, map, origin, [&](auto xy, auto r2) {
-    if (0 <= r2 && r2 < (int)maxR2) {
-      map.addLuminosity(xy, l.decayFactor * (maxR2 - (float)r2) / maxR2);
+    if (0 <= r2 && r2 < minR2) {
+      map.addLuminosity(xy, 1.0f);
+    } else if (0 <= r2 && (float)r2 < maxR2) {
+      map.addLuminosity(xy, l.decayFactor * (maxR2 - (float)r2) /
+                                (maxR2 - (float)minR2));
     }
   });
 }
