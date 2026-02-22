@@ -85,8 +85,11 @@ struct OnDeath {
   virtual ~OnDeath() = default;
 };
 
-struct Frozen {
+struct Frozen {};
+
+struct Temporary {
   int turns;
+  flecs::entity component;
 
   void update(flecs::entity self);
 };

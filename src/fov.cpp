@@ -164,4 +164,10 @@ void addLight(flecs::entity mapEntity, GameMap &map) {
       .with(flecs::ChildOf, mapEntity)
       .build()
       .each([&](auto &p, auto &l) { addLumens(mapEntity, map, p, l); });
+
+  auto player = mapEntity.world().lookup("player");
+  assert(player);
+  if (player.has<Light>()) {
+    addLumens(mapEntity, map, player.get<Position>(), player.get<Light>());
+  }
 }

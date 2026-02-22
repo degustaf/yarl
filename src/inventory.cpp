@@ -13,8 +13,9 @@ void drop(flecs::entity item, flecs::entity wearer) {
 
 void Taser::apply(flecs::entity target) const {
   if (target.has<Frozen>()) {
-    target.get_mut<Frozen>().turns += turns;
+    target.get_mut<Temporary>().turns += turns;
   } else {
-    target.set<Frozen>({turns});
+    target.add<Frozen>().set<Temporary>(
+        {turns, target.world().component<Frozen>()});
   }
 }

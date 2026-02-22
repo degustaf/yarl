@@ -147,7 +147,9 @@ module::module(flecs::world ecs) {
       .member<int>("power");
   ecs.component<Regenerator>().member<int>("healTurns").member<int>("turns");
   ecs.component<OnDeath>();
-  ecs.component<Frozen>().member<int>("turns");
+  ecs.component<Frozen>();
+  ecs.component<Temporary>().member<int>("turns").member<flecs::entity>(
+      "component");
 
   // ai.hpp
   ecs.component<Ai>();
@@ -191,6 +193,12 @@ module::module(flecs::world ecs) {
   ecs.component<MagicMappingConsumable>().is_a<Consumable>();
   ecs.component<RopeConsumable>().is_a<Consumable>();
   ecs.component<TransporterConsumable>().is_a<Consumable>();
+  ecs.component<LightConsumable>()
+      .member("turns", &LightConsumable::turns)
+      .member("innerRadius", &LightConsumable::innerRadius)
+      .member("outerRadius", &LightConsumable::outerRadius)
+      .member("decayFactor", &LightConsumable::decayFactor)
+      .is_a<Consumable>();
 
   // engine.hpp
   ecs.component<Seed>().member<uint32_t>("seed");
@@ -335,6 +343,13 @@ module::module(flecs::world ecs) {
       .add<Item>()
       .add<Flammable>()
       .set<FireballDamageConsumable>({12, 3});
+
+  ecs.prefab("lightScroll")
+      .set<Renderable>({'~', color::lightFG, std::nullopt, RenderOrder::Item})
+      .set<Named>({"Light Scroll"})
+      .add<Item>()
+      .add<Flammable>()
+      .set<LightConsumable>({10, 2, 4, 0.6f});
 
   ecs.prefab("dung")
       .set<Renderable>({'~', color::dung, std::nullopt, RenderOrder::Item})
