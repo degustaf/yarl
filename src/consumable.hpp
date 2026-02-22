@@ -108,6 +108,21 @@ struct TransporterConsumable : Consumable {
                                 flecs::entity consumer) const override;
 };
 
+struct LightConsumable : Consumable {
+  LightConsumable() = default;
+  LightConsumable(int turns, int innerRadius, int outerRadius,
+                  float decayFactor)
+      : turns(turns), innerRadius(innerRadius), outerRadius(outerRadius),
+        decayFactor(decayFactor) {};
+  int turns;
+  int innerRadius;
+  int outerRadius;
+  float decayFactor;
+  virtual ~LightConsumable() = default;
+  virtual ActionResult activate(flecs::entity item,
+                                flecs::entity target) const override;
+};
+
 inline bool isConsumable(flecs::entity e) {
   return get<Consumable>(e) != nullptr;
 }

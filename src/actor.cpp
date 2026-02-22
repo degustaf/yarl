@@ -158,9 +158,10 @@ void Regenerator::update(flecs::entity self) {
   }
 }
 
-void Frozen::update(flecs::entity self) {
+void Temporary::update(flecs::entity self) {
   turns--;
   if (turns <= 0) {
-    self.remove<Frozen>();
+    assert(component.has<flecs::Component>());
+    self.remove(component).remove<Temporary>();
   }
 }

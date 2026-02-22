@@ -423,6 +423,9 @@ ActionResult MainHandler::handle_action(flecs::world ecs,
       if (scentMessage.size() > 0) {
         log.addMessage(scentMessage);
       }
+      ecs.defer_begin();
+      ecs.query<Temporary>().each([](auto e, auto &t) { t.update(e); });
+      ecs.defer_end();
       ecs.lookup("turn").get_mut<Turn>().turn++;
     }
     // if (player.has<TrackerConsumable>()) {

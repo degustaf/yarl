@@ -30,10 +30,7 @@ void Engine::handle_enemy_turns(flecs::world ecs) {
         auto e = it.entity(i);
         auto ai_id = it.id(0);
         auto ai_type = static_cast<Ai *>(e.try_get_mut(ai_id));
-        auto frozen = e.try_get_mut<Frozen>();
-        if (frozen) {
-          frozen->update(e);
-        } else {
+        if (!e.has<Frozen>()) {
           auto action = ai_type->act(e);
           if (action) {
             auto in = e.try_get_mut<Invisible>();
@@ -130,7 +127,7 @@ void Engine::new_game(flecs::world ecs) {
   auto map = ecs.entity();
   auto cfg = roomAccretion::Config{};
   cfg.lit = false;
-  cfg.ROOM_MIN_SIZE = 2;
+  cfg.ROOM_MIN_SIZE = 3;
   cfg.MAX_ROOMS = 300;
   cfg.MAX_ITER = 1000;
   cfg.LAKE_ITER = 0;

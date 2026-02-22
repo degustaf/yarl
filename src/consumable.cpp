@@ -289,3 +289,13 @@ ActionResult TransporterConsumable::activate(flecs::entity item,
     }
   }
 }
+
+ActionResult LightConsumable::activate(flecs::entity item,
+                                       flecs::entity target) const {
+  auto light = item.world().component<Light>();
+  assert(light.has<flecs::Component>());
+  target.set<Temporary>({turns, light})
+      .set<Light>({innerRadius, outerRadius, decayFactor});
+  item.destruct();
+  return {ActionResultType::Success, "", 0.0f};
+}

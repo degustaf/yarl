@@ -434,20 +434,35 @@ static void populateRoom(const Config &cfg, flecs::entity map,
   if (first && dungeon.isWalkable(room.center())) {
     player.get_mut<Position>() = room.center();
     if (!cfg.lit) {
-      auto x = rng.getInt(room.x1, room.x2);
-      auto y = rng.getInt(room.y1, room.y2);
+      auto x = rng.getInt(room.x1 + 1, room.x2 - 1);
+      auto y = rng.getInt(room.y1 + 1, room.y2 - 1);
       ecs.entity()
           .is_a(ecs.lookup("module::light"))
           .set<Position>({x, y})
           .add(flecs::ChildOf, map);
+    }
+    if (dungeon.level == 1) {
+      while (true) {
+        auto x = rng.getInt(room.x1 + 1, room.x2 - 1);
+        auto y = rng.getInt(room.y1 + 1, room.y2 - 1);
+        if (dungeon.isWalkable(x, y) && q.find([x, y](const Position &p) {
+              return p == Position{x, y};
+            }) == map.null()) {
+          auto prefab = ecs.lookup("module::lightScroll");
+          assert(prefab);
+          ecs.entity().is_a(prefab).set<Position>({x, y}).add(flecs::ChildOf,
+                                                              map);
+          break;
+        }
+      }
     }
     first = false;
   } else {
     const auto item_count =
         rng.getInt(0, getMaxValueForFloor(max_items_by_floor, dungeon.level));
     for (auto i = 0; i < item_count; i++) {
-      auto x = rng.getInt(room.x1, room.x2);
-      auto y = rng.getInt(room.y1, room.y2);
+      auto x = rng.getInt(room.x1 + 1, room.x2 - 1);
+      auto y = rng.getInt(room.y1 + 1, room.y2 - 1);
       if (dungeon.isWalkable(x, y) && q.find([x, y](const Position &p) {
             return p == Position{x, y};
           }) == map.null()) {
@@ -462,8 +477,8 @@ static void populateRoom(const Config &cfg, flecs::entity map,
     const auto monster_count = rng.getInt(
         0, getMaxValueForFloor(max_monsters_by_floor, dungeon.level));
     for (auto i = 0; i < monster_count; i++) {
-      auto x = rng.getInt(room.x1, room.x2);
-      auto y = rng.getInt(room.y1, room.y2);
+      auto x = rng.getInt(room.x1 + 1, room.x2 - 1);
+      auto y = rng.getInt(room.y1 + 1, room.y2 - 1);
       if (dungeon.isWalkable(x, y) && q.find([x, y](const Position &p) {
             return p == Position{x, y};
           }) == map.null()) {
@@ -477,8 +492,8 @@ static void populateRoom(const Config &cfg, flecs::entity map,
 
     if (!cfg.lit) {
       if (rng.get(0.0, 1.0) < cfg.LIGHT_PERCENT) {
-        auto x = rng.getInt(room.x1, room.x2);
-        auto y = rng.getInt(room.y1, room.y2);
+        auto x = rng.getInt(room.x1 + 1, room.x2 - 1);
+        auto y = rng.getInt(room.y1 + 1, room.y2 - 1);
         ecs.entity()
             .is_a(ecs.lookup("module::light"))
             .set<Position>({x, y})
