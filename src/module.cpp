@@ -150,6 +150,7 @@ module::module(flecs::world ecs) {
   ecs.component<Frozen>();
   ecs.component<Temporary>().member<int>("turns").member<flecs::entity>(
       "component");
+  ecs.component<Describable>();
 
   // ai.hpp
   ecs.component<Ai>();
@@ -286,6 +287,7 @@ module::module(flecs::world ecs) {
   ecs.prefab("orc")
       .set<Renderable>({'o', color::orc, std::nullopt, RenderOrder::Actor})
       .set<Named>({"Orc"})
+      .add<Describable>()
       .add<BlocksMovement>()
       .set<HostileAi>({})
       .emplace<Fighter>(10, 0, 3)
@@ -294,6 +296,7 @@ module::module(flecs::world ecs) {
   ecs.prefab("troll")
       .set<Renderable>({'T', color::troll, std::nullopt, RenderOrder::Actor})
       .set<Named>({"Troll"})
+      .add<Describable>()
       .add<BlocksMovement>()
       .set<HostileAi>({})
       .emplace<Fighter>(16, 1, 4)
@@ -302,6 +305,7 @@ module::module(flecs::world ecs) {
   ecs.prefab("cysts")
       .set<Renderable>({0xB6, color::cyst, std::nullopt, RenderOrder::Actor})
       .set<Named>({"Fiend cysts"})
+      .add<Describable>()
       .add<BlocksMovement>()
       .emplace<ScentOnDeath>(ScentType::fiend, 100.0f)
       .emplace<Fighter>(1, 0, 0);

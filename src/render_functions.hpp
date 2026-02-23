@@ -17,5 +17,8 @@ void renderDungeonLevel(Console &console, int level,
 void renderNamesAtMouseLocation(Console &console, const std::array<int, 2> &xy,
                                 const std::array<int, 2> &mouse_loc,
                                 flecs::entity map, const GameMap &gameMap);
+void renderDescribableAtMouseLocation(Console &console,
+                                      const std::array<int, 2> &mouse_loc,
+                                      flecs::entity e);
 
 void renderCommandButton(Console &console, const std::array<int, 4> &xywh);

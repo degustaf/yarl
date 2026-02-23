@@ -97,6 +97,23 @@ void renderNamesAtMouseLocation(Console &console, const std::array<int, 2> &xy,
   console.print(xy, msg, std::nullopt, std::nullopt);
 }
 
+void renderDescribableAtMouseLocation(Console &console,
+                                      const std::array<int, 2> &mouse_loc,
+                                      flecs::entity e) {
+  assert(e.has<Describable>());
+  static constexpr auto width = 15;
+  static constexpr auto height = 5;
+  auto x = mouse_loc[0] + 1 + width > console.get_width()
+               ? mouse_loc[0] - 1 - width
+               : mouse_loc[0] + 1;
+  auto y = mouse_loc[1] + height > console.get_height() ? mouse_loc[1]
+                                                        : mouse_loc[1] - height;
+  console.draw_frame({x, y, width, height}, DECORATION, color::text,
+                     color::background);
+  console.print({x + 1, y + 1}, Describable::describe(e), color::text,
+                std::nullopt);
+}
+
 void renderCommandButton(Console &console, const std::array<int, 4> &xywh) {
   console.draw_frame(xywh, DECORATION, color::menu_border,
                      color::menu_background);

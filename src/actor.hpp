@@ -93,3 +93,7 @@ struct Temporary {
 
   void update(flecs::entity self);
 };
+
+struct Describable {
+  static std::string describe(flecs::entity);
+};
