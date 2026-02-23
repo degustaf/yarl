@@ -115,14 +115,14 @@ void GameMap::render(Console &console, uint64_t time) {
           console.at({x, y}).bg += (int8_t)(scale * noise.get(vec));
         }
       } else if (isExplored(x, y)) {
-        console.at(x, y) = isStairs({x, y})          ? stairs_dark
-                           : isKnownBloody({x, y})   ? bloody_floor_dark
-                           : map.isWalkable(x, y)    ? floor_dark
-                           : isWater(x, y)           ? water_dark
-                           : map.isTransparent(x, y) ? chasm_dark
-                                                     : wall_dark;
+        console.at({x, y}) = isStairs({x, y})          ? stairs_dark
+                             : isKnownBloody({x, y})   ? bloody_floor_dark
+                             : map.isWalkable(x, y)    ? floor_dark
+                             : isWater(x, y)           ? water_dark
+                             : map.isTransparent(x, y) ? chasm_dark
+                                                       : wall_dark;
         if (isWater(x, y)) {
-          console.at(x, y).bg += (int8_t)(31.0f * noise.get(vec));
+          console.at({x, y}).bg += (int8_t)(31.0f * noise.get(vec));
         }
       } else if (isSensed(x, y)) {
         console.at({x, y}) = isStairs({x, y})          ? stairs_sensed
