@@ -386,6 +386,14 @@ void MainHandler::on_render(flecs::world ecs, tcod::Console &console) {
   auto player = ecs.lookup("player");
   player.get<Renderable>().render(console, player.get<Position>(), true,
                                   player.has<Invisible>());
+  if (gMap.isVisible(mouse_loc)) {
+    auto e =
+        ecs.query_builder<const Position>().with<Describable>().build().find(
+            [&](auto p) { return p == mouse_loc; });
+    if (e) {
+      renderDescribableAtMouseLocation(console, mouse_loc, e);
+    }
+  }
 
   if (hud) {
     ecs.lookup("messageLog").get<MessageLog>().render(console, 21, 45, 40, 5);

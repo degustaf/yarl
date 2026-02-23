@@ -165,3 +165,11 @@ void Temporary::update(flecs::entity self) {
     self.remove(component).remove<Temporary>();
   }
 }
+
+std::string Describable::describe(flecs::entity e) {
+  auto name = e.try_get<Named>();
+  if (name) {
+    return name->name;
+  }
+  return "";
+}
