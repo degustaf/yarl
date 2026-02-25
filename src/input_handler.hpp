@@ -2,7 +2,6 @@
 
 #include <SDL3/SDL.h>
 #include <flecs.h>
-#include <libtcod.h>
 
 #include <array>
 #include <cstdint>

@@ -12,6 +12,7 @@
 #include "action.hpp"
 #include "actor.hpp"
 #include "blood.hpp"
+#include "books.hpp"
 #include "color.hpp"
 #include "command.hpp"
 #include "console.hpp"
@@ -737,12 +738,52 @@ DropItemInputHandler::item_selected(flecs::entity item) {
   return std::make_unique<DropItemAction>(item);
 }
 
+static void readBook(flecs::world, Console &console, const Book &b) {
+  auto width = 2 * console.get_width() / 3;
+  auto height = (int)b.body.size() + 2;
+  auto x = console.get_width() / 6;
+  auto y = (console.get_height() - height) / 2;
+  console.draw_frame({x - 1, y - 1, width + 2, height + 2}, DECORATION,
+                     color::menu_border, std::nullopt);
+  {
+    auto &tile = console.at({x - 1, y + 1});
+    tile.ch = 0x251C;
+    tile.fg = color::menu_border;
+  }
+  {
+    auto &tile = console.at({x + width, y + 1});
+    tile.ch = 0x2524;
+    tile.fg = color::menu_border;
+  }
+  for (auto i = 0; i < width; i++) {
+    auto &tile = console.at({x + i, y + 1});
+    tile.ch = DECORATION[1];
+    tile.fg = color::menu_border;
+  }
+  console.print({console.get_width() / 2, y}, b.title, color::menu_title,
+                std::nullopt, Console::Alignment::CENTER);
+  y += 2;
+  for (auto &s : b.body) {
+    console.print({x, y}, s, color::menu_text, std::nullopt);
+    y++;
+  }
+}
+
 std::unique_ptr<Action> UseItemInputHandler::item_selected(flecs::entity item) {
   if (isConsumable(item)) {
     return std::make_unique<ItemAction>(item);
   }
   if (item.has<Equippable>()) {
     return std::make_unique<EquipAction>(item);
+  }
+  if (item.has<Book>()) {
+    auto f = [item](auto ecs, auto &console) {
+      readBook(ecs, console, item.get<Book>());
+    };
+    item.world().set<std::unique_ptr<InputHandler>>(
+        std::make_unique<PopupInputHandler<MainGameInputHandler, decltype(f)>>(
+            f, *this));
+    return nullptr;
   }
   return nullptr;
 }

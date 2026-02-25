@@ -10,6 +10,7 @@
 #include "actor.hpp"
 #include "ai.hpp"
 #include "blood.hpp"
+#include "books.hpp"
 #include "color.hpp"
 #include "console.hpp"
 #include "consumable.hpp"
@@ -168,6 +169,13 @@ module::module(flecs::world ecs) {
 
   // blood.hpp
   ecs.component<BloodDrop>();
+
+  // books.hpp
+  ecs.component<std::vector<std::string>>().opaque(
+      std_vector_support<std::string>);
+  ecs.component<Book>()
+      .member<std::string>("title")
+      .member<std::vector<std::string>>("body");
 
   // console.hpp
   ecs.component<Console>();
@@ -425,6 +433,11 @@ module::module(flecs::world ecs) {
       .add<Item>()
       .set<Taser>({3})
       .set<Equippable>({EquipmentType::Weapon, 0, 0});
+
+  ecs.prefab("book")
+      .set<Renderable>({'&', color::tool, std::nullopt, RenderOrder::Item})
+      .set<Named>({"book"})
+      .add<Item>();
 
   ecs.prefab("yendor")
       .set<Renderable>({0x263C, color::laser, std::nullopt, RenderOrder::Item})
