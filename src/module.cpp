@@ -117,6 +117,12 @@ module::module(flecs::world ecs) {
       .assign_string([](std::string *data, const char *value) {
         *data = value; // Assign new value to std::string
       });
+  ecs.component<std::vector<int>>().opaque(std_vector_support<int>);
+  ecs.component<std::array<int, 2>>().opaque(std_array_support<int, 2>);
+  ecs.component<std::vector<std::array<int, 2>>>().opaque(
+      std_vector_support<std::array<int, 2>>);
+  ecs.component<std::vector<std::string>>().opaque(
+      std_vector_support<std::string>);
 
   // color.hpp
   ecs.component<color::RGB>()
@@ -155,9 +161,6 @@ module::module(flecs::world ecs) {
 
   // ai.hpp
   ecs.component<Ai>();
-  ecs.component<std::array<int, 2>>().opaque(std_array_support<int, 2>);
-  ecs.component<std::vector<std::array<int, 2>>>().opaque(
-      std_vector_support<std::array<int, 2>>);
   ecs.component<HostileAi>()
       .member("path", &HostileAi::path)
       .is_a<Ai>()
@@ -166,13 +169,15 @@ module::module(flecs::world ecs) {
       .member("turns_remaining", &ConfusedAi::turns_remaining)
       .is_a<Ai>()
       .add(flecs::CanToggle);
+  ecs.component<WanderAi>()
+      .member("memory", &WanderAi::memory)
+      .is_a<Ai>()
+      .add(flecs::CanToggle);
 
   // blood.hpp
   ecs.component<BloodDrop>();
 
   // books.hpp
-  ecs.component<std::vector<std::string>>().opaque(
-      std_vector_support<std::string>);
   ecs.component<Book>()
       .member<std::string>("title")
       .member<std::vector<std::string>>("body");
@@ -322,6 +327,13 @@ module::module(flecs::world ecs) {
       .set<Renderable>({'%', color::blood, std::nullopt, RenderOrder::Actor})
       .set<Named>({"Rotting corpse"})
       .set<Scent>({ScentType::decay, 1000});
+
+  ecs.prefab("cat")
+      .set<Renderable>(
+          {'f', color::background, std::nullopt, RenderOrder::Actor})
+      .set<Named>({"cat"})
+      .add<Describable>()
+      .add<BlocksMovement>();
 
   ecs.prefab("healthPotion")
       .set<Renderable>({'!', color::potion, std::nullopt, RenderOrder::Item})

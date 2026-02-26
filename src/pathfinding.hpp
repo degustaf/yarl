@@ -156,6 +156,73 @@ private:
   H cost;
 };
 
+/******
+ * F: std::function<int(Index)>
+ * G: std::function<RangedFor<Index>(Index)>
+ * H: std::function<int(Index)>
+ * *****/
+template <typename G, typename H> class WanderDijkstra {
+public:
+  WanderDijkstra(Index dimensions, std::vector<int> start, G adjacent, H cost)
+      : dimensions(dimensions), distance(dimensions, Infinity),
+        cameFrom(dimensions, {-1, -1}), adjacent(adjacent), cost(cost) {
+    for (auto y = 0; y < dimensions[1]; y++) {
+      for (auto x = 0; x < dimensions[0]; x++) {
+        auto v = start[y * dimensions[0] + x];
+        distance[{x, y}] = v == 0 ? Infinity : v;
+      }
+    }
+  };
+
+  void scan(void) {
+    auto order = [&](const auto &lhs, const auto &rhs) {
+      return distance[lhs] > distance[rhs];
+    };
+    std::priority_queue<Index, std::vector<Index>, decltype(order)> queue(
+        order);
+    for (auto y = 0; y < dimensions[1]; y++) {
+      for (auto x = 0; x < dimensions[0]; x++) {
+        if (distance[{x, y}] != Infinity) {
+          queue.push({x, y});
+        }
+      }
+    }
+
+    scanPrivate(queue);
+  }
+
+private:
+  template <typename Q> inline void scanPrivate(Q &queue) {
+    while (!queue.empty()) {
+      auto next = queue.top();
+      queue.pop();
+      auto value = distance[next];
+      if (value == Infinity) {
+        return;
+      }
+
+      for (auto &v : adjacent(next)) {
+        auto alt = value + cost(v);
+        if (alt < distance[v]) {
+          distance[v] = alt;
+          queue.push(v);
+          cameFrom[v] = next;
+        }
+      }
+    }
+  }
+
+  Index dimensions;
+  map<int> distance;
+
+public:
+  map<Index> cameFrom;
+
+private:
+  G adjacent;
+  H cost;
+};
+
 // If we decide we need A* with portals, this has an admissable heuristic:
 // https://stackoverflow.com/questions/14428331/
 

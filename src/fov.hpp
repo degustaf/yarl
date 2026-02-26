@@ -1,3 +1,4 @@
+#pragma once
 #include "actor.hpp"
 #include "game_map.hpp"
 
@@ -48,12 +49,14 @@ struct Row {
   }
 };
 
-static bool isWall(const GameMap &map, const Row &row,
+template <typename Mappable>
+static bool isWall(const Mappable &map, const Row &row,
                    std::array<int, 2> tile) {
   return !map.isTransparent(row.transform(tile));
 }
 
-static bool isFloor(const GameMap &map, const Row &row,
+template <typename Mappable>
+static bool isFloor(const Mappable &map, const Row &row,
                     std::array<int, 2> tile) {
   return map.isTransparent(row.transform(tile));
 }
@@ -62,8 +65,8 @@ static double slope(std::array<int, 2> tile) {
   return (2.0 * tile[1] - 1) / (2.0 * tile[0]);
 }
 
-template <typename F>
-static void scan(GameMap &map, flecs::query<const Position> &q, Row row,
+template <typename F, typename Mappable>
+static void scan(Mappable &map, flecs::query<const Position> &q, Row row,
                  F callback) {
   auto prev_tile = std::optional<std::array<int, 2>>(std::nullopt);
   for (auto col = (int)std::floor(row.depth * row.startSlope + 0.5);
@@ -105,8 +108,8 @@ static void scan(GameMap &map, flecs::query<const Position> &q, Row row,
   }
 }
 
-template <typename F>
-static void computeFov(flecs::entity mapEntity, GameMap &map,
+template <typename F, typename Mappable>
+static void computeFov(flecs::entity mapEntity, Mappable &map,
                        std::array<int, 2> origin, F callback) {
 
   for (auto y = 0; y < map.getHeight(); y++) {
@@ -128,7 +131,8 @@ static void computeFov(flecs::entity mapEntity, GameMap &map,
   }
 }
 
-void computeFov(flecs::entity mapEntity, GameMap &map,
+template <typename Mappable>
+void computeFov(flecs::entity mapEntity, Mappable &map,
                 std::array<int, 2> origin, int maxRadius) {
   if (maxRadius == 0) {
     computeFov(mapEntity, map, origin,
@@ -154,7 +158,7 @@ static void addLumens(flecs::entity mapEntity, GameMap &map,
   });
 }
 
-void addLight(flecs::entity mapEntity, GameMap &map) {
+static inline void addLight(flecs::entity mapEntity, GameMap &map) {
   for (auto &l : map.luminosity) {
     l = 0.0f;
   }
