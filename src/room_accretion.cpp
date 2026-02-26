@@ -8,6 +8,7 @@
 #include <libtcod.hpp>
 
 #include "actor.hpp"
+#include "ai.hpp"
 #include "books.hpp"
 #include "color.hpp"
 #include "defines.hpp"
@@ -449,13 +450,13 @@ static void populateRoom(const Config &cfg, flecs::entity map,
         if (dungeon.isWalkable(x, y) && q.find([x, y](const Position &p) {
               return p == Position{x, y};
             }) == map.null()) {
-          auto prefab = ecs.lookup("module::book");
+          auto prefab = ecs.lookup("module::cat");
           assert(prefab);
           ecs.entity()
               .is_a(prefab)
               .set<Position>({x, y})
               .add(flecs::ChildOf, map)
-              .set<Book>(randomBook(rng, 2 * dungeon.getWidth() / 3));
+              .emplace<WanderAi>(dungeon);
           break;
         }
       }

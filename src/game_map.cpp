@@ -4,6 +4,7 @@
 
 #include "color.hpp"
 #include "defines.hpp"
+#include "fov.hpp"
 #include "room_accretion.hpp"
 #include "scent.hpp"
 

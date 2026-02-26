@@ -7,6 +7,7 @@
 #include <flecs.h>
 
 #include "action.hpp"
+#include "game_map.hpp"
 
 struct Ai {
   virtual std::unique_ptr<Action> act(flecs::entity self) = 0;
@@ -36,4 +37,12 @@ struct ConfusedAi : Ai {
 struct FleeAi : Ai {
   virtual std::unique_ptr<Action> act(flecs::entity self);
   virtual ~FleeAi() = default;
+};
+
+struct WanderAi : Ai {
+  WanderAi(const GameMap &map);
+  virtual std::unique_ptr<Action> act(flecs::entity self);
+  virtual ~WanderAi() = default;
+
+  std::vector<int> memory;
 };

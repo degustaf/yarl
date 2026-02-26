@@ -48,14 +48,14 @@ struct GameMap {
 
   void init() { map = TCODMap(width, height); }
 
+  inline int getWidth() const { return width; }
+  inline int getHeight() const { return height; }
   inline bool inBounds(int x, int y) const {
-    return 0 <= x && x < width && 0 <= y && y < height;
+    return 0 <= x && x < getWidth() && 0 <= y && y < getHeight();
   }
   inline bool inBounds(std::array<int, 2> xy) const {
     return inBounds(xy[0], xy[1]);
   }
-  inline int getWidth() const { return width; }
-  inline int getHeight() const { return height; }
   inline bool inLight(std::array<int, 2> xy, float brightness = 0.0f) const {
     return luminosity[xy[1] * width + xy[0]] > brightness;
   }
@@ -168,10 +168,6 @@ private:
   TCODMap map;
   TCODNoise noise;
 };
-
-void computeFov(flecs::entity mapEntity, GameMap &map,
-                std::array<int, 2> origin, int maxRadius);
-void addLight(flecs::entity mapEntity, GameMap &map);
 
 static inline TCOD_ConsoleTile lerp(const TCOD_ConsoleTile &x,
                                     const TCOD_ConsoleTile &y, float t) {
