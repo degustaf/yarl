@@ -1,4 +1,3 @@
-#include <SDL3/SDL_timer.h>
 #define SDL_MAIN_USE_CALLBACKS
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
@@ -61,7 +60,7 @@ SDL_AppResult SDL_AppInit(void **data, [[maybe_unused]] int argc,
     Command::save(data_dir / configName);
   }
 
-#if !defined NDEBUG
+#if !defined NDEBUG && !defined __EMSCRIPTEN__
   ecs->import <flecs::stats>();
   ecs->set<flecs::Rest>({});
 #endif
@@ -78,7 +77,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
   handler->animate(ecs, SDL_GetTicks());
   handler->on_render(ecs, console);
   ecs.get_mut<tcod::Context>().present(console);
-#if !defined NDEBUG
+#if !defined NDEBUG && !defined __EMSCRIPTEN__
   ecs.progress();
 #endif
   return SDL_APP_CONTINUE;
@@ -88,7 +87,11 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
   auto &ecs = *static_cast<flecs::world *>(appstate);
   auto &handler = ecs.get_mut<std::unique_ptr<InputHandler>>();
   ecs.get_mut<tcod::Context>().convert_event_coordinates(*event);
-  return handler->handle_action(ecs, handler->dispatch(event, ecs));
+  // Not sure why, but emscripten doesn't like this function call being inside
+  // the next one. So we give it a short lived variable.
+  auto action = handler->dispatch(event, ecs);
+  auto ret = handler->handle_action(ecs, std::move(action));
+  return ret;
 }
 
 static void delete_file(std::filesystem::path file) {
