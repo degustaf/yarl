@@ -26,6 +26,9 @@ file(
 # Enable warnings recommended for new projects.
 if (MSVC)
     add_compile_options(/W2)
+elseif(EMSCRIPTEN)
+    add_compile_options(-Wall -Wextra -Wconversion -Werror -g)
+    add_compile_options(-fexceptions)
 else()
     add_compile_options(-Wall -Wextra -Wconversion -Werror -pedantic -g)
 endif()
@@ -38,6 +41,25 @@ set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
 # Enforce UTF-8 encoding on MSVC.
 if (MSVC)
     target_compile_options(${PROJECT_NAME} PRIVATE /utf-8)
+endif()
+
+if (EMSCRIPTEN)
+    # Attach data folder to Emscripten builds.
+    target_link_options(${PROJECT_NAME} PRIVATE
+        "SHELL:--preload-file ${CMAKE_CURRENT_SOURCE_DIR}/assets@assets"
+        -lidbfs.js  # Enable IDBFS (browser file system.)
+	# -sSTACK_SIZE=25mb
+        -sALLOW_MEMORY_GROWTH
+	-sUSE_HARFBUZZ
+        # -s EXPORTED_FUNCTIONS=_free
+        # -sDEFAULT_LIBRARY_FUNCS_TO_INCLUDE=free
+        # --closure 1
+    )
+
+    configure_file(
+        ${PROJECT_SOURCE_DIR}/html/index.html
+        ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/index.html
+    )
 endif()
 
 add_compile_definitions(FLECS_CPP_NO_AUTO_REGISTRATION)
@@ -57,3 +79,8 @@ target_link_libraries(${PROJECT_NAME}
 	flecs::flecs_static
 	utf8proc::utf8proc
 )
+
+if (NOT EMSCRIPTEN)
+	find_package(harfbuzz)
+	target_link_libraries(${PROJECT_NAME} PRIVATE harfbuzz::harfbuzz)
+endif()

@@ -1,5 +1,7 @@
 #include "books.hpp"
+
 #include <cctype>
+#include <sstream>
 #include <vector>
 
 static const auto loremIpsum = std::string(

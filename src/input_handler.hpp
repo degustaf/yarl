@@ -82,9 +82,12 @@ struct MainMenuInputHandler : InputHandler {
 private:
   std::unique_ptr<Action> processChoice(int idx, flecs::world ecs);
   int idx;
-  static constexpr auto choices =
-      std::array{"Play a new game   ", "Continue last game",
-                 "Options           ", "Quit              "};
+  static constexpr auto choices = std::array{
+      "Play a new game   ", "Continue last game", "Options           ",
+#ifndef __EMSCRIPTEN__
+      "Quit              "
+#endif
+  };
   static constexpr auto ImageWidth = 100;
 };
 
