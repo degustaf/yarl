@@ -113,15 +113,15 @@ render(const FontPtr &font, SDL_Renderer *renderer, const Console &console,
 
   int target_width, target_height;
   SDL_GetRenderOutputSize(renderer, &target_width, &target_height);
-  auto cell_width = target_width / console.get_width();
-  auto cell_height = target_height / console.get_height();
+  auto cell_width = (float)target_width / (float)console.get_width();
+  auto cell_height = (float)target_height / (float)console.get_height();
 
   for (auto y = 0; y < console.get_height(); y++) {
     for (auto x = 0; x < console.get_width(); x++) {
       const auto tile = console.at({x, y}).normalize_tile_for_drawing();
 
-      SDL_FRect dstRect{(float)(x * cell_width), (float)(y * cell_height),
-                        (float)cell_width, (float)cell_height}; // x, y, w, h
+      SDL_FRect dstRect{(float)x * cell_width, (float)y * cell_height,
+                        cell_width, cell_height}; // x, y, w, h
       SDL_SetRenderDrawColor(renderer, tile.bg.r, tile.bg.g, tile.bg.b,
                              tile.bg.a);
       SDL_RenderFillRect(renderer, &dstRect);
@@ -146,8 +146,8 @@ render(const FontPtr &font, SDL_Renderer *renderer, const Console &console,
         auto &text = cachedGlyphs.find(ch)->second;
         TTF_SetTextColor(text.get(), tile.fg.r, tile.fg.g, tile.fg.b,
                          tile.fg.a);
-        TTF_DrawRendererText(text.get(), (float)(x * cell_width),
-                             (float)(y * cell_height));
+        TTF_DrawRendererText(text.get(), (float)x * cell_width,
+                             (float)y * cell_height);
       }
     }
   }
@@ -257,6 +257,15 @@ SDLData::SDLData(int columns, int rows, float fontSize, const char *title,
     throw std::runtime_error(std::string("Could not create SDL window:\n") +
                              SDL_GetError());
   }
+  SDL_GetWindowSize(window.get(), &w, &h);
+  if (h != rows * dims[1]) {
+    h = h / rows;
+    fontSize = (float)h;
+    font = FontPtr(TTF_OpenFont(fontPath.string().c_str(), fontSize),
+                   TTF_CloseFont);
+    TTF_GetStringSize(font.get(), "@", 1, &w, &h);
+    dims = {w, h};
+  }
 
   SDL_PropertiesID renderer_props = SDL_CreateProperties();
   SDL_SetNumberProperty(renderer_props,
@@ -338,8 +347,9 @@ static SDL_FRect
 get_destination_rect_for_console(SDL_Renderer *renderer,
                                  const std::array<int, 2> &dims,
                                  const std::array<int, 2> &consoleDims) {
-  return get_destination_rect(renderer, consoleDims[0] * dims[0],
-                              consoleDims[1] * dims[1]);
+  auto ret = get_destination_rect(renderer, consoleDims[0] * dims[0],
+                                  consoleDims[1] * dims[1]);
+  return ret;
 }
 
 SDLData::Transform SDLData::cursor_transform_for_console_viewport(

@@ -48,7 +48,7 @@ if (EMSCRIPTEN)
     target_link_options(${PROJECT_NAME} PRIVATE
         "SHELL:--preload-file ${CMAKE_CURRENT_SOURCE_DIR}/assets@assets"
         -lidbfs.js  # Enable IDBFS (browser file system.)
-	# -sSTACK_SIZE=25mb
+	-sSTACK_SIZE=16mb
         -sALLOW_MEMORY_GROWTH
 	-sUSE_HARFBUZZ
         # -s EXPORTED_FUNCTIONS=_free
