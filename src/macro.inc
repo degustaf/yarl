@@ -16,36 +16,40 @@
 
 
 #define COMMAND_BUILDER(X, SEP) \
-  X(AUTO, SDL_SCANCODE_A, "autoexplore") SEP \
-  X(DL, SDL_SCANCODE_B, "down-left") SEP \
-  X(COMMANDS, SDL_SCANCODE_C, "open command menu") SEP \
-  X(DROP, SDL_SCANCODE_D, "drop") SEP \
-  X(GRAB, SDL_SCANCODE_G, "grab") SEP \
-  X(LEFT, SDL_SCANCODE_H, "left") SEP \
-  X(INVENTORY, SDL_SCANCODE_I, "inventory") SEP \
-  X(DOWN, SDL_SCANCODE_J, "down") SEP \
-  X(UP, SDL_SCANCODE_K, "up") SEP \
-  X(RIGHT, SDL_SCANCODE_L, "right") SEP \
-  X(MESSAGES, SDL_SCANCODE_M, "expand log") SEP \
-  X(DR, SDL_SCANCODE_N, "down-right") SEP \
-  X(OPEN, SDL_SCANCODE_O, "open/close a door") SEP \
-  X(PEEK, SDL_SCANCODE_P, "peek a tile") SEP \
-  X(SHOOT, SDL_SCANCODE_S, "shoot a ranged weapon") SEP \
-  X(TURN, SDL_SCANCODE_T, "display turn and seed") SEP \
-  X(UR, SDL_SCANCODE_U, "up-right") SEP \
-  X(CHARACTER, SDL_SCANCODE_X, "character screen") SEP \
-  X(UL, SDL_SCANCODE_Y, "up-left") SEP \
-  X(HUD, SDL_SCANCODE_Z, "toggle hud") SEP \
-  X(WAIT, SDL_SCANCODE_SPACE, "wait a turn") SEP \
-  X(STAIRS, SDL_SCANCODE_PERIOD, "use the stairs")
+  X(UP, SDL_SCANCODE_K, SDL_SCANCODE_W, "up") SEP \
+  X(DOWN, SDL_SCANCODE_J, SDL_SCANCODE_S, "down") SEP \
+  X(LEFT, SDL_SCANCODE_H, SDL_SCANCODE_A, "left") SEP \
+  X(RIGHT, SDL_SCANCODE_L, SDL_SCANCODE_D, "right") SEP \
+  X(UL, SDL_SCANCODE_Y, SDL_SCANCODE_Q, "up-left") SEP \
+  X(UR, SDL_SCANCODE_U, SDL_SCANCODE_E, "up-right") SEP \
+  X(DL, SDL_SCANCODE_B, SDL_SCANCODE_Z, "down-left") SEP \
+  X(DR, SDL_SCANCODE_N, SDL_SCANCODE_C, "down-right") SEP \
+  \
+  X(AUTO, SDL_SCANCODE_A, SDL_SCANCODE_U, "autoexplore") SEP \
+  X(COMMANDS, SDL_SCANCODE_C, SDL_SCANCODE_M, "open command menu") SEP \
+  X(DROP, SDL_SCANCODE_D, SDL_SCANCODE_K, "drop") SEP \
+  X(GRAB, SDL_SCANCODE_G, SDL_SCANCODE_G, "grab") SEP \
+  X(INVENTORY, SDL_SCANCODE_I, SDL_SCANCODE_I, "inventory") SEP \
+  X(MESSAGES, SDL_SCANCODE_M, SDL_SCANCODE_L, "expand log") SEP \
+  X(OPEN, SDL_SCANCODE_O, SDL_SCANCODE_O, "open/close a door") SEP \
+  X(PEEK, SDL_SCANCODE_P, SDL_SCANCODE_P, "examine a tile") SEP \
+  X(QUIT, SDL_SCANCODE_Q, SDL_SCANCODE_X, "quit the game") SEP \
+  X(SHOOT, SDL_SCANCODE_S, SDL_SCANCODE_F, "fire a weapon") SEP \
+  X(TURN, SDL_SCANCODE_T, SDL_SCANCODE_T, "display turn and seed") SEP \
+  X(CHARACTER, SDL_SCANCODE_X, SDL_SCANCODE_N, "character screen") SEP \
+  X(HUD, SDL_SCANCODE_Z, SDL_SCANCODE_H, "toggle hud") SEP \
+  X(WAIT, SDL_SCANCODE_SPACE, SDL_SCANCODE_SPACE, "wait a turn") SEP \
+  X(STAIRS, SDL_SCANCODE_PERIOD, SDL_SCANCODE_PERIOD, "use the stairs")
 
+  // X(BREATH, SDL_SCANCODE_E, SDL_SCANCODE_B, "deep breathing") SEP
+  // X(READ, SDL_SCANCODE_R, SDL_SCANCODE_R, "read a book") SEP
   // X(EQUIP, SDL_SCANCODE_E, "equip item") SEP
   // X(REMOVE, SDL_SCANCODE_R, "remove an item") SEP
   // X(TEXT, SDL_SCANCODE_TAB, "enter a command")
 
 #define COMMA ,
 
-#define ENUM_BUILDER(COMMAND, LETTER, DESC) COMMAND
-#define INIT_BUILDER(COMMAND, LETTER, DESC) {LETTER, CommandType::COMMAND}
-#define DESCRIPTION(COMMAND, LETTER, DESC) DESC
-#define ENUM_NAME(COMMAND, LETTER, DESC) #COMMAND
+#define ENUM_BUILDER(COMMAND, LETTER, LETTER_WASD, DESC) COMMAND
+#define INIT_BUILDER(COMMAND, LETTER, LETTER_WASD, DESC) {LETTER, LETTER_WASD, CommandType::COMMAND}
+#define DESCRIPTION(COMMAND, LETTER, LETTER_WASD, DESC) DESC
+#define ENUM_NAME(COMMAND, LETTER, LETTER_WASD, DESC) #COMMAND

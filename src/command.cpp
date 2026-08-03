@@ -48,14 +48,22 @@ static CommandType getCommandTypeFromName(std::string &name) {
 }
 
 static const struct {
-  SDL_Scancode code;
+  SDL_Scancode code_vim;
+  SDL_Scancode code_wasd;
   CommandType tp;
 } initialCommands[] = {COMMAND_BUILDER(INIT_BUILDER, COMMA)};
 
 void Command::init(void) {
   mapping.clear();
   for (auto &cmd : initialCommands) {
-    mapping[cmd.code] = cmd.tp;
+    mapping[cmd.code_vim] = cmd.tp;
+  }
+}
+
+void Command::init_wasd(void) {
+  mapping.clear();
+  for (auto &cmd : initialCommands) {
+    mapping[cmd.code_wasd] = cmd.tp;
   }
 }
 

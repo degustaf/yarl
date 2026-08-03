@@ -265,22 +265,52 @@ std::unique_ptr<Action> MainMenuInputHandler::processChoice(int idx,
 
 std::unique_ptr<Action> KeybindMenu::keyDown(Command cmd, flecs::world ecs) {
   switch (cmd.type) {
+  case CommandType::UP:
+    idx[1]--;
+    if (idx[1] == -2)
+      idx[1] = maxIdx[idx[0]] - 1;
+    break;
+  case CommandType::DOWN:
+    idx[1]++;
+    if (idx[1] == maxIdx[idx[0]])
+      idx[1] = -1;
+    break;
+  case CommandType::LEFT:
+    idx[0] = (idx[0] - 1) & 1;
+    if (idx[1] >= maxIdx[idx[0]]) {
+      idx[1] = maxIdx[idx[0]] - 1;
+    }
+    break;
+  case CommandType::RIGHT:
+    idx[0] = (idx[0] + 1) & 1;
+    if (idx[1] >= maxIdx[idx[0]]) {
+      idx[1] = maxIdx[idx[0]] - 1;
+    }
+    break;
+
   case CommandType::ESCAPE:
     make<MainMenuInputHandler>(ecs);
     return nullptr;
-  case CommandType::UP:
-    idx--;
-    if (idx == -1)
-      idx = (int)keys.size() - 1;
-    break;
-  case CommandType::DOWN:
-    idx++;
-    if (idx == (int)keys.size())
-      idx = 0;
-    break;
   case CommandType::ENTER:
-    ecs.set<std::unique_ptr<InputHandler>>(
-        std::make_unique<KeyBinding>(*this, Command::mapping[keys[idx]]));
+    if (idx[1] == -1) {
+      if (idx[0] == 0) {
+        Command::init();
+      } else {
+        assert(idx[0] == 1);
+        Command::init_wasd();
+      }
+      for (auto &k : keys) {
+        for (auto &c : Command::mapping) {
+          if (k.first == c.second) {
+            k.second = c.first;
+          }
+        }
+      }
+    } else {
+      auto i = idx[0] * maxIdx[0] + idx[1];
+      ecs.set<std::unique_ptr<InputHandler>>(std::make_unique<KeyBinding>(
+          *this, Command::mapping[keys[i].second]));
+    }
     break;
 
   default:
@@ -305,15 +335,36 @@ void KeybindMenu::on_render(flecs::world ecs, Console &console) {
   console.draw_frame({frameX, frameY, COMMAND_MENU_WIDTH, COMMAND_MENU_HEIGHT},
                      DECORATION, color::menu_border, std::nullopt);
 
+  console.print({frameX + 2, frameY + 2},
+                "Movement from arrow keys and numpad is always enabled.",
+                color::text, std::nullopt);
+
+  console.print({frameX + 2, frameY + 4}, "Set default vi keybindings",
+                idx[0] == 0 && idx[1] == -1 ? color::background : color::text,
+                idx[0] == 0 && idx[1] == -1 ? std::optional(color::menu_border)
+                                            : std::nullopt);
+  console.print({frameX + 2 + (COMMAND_MENU_WIDTH / 2), frameY + 4},
+                "Set default wasd keybindings",
+                idx[0] == 1 && idx[1] == -1 ? color::background : color::text,
+                idx[0] == 1 && idx[1] == -1 ? std::optional(color::menu_border)
+                                            : std::nullopt);
+
+  auto x = 0;
   auto y = 0;
   for (auto &key : keys) {
-    auto buffer = stringf(
-        "%-25s: %s", CommandTypeDescription(Command::mapping[key]),
-        SDL_GetKeyName(SDL_GetKeyFromScancode(key, SDL_KMOD_NONE, true)));
-    console.print({frameX + 2, frameY + y + 2}, buffer,
-                  y == idx ? color::background : color::text,
-                  y == idx ? std::optional(color::menu_border) : std::nullopt);
+    auto buffer = stringf("%-25s: %s", CommandTypeDescription(key.first),
+                          SDL_GetKeyName(SDL_GetKeyFromScancode(
+                              key.second, SDL_KMOD_NONE, true)));
+    console.print({frameX + 2 + x * (COMMAND_MENU_WIDTH / 2), frameY + y + 6},
+                  buffer,
+                  x == idx[0] && y == idx[1] ? color::background : color::text,
+                  x == idx[0] && y == idx[1] ? std::optional(color::menu_border)
+                                             : std::nullopt);
     y++;
+    if (y == maxIdx[x]) {
+      y = 0;
+      x++;
+    }
   }
 }
 
@@ -327,7 +378,12 @@ std::unique_ptr<Action> KeyBinding::keyDown(Command cmd, flecs::world ecs) {
     SDL_Keymod mod = SDL_KMOD_NONE;
     auto scan = SDL_GetScancodeFromKey(cmd.ch, &mod);
     Command::set(scan, c);
-    keys[idx] = scan;
+    for (auto &k : keys) {
+      if (k.first == c) {
+        k.second = scan;
+        break;
+      }
+    }
     ecs.set<std::unique_ptr<InputHandler>>(
         std::make_unique<KeybindMenu>(*this));
     return nullptr;
@@ -634,9 +690,21 @@ std::unique_ptr<Action> MainGameInputHandler::keyDown(Command cmd,
     make<MainMenuInputHandler>(ecs);
     return nullptr;
 
-  default:
+    // Handling these cases individually, instead of a default gives us a
+    // compile time check that we're handling every command.
+  case CommandType::NONE:
+  case CommandType::ENTER:
+  case CommandType::PAGEUP:
+  case CommandType::PAGEDOWN:
+  case CommandType::HOME:
+  case CommandType::END:
+  case CommandType::SHIFT:
+  case CommandType::CTRL:
+  case CommandType::ALT:
+  case CommandType::QUIT:
     return nullptr;
   }
+  return nullptr;
 }
 
 std::unique_ptr<Action>

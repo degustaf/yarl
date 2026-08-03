@@ -20,6 +20,7 @@ struct Command {
   SDL_Keycode ch;
 
   static void init(void);
+  static void init_wasd(void);
   static Command get(SDL_KeyboardEvent &key);
   static bool set(SDL_Scancode code, CommandType tp);
   static bool load(std::filesystem::path fileName);

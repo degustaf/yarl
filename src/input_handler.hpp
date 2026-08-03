@@ -83,7 +83,7 @@ private:
   std::unique_ptr<Action> processChoice(int idx, flecs::world ecs);
   int idx;
   static constexpr auto choices = std::array{
-      "Play a new game   ", "Continue last game", "Options           ",
+      "Play a new game   ", "Continue last game", "Configure controls",
 #ifndef __EMSCRIPTEN__
       "Quit              "
 #endif
@@ -92,10 +92,16 @@ private:
 };
 
 struct KeybindMenu : MainMenuInputHandler {
-  KeybindMenu(const InputHandler &h) : MainMenuInputHandler(h), idx(0) {
+  KeybindMenu(const InputHandler &h)
+      : MainMenuInputHandler(h), idx({0, -1}), maxIdx({0, 0}) {
+    auto count = 0;
     for (auto &c : Command::mapping) {
-      keys.push_back(c.first);
+      keys.push_back({c.second, c.first});
+      count++;
     }
+    std::sort(keys.begin(), keys.end());
+    maxIdx[1] = count >> 1;
+    maxIdx[0] = count - maxIdx[1];
   };
   KeybindMenu(const KeybindMenu &) = default;
   virtual ~KeybindMenu() = default;
@@ -103,8 +109,9 @@ struct KeybindMenu : MainMenuInputHandler {
   virtual std::unique_ptr<Action> keyDown(Command, flecs::world) override;
   virtual void on_render(flecs::world, Console &) override;
 
-  int idx;
-  std::vector<SDL_Scancode> keys;
+  std::array<int, 2> idx;
+  std::array<int, 2> maxIdx;
+  std::vector<std::pair<CommandType, SDL_Scancode>> keys;
 };
 
 struct KeyBinding : KeybindMenu {
