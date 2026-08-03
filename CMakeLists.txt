@@ -70,11 +70,13 @@ find_package(libtcod CONFIG REQUIRED)
 find_package(flecs)
 find_package(SDL3_ttf CONFIG REQUIRED)
 find_package(SDL3_image CONFIG REQUIRED)
+find_package(SDL3_mixer CONFIG REQUIRED)
 find_package(utf8proc)
 target_link_libraries(${PROJECT_NAME}
 	PRIVATE SDL3::SDL3
 	SDL3_ttf::SDL3_ttf
 	SDL3_image::SDL3_image
+	SDL3_mixer::SDL3_mixer
 	libtcod::libtcod
 	flecs::flecs_static
 	utf8proc::utf8proc

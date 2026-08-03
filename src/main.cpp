@@ -9,6 +9,7 @@
 
 #include <flecs.h>
 
+#include "audio.hpp"
 #include "color.hpp"
 #include "defines.hpp"
 #include "engine.hpp"
@@ -39,6 +40,10 @@ SDL_AppResult SDL_AppInit(void **data, [[maybe_unused]] int argc,
   ecs->emplace<SDLData>(width, height, 15.0f, "Yet Another Roguelike",
                         "assets/CodeNewRoman.ttf",
                         "assets/death_on_the_pale_horse.png");
+  ecs->emplace<SDLAudio>(
+      "assets/sound/Abstraction/Sketchbook-2024-03-06_02.ogg",
+      "assets/sound/HeltonYanSurrealDrones/"
+      "DSGNDron_Dissonant-Space_Horror_HY_SD.ogg");
   ecs->set<Console>(ecs->get_mut<SDLData>().new_console(width, height));
   ecs->set<std::unique_ptr<InputHandler>>(
       std::make_unique<MainMenuInputHandler>(std::array{width, height}));

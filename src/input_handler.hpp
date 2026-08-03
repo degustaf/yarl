@@ -79,15 +79,18 @@ struct MainMenuInputHandler : InputHandler {
   virtual void on_render(flecs::world, Console &) override;
   virtual bool renderImg() const override { return true; };
 
+protected:
+  int idx;
+
 private:
   std::unique_ptr<Action> processChoice(int idx, flecs::world ecs);
-  int idx;
-  static constexpr auto choices = std::array{
-      "Play a new game   ", "Continue last game", "Configure controls",
+  static constexpr auto choices =
+      std::array{"Play a new game   ", "Continue last game",
+                 "Configure controls", "Audio Options     ",
 #ifndef __EMSCRIPTEN__
-      "Quit              "
+                 "Quit              "
 #endif
-  };
+      };
   static constexpr auto ImageWidth = 100;
 };
 
@@ -122,6 +125,19 @@ struct KeyBinding : KeybindMenu {
   virtual void on_render(flecs::world, Console &) override;
 
   CommandType c;
+};
+
+struct VolumeControls : MainMenuInputHandler {
+  VolumeControls(const InputHandler &h) : MainMenuInputHandler(h) {};
+  virtual ~VolumeControls() = default;
+
+  virtual std::unique_ptr<Action> keyDown(Command, flecs::world) override;
+  virtual std::unique_ptr<Action> click(SDL_MouseButtonEvent &,
+                                        flecs::world) override;
+  virtual void on_render(flecs::world, Console &) override;
+
+private:
+  static constexpr auto choices_size = 3;
 };
 
 struct MainHandler : InputHandler {

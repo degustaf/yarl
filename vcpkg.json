@@ -14,6 +14,9 @@
     },
     {
       "name": "sdl3",
+      "features": [
+        "alsa"
+      ],
       "version>=": "3.4.12"
     },
     {
@@ -22,6 +25,13 @@
         "png"
       ],
       "version>=": "3.4.4#1"
+    },
+    {
+      "name": "sdl3-mixer",
+      "features": [
+        "libvorbis"
+      ],
+      "version>=": "3.2.4"
     },
     {
       "name": "sdl3-ttf",

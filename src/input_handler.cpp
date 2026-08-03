@@ -11,6 +11,7 @@
 
 #include "action.hpp"
 #include "actor.hpp"
+#include "audio.hpp"
 #include "blood.hpp"
 #include "books.hpp"
 #include "color.hpp"
@@ -30,6 +31,8 @@
 
 static constexpr auto COMMAND_MENU_WIDTH = 70;
 static constexpr auto COMMAND_MENU_HEIGHT = 28;
+
+static int getFrameX(int console_width) { return console_width / 2; }
 
 static Console buildCommandMenu(void) {
   auto con = Console(COMMAND_MENU_WIDTH, COMMAND_MENU_HEIGHT);
@@ -255,6 +258,9 @@ std::unique_ptr<Action> MainMenuInputHandler::processChoice(int idx,
     make<KeybindMenu>(ecs);
     return nullptr;
   case 3:
+    make<VolumeControls>(ecs);
+    return nullptr;
+  case 4:
     return std::make_unique<ExitAction>();
   default:
     assert(false);
@@ -327,7 +333,7 @@ void KeybindMenu::on_render(flecs::world ecs, Console &console) {
     tile.bg /= 8;
   }
 
-  auto frameX = console.get_width() / 2;
+  auto frameX = getFrameX(console.get_width());
   auto frameY = (console.get_height() - COMMAND_MENU_HEIGHT) / 2;
 
   assert(frameX + COMMAND_MENU_WIDTH < console.get_width());
@@ -402,7 +408,7 @@ void KeyBinding::on_render(flecs::world ecs, Console &console) {
 
   auto str = stringf("Press a key for %s", CommandTypeDescription(c));
 
-  auto frameX = (int)console.get_width() / 2;
+  auto frameX = getFrameX(console.get_width());
   auto frameY = (int)(console.get_height() - 3) / 2;
 
   assert(frameX + (int)str.length() + 2 < console.get_width());
@@ -410,6 +416,130 @@ void KeyBinding::on_render(flecs::world ecs, Console &console) {
   console.draw_frame({frameX, frameY, (int)str.length() + 2, 3}, DECORATION,
                      color::menu_border, std::nullopt);
   console.print({frameX + 1, frameY + 1}, str, color::menu_text, std::nullopt);
+}
+
+static constexpr auto maxGain = 100;
+static constexpr auto total_width = 20;
+
+std::unique_ptr<Action> VolumeControls::keyDown(Command cmd, flecs::world ecs) {
+  switch (cmd.type) {
+  case CommandType::UP:
+    idx--;
+    if (idx == -1)
+      idx = choices_size - 1;
+    break;
+  case CommandType::DOWN:
+    idx++;
+    if (idx == choices_size)
+      idx = 0;
+    break;
+
+  case CommandType::RIGHT: {
+    auto &audio = ecs.get_mut<SDLAudio>();
+    switch (idx) {
+    case 0:
+      if ((int)(maxGain * audio.get_master_gain()) < 2 * maxGain) {
+        audio.add_master_gain(2.0f / maxGain);
+      }
+      break;
+    case 1:
+      if ((int)(maxGain * audio.get_music_gain()) < 2 * maxGain) {
+        audio.add_music_gain(2.0f / maxGain);
+      }
+      break;
+    case 2:
+      if ((int)(maxGain * audio.get_sfx_gain()) < 2 * maxGain) {
+        audio.add_sfx_gain(2.0f / maxGain);
+      }
+      break;
+    default:
+      assert(false);
+      break;
+    }
+    break;
+  }
+
+  case CommandType::LEFT: {
+    auto &audio = ecs.get_mut<SDLAudio>();
+    switch (idx) {
+    case 0:
+      if ((int)(maxGain * audio.get_master_gain()) > 0) {
+        audio.add_master_gain(-2.0f / maxGain);
+      }
+      break;
+    case 1:
+      if ((int)(maxGain * audio.get_music_gain()) > 0) {
+        audio.add_music_gain(-2.0f / maxGain);
+      }
+      break;
+    case 2:
+      if ((int)(maxGain * audio.get_sfx_gain()) > 0) {
+        audio.add_sfx_gain(-2.0f / maxGain);
+      }
+      break;
+    default:
+      assert(false);
+      break;
+    }
+    break;
+  }
+
+  case CommandType::ESCAPE:
+    make<MainMenuInputHandler>(ecs);
+    return nullptr;
+
+  default:
+    break;
+  }
+  return nullptr;
+}
+
+std::unique_ptr<Action> VolumeControls::click(SDL_MouseButtonEvent &,
+                                              flecs::world) {
+  // TODO
+  return nullptr;
+}
+
+static void renderVolumeBar(Console &console, int x, int y, int gain,
+                            const char *label, bool selected) {
+  auto str = stringf(selected ? "\u2020%14s: %3d " : "%15s: %3d ", label, gain);
+  console.print({x, y}, str, std::nullopt, std::nullopt);
+
+  console.draw_rect({x + 25, y, total_width, 1}, 0x2591, color::menu_border,
+                    color::menu_background);
+  auto barWidth = (gain * total_width) / maxGain;
+  if (barWidth > 0) {
+    console.draw_rect({x + 25, y, barWidth, 1}, ' ', std::nullopt, color::text);
+  }
+}
+
+void VolumeControls::on_render(flecs::world ecs, Console &console) {
+  MainMenuInputHandler::on_render(ecs, console);
+  for (auto &tile : console) {
+    tile.fg /= 8;
+    tile.bg /= 8;
+  }
+
+  auto frameX = getFrameX(console.get_width());
+  auto frameY = (console.get_height() - COMMAND_MENU_HEIGHT) / 2;
+
+  assert(frameX + COMMAND_MENU_WIDTH < console.get_width());
+
+  console.draw_frame({frameX, frameY, COMMAND_MENU_WIDTH, COMMAND_MENU_HEIGHT},
+                     DECORATION, color::menu_border, color::background);
+
+  auto &audio = ecs.get<SDLAudio>();
+  auto x = frameX + 2;
+  auto y = frameY + 2;
+  renderVolumeBar(console, x, y,
+                  (int)(audio.get_master_gain() * maxGain / 2.0f),
+                  "Master Volume", idx == 0);
+  y += 2;
+  renderVolumeBar(console, x, y, (int)(audio.get_music_gain() * maxGain / 2.0f),
+                  "Music Volume", idx == 1);
+  y += 2;
+  renderVolumeBar(console, x, y, (int)(audio.get_sfx_gain() * maxGain / 2.0f),
+                  "SFX Volume", idx == 2);
 }
 
 void MainHandler::on_render(flecs::world ecs, Console &console) {

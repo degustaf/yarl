@@ -249,7 +249,7 @@ SDLData::SDLData(int columns, int rows, float fontSize, const char *title,
   SDL_SetNumberProperty(window_props, SDL_PROP_WINDOW_CREATE_FLAGS_NUMBER,
                         SDL_WINDOW_RESIZABLE);
 
-  sdl_subsystems = SDL_INIT_VIDEO;
+  sdl_subsystems = SDL_INIT_VIDEO | SDL_INIT_AUDIO;
   SDL_AddEventWatch(handle_event, this);
   window = decltype(window)(SDL_CreateWindowWithProperties(window_props),
                             SDL_DestroyWindow);

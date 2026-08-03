@@ -9,6 +9,7 @@
 
 #include "actor.hpp"
 #include "ai.hpp"
+#include "audio.hpp"
 #include "blood.hpp"
 #include "books.hpp"
 #include "color.hpp"
@@ -123,6 +124,9 @@ module::module(flecs::world ecs) {
       std_vector_support<std::array<int, 2>>);
   ecs.component<std::vector<std::string>>().opaque(
       std_vector_support<std::string>);
+  //
+  // audio.hpp
+  ecs.component<SDLAudio>();
 
   // color.hpp
   ecs.component<color::RGB>()
