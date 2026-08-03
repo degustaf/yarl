@@ -30,10 +30,6 @@ jobs:
             libxss-dev libxtst-dev libxkbcommon-dev libdrm-dev libgbm-dev libgl1-mesa-dev \
             libgles2-mesa-dev libegl1-mesa-dev libdbus-1-dev libibus-1.0-dev libudev-dev \
             libthai-dev libpipewire-0.3-dev libwayland-dev libdecor-0-dev liburing-dev \
-      - name: Needed build tool
-        uses: actions/setup-python@v6
-        with:
-          python-version: 3.12
       - name: Fetch Vcpkg commits
         working-directory: vcpkg
         run: git fetch --unshallow
@@ -41,6 +37,17 @@ jobs:
         working-directory: vcpkg
         run: ./bootstrap-vcpkg.sh
       - uses: lukka/get-cmake@latest
+      - name: Restore vcpkg and its artifacts.
+        uses: actions/cache@v6
+        with:
+          path: |
+            ${{ env.CMAKE_BUILD_DIR }}/vcpkg_installed/
+            ${{ env.VCPKG_ROOT }}
+            !${{ env.VCPKG_ROOT }}/buildtrees
+            !${{ env.VCPKG_ROOT }}/packages
+            !${{ env.VCPKG_ROOT }}/downloads
+          key: |
+            ${{ hashFiles( 'vcpkg_manifest/vcpkg.json', '.git/modules/vcpkg/HEAD' )}}-linux-invalidate
       - name: CMake configure
         run: |
           cmake -S . -B ${{env.CMAKE_BUILD_DIR}} -DCMAKE_BUILD_TYPE=RelWithDebInfo

@@ -43,6 +43,17 @@ jobs:
       - name: Verify emscripten
         run: emcc -v
       - uses: lukka/get-cmake@latest
+      - name: Restore vcpkg and its artifacts.
+        uses: actions/cache@v6
+        with:
+          path: |
+            ${{ env.CMAKE_BUILD_DIR }}/vcpkg_installed/
+            ${{ env.VCPKG_ROOT }}
+            !${{ env.VCPKG_ROOT }}/buildtrees
+            !${{ env.VCPKG_ROOT }}/packages
+            !${{ env.VCPKG_ROOT }}/downloads
+          key: |
+            ${{ hashFiles( 'vcpkg_manifest/vcpkg.json', '.git/modules/vcpkg/HEAD' )}}-emscripten-invalidate
       - name: CMake configure
         run: emcmake cmake -S . -B ${{env.CMAKE_BUILD_DIR}}
           -DVCPKG_CHAINLOAD_TOOLCHAIN_FILE="${EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake"
