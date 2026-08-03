@@ -17,6 +17,7 @@ struct Inventory {
 struct ContainedBy {};
 struct Item {};
 struct Flammable {};
+struct Dropped {};
 
 void drop(flecs::entity item, flecs::entity wearer);
 

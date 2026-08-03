@@ -23,6 +23,7 @@
 #include "game_map.hpp"
 #include "inventory.hpp"
 #include "level.hpp"
+#include "map_queries.hpp"
 #include "message_log.hpp"
 #include "pathfinding.hpp"
 #include "position.hpp"
@@ -604,9 +605,8 @@ void MainHandler::on_render(flecs::world ecs, Console &console) {
                                     player.has<Invisible>());
   }
   if (gMap.isVisible(mouse_loc)) {
-    auto e =
-        ecs.query_builder<const Position>().with<Describable>().build().find(
-            [&](auto p) { return p == mouse_loc; });
+    auto e = mapQuery<positionQuery::Describable>(ecs, map).find(
+        [&](auto p) { return p == mouse_loc; });
     if (e) {
       renderDescribableAtMouseLocation(console, mouse_loc, e);
     }
@@ -1166,17 +1166,15 @@ void AutoExplore::on_render(flecs::world ecs, Console &console) {
   auto player = ecs.entity("player");
   auto pos = player.get<Position>();
   auto &gameMap = map.get<GameMap>();
+  auto qItem = mapQuery<positionQuery::Item>(ecs, map);
+  auto qOpen = mapQuery<positionQuery::Openable>(ecs, map);
+  auto qPortal = mapQuery<positionQuery::Portal>(ecs, map);
   auto dij = pathfinding::Dijkstra(
       {gameMap.getWidth(), gameMap.getHeight()},
       [&](auto xy) {
         if (!gameMap.isExplored(xy))
           return true;
-        if (map.world()
-                .query_builder<const Position>()
-                .with<Item>()
-                .with(flecs::ChildOf, map)
-                .build()
-                .find([&](auto p) { return p == xy; })) {
+        if (qItem.find([&](auto p) { return p == xy; })) {
           return true;
         }
         return false;
@@ -1190,31 +1188,18 @@ void AutoExplore::on_render(flecs::world ecs, Console &console) {
               (gameMap.isWalkable(next) ||
                (player.has<Flying>() && gameMap.isFlyable(next)))) {
             ret.push_back(next);
-          } else if (map.world()
-                         .query_builder<const Position>()
-                         .with<Openable>()
-                         .with(flecs::ChildOf, map)
-                         .build()
-                         .find([next](auto &p) { return p == next; })) {
+          } else if (qOpen.find([next](auto &p) { return p == next; })) {
             ret.push_back(next);
           }
         }
-        flecs::entity e = ecs.query_builder<const Position>()
-                              .with(ecs.component<Portal>(), flecs::Wildcard)
-                              .with(flecs::ChildOf, map)
-                              .build()
-                              .find([xy](auto &p) { return p == xy; });
+        flecs::entity e = qPortal.find([xy](auto &p) { return p == xy; });
         if (e) {
           ret.push_back(e.target<Portal>().get<Position>());
         }
         return ret;
       },
       [&](auto xy) {
-        if (ecs.query_builder<const Position>()
-                .with<Openable>()
-                .with(flecs::ChildOf, map)
-                .build()
-                .find([xy](auto &p) { return p == xy; })) {
+        if (qOpen.find([xy](auto &p) { return p == xy; })) {
           if (!gameMap.isWalkable(xy)) {
             return 2;
           }
@@ -1252,6 +1237,8 @@ PathFinder::PathFinder(flecs::entity map, std::array<int, 2> orig,
   auto &gameMap = map.get<GameMap>();
   auto ecs = map.world();
   auto player = ecs.lookup("player");
+  auto qOpen = mapQuery<positionQuery::Openable>(ecs, map);
+  auto qPortal = mapQuery<positionQuery::Portal>(ecs, map);
   auto dij = pathfinding::Dijkstra(
       {gameMap.getWidth(), gameMap.getHeight()},
       [=](auto xy) { return orig == xy; },
@@ -1266,22 +1253,14 @@ PathFinder::PathFinder(flecs::entity map, std::array<int, 2> orig,
             ret.push_back(next);
           }
         }
-        flecs::entity e = ecs.query_builder<Position>()
-                              .with(ecs.component<Portal>(), flecs::Wildcard)
-                              .with(flecs::ChildOf, map)
-                              .build()
-                              .find([xy](auto &p) { return p == xy; });
+        flecs::entity e = qPortal.find([xy](auto &p) { return p == xy; });
         if (e) {
           ret.push_back(e.target<Portal>().get<Position>());
         }
         return ret;
       },
       [&](auto xy) {
-        if (ecs.query_builder<const Position>()
-                .with<Openable>()
-                .with(flecs::ChildOf, map)
-                .build()
-                .find([xy](auto &p) { return p == xy; })) {
+        if (qOpen.find([xy](auto &p) { return p == xy; })) {
           if (!gameMap.isWalkable(xy)) {
             return 2;
           }

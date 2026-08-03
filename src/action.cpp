@@ -11,6 +11,7 @@
 #include "game_map.hpp"
 #include "input_handler.hpp"
 #include "inventory.hpp"
+#include "map_queries.hpp"
 #include "position.hpp"
 #include "string.hpp"
 #include "util.hpp"
@@ -69,14 +70,11 @@ static ActionResult attack(flecs::entity e, std::array<int, 2> pos,
 static flecs::entity itemAtLocation(flecs::entity e) {
 
   auto &pos = e.get<Position>();
-  auto currentMap = e.world().lookup("currentMap");
+  auto ecs = e.world();
+  auto currentMap = ecs.lookup("currentMap");
   assert(currentMap);
   auto map = currentMap.target<CurrentMap>();
-  auto q = e.world()
-               .query_builder<const Position>("module::pickup")
-               .with<Item>()
-               .with(flecs::ChildOf, map)
-               .build();
+  auto q = mapQuery<positionQuery::Item>(ecs, map);
   return q.find(
       [&](flecs::entity item, auto &p) { return e != item && p == pos; });
 }
@@ -89,13 +87,8 @@ ActionResult MoveAction::perform(flecs::entity e) const {
     if (map.isWalkable(pos + dxy) ||
         (e.has<Flying>() && map.isFlyable(pos + dxy))) {
       if (GameMap::get_blocking_entity(mapEntity, pos + dxy) == e.null()) {
-        auto portal =
-            e.world()
-                .query_builder<const Position>()
-                .with(flecs::ChildOf, mapEntity)
-                .with(e.world().component<Portal>(), flecs::Wildcard)
-                .build()
-                .find([&](const Position &p) { return p == pos + dxy; });
+        auto q = mapQuery<positionQuery::Portal>(e.world(), mapEntity);
+        auto portal = q.find([&](const Position &p) { return p == pos + dxy; });
         if (portal) {
           pos = portal.target<Portal>().get<Position>();
           if (e.has<MoveAnimation>()) {
@@ -162,11 +155,7 @@ ActionResult DoorDirectionAction::perform(flecs::entity e) const {
   assert(currentMap);
   auto mapEntity = currentMap.target<CurrentMap>();
 
-  auto q = ecs.query_builder<const Position>("module::blocksPosition")
-               .with(flecs::ChildOf, mapEntity)
-               .with<Openable>()
-               .build();
-
+  auto q = mapQuery<positionQuery::Openable>(ecs, mapEntity);
   auto target = q.find([=](const Position &p) { return p == pos + dxy; });
   if (target) {
     toggleDoor(target);
@@ -183,11 +172,7 @@ ActionResult DoorAction::perform(flecs::entity e) const {
   assert(currentMap);
   auto mapEntity = currentMap.target<CurrentMap>();
 
-  auto q = ecs.query_builder<const Position>("module::blocksPosition")
-               .with(flecs::ChildOf, mapEntity)
-               .with<Openable>()
-               .build();
-
+  auto q = mapQuery<positionQuery::Openable>(ecs, mapEntity);
   auto success = false;
   ecs.defer_begin();
   q.each([&](auto e, auto &p) {

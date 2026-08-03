@@ -14,6 +14,7 @@
 #include "defines.hpp"
 #include "engine.hpp"
 #include "game_map.hpp"
+#include "map_queries.hpp"
 #include "map_shared.hpp"
 #include "pathfinding.hpp"
 #include "scent.hpp"
@@ -604,9 +605,7 @@ void roomAccretion::generateDungeon(const Config &cfg, flecs::entity map,
     return;
   }
 
-  auto q = ecs.query_builder<const Position>("module::position")
-               .with(flecs::ChildOf, map)
-               .build();
+  auto q = mapQuery<positionQuery::Position>(ecs, map);
 
   addPortals(cfg, map, dungeon, rng);
 
@@ -661,22 +660,16 @@ void roomAccretion::generateDungeon(const Config &cfg, flecs::entity map,
             ret.push_back(next);
           }
         }
-        flecs::entity e = ecs.query_builder<Position>()
-                              .with(ecs.component<Portal>(), flecs::Wildcard)
-                              .with(flecs::ChildOf, map)
-                              .build()
-                              .find([xy](auto &p) { return p == xy; });
+        auto q = mapQuery<positionQuery::Portal>(ecs, map);
+        flecs::entity e = q.find([xy](auto &p) { return p == xy; });
         if (e) {
           ret.push_back(e.target<Portal>().get<Position>());
         }
         return ret;
       },
       [&](auto xy) {
-        if (ecs.query_builder<const Position>()
-                .with<Openable>()
-                .with(flecs::ChildOf, map)
-                .build()
-                .find([xy](auto &p) { return p == xy; })) {
+        auto q = mapQuery<positionQuery::Openable>(ecs, map);
+        if (q.find([xy](auto &p) { return p == xy; })) {
           if (!dungeon.isWalkable(xy)) {
             return 2;
           }

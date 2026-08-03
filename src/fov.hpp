@@ -1,6 +1,7 @@
 #pragma once
 #include "actor.hpp"
 #include "game_map.hpp"
+#include "map_queries.hpp"
 
 #include <array>
 #include <cmath>
@@ -119,10 +120,7 @@ static void computeFov(flecs::entity mapEntity, Mappable &map,
   }
 
   auto ecs = mapEntity.world();
-  auto q = ecs.query_builder<const Position>()
-               .with(ecs.component<Portal>(), flecs::Wildcard)
-               .with(flecs::ChildOf, mapEntity)
-               .build();
+  auto q = mapQuery<positionQuery::Portal>(ecs, mapEntity);
 
   callback(origin, 0);
 

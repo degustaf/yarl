@@ -12,6 +12,7 @@
 #include "game_map.hpp"
 #include "input_handler.hpp"
 #include "inventory.hpp"
+#include "map_queries.hpp"
 #include "message_log.hpp"
 #include "position.hpp"
 #include "scent.hpp"
@@ -110,11 +111,8 @@ ActionResult ConfusionConsumable::selected(flecs::entity item,
             color::impossible};
   }
 
-  auto target_entity = ecs.query_builder<const Position>("module::enemyWithAi")
-                           .with(flecs::ChildOf, map)
-                           .with<Ai>()
-                           .build()
-                           .find([target](auto &pos) { return pos == target; });
+  auto target_entity = mapQuery<positionQuery::Ai>(ecs, map).find(
+      [target](auto &pos) { return pos == target; });
   if (target_entity == target_entity.null()) {
     return {ActionResultType::Failure, "You must select an enemy to target.",
             0.0f, color::impossible};

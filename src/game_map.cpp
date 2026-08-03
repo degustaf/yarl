@@ -5,6 +5,7 @@
 #include "color.hpp"
 #include "defines.hpp"
 #include "fov.hpp"
+#include "map_queries.hpp"
 #include "room_accretion.hpp"
 #include "scent.hpp"
 #include "string.hpp"
@@ -263,10 +264,6 @@ flecs::entity GameMap::get_blocking_entity(flecs::entity map,
   if (player.get<Position>() == pos) {
     return player;
   }
-  auto q = map.world()
-               .query_builder<const Position>("module::blocksPosition")
-               .with(flecs::ChildOf, map)
-               .with<BlocksMovement>()
-               .build();
+  auto q = mapQuery<positionQuery::Blocks>(map.world(), map);
   return q.find([&](const auto &p) { return p == pos; });
 }

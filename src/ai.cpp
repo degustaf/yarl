@@ -10,6 +10,7 @@
 #include "defines.hpp"
 #include "fov.hpp"
 #include "game_map.hpp"
+#include "map_queries.hpp"
 #include "pathfinding.hpp"
 #include "string.hpp"
 
@@ -30,6 +31,8 @@ std::unique_ptr<Action> HostileAi::act(flecs::entity self) {
       return std::make_unique<MeleeAction>(dx, dy);
     }
 
+    auto qOpenable = mapQuery<positionQuery::Openable>(ecs, mapEntity);
+    auto qPortal = mapQuery<positionQuery::Portal>(ecs, mapEntity);
     auto dij = pathfinding::Dijkstra(
         {map.getWidth(), map.getHeight()},
         [=](auto xy) { return target == xy; },
@@ -44,22 +47,14 @@ std::unique_ptr<Action> HostileAi::act(flecs::entity self) {
               ret.push_back(next);
             }
           }
-          flecs::entity e = ecs.query_builder<Position>()
-                                .with(ecs.component<Portal>(), flecs::Wildcard)
-                                .with(flecs::ChildOf, mapEntity)
-                                .build()
-                                .find([xy](auto &p) { return p == xy; });
+          flecs::entity e = qPortal.find([xy](auto &p) { return p == xy; });
           if (e) {
             ret.push_back(e.target<Portal>().get<Position>());
           }
           return ret;
         },
         [&](auto xy) {
-          if (ecs.query_builder<const Position>()
-                  .with<Openable>()
-                  .with(flecs::ChildOf, mapEntity)
-                  .build()
-                  .find([xy](auto &p) { return p == xy; })) {
+          if (qOpenable.find([xy](auto &p) { return p == xy; })) {
             if (!map.isWalkable(xy)) {
               return 2;
             }
@@ -116,6 +111,8 @@ std::unique_ptr<Action> FleeAi::act(flecs::entity self) {
   const auto &map = mapEntity.get<GameMap>();
 
   // TODO handle invisibility
+  auto qOpen = mapQuery<positionQuery::Openable>(ecs, mapEntity);
+  auto qPortal = mapQuery<positionQuery::Portal>(ecs, mapEntity);
   auto dij = pathfinding::Dijkstra(
       {map.getWidth(), map.getHeight()},
       [=](auto xy) { return playerPos == xy; },
@@ -128,30 +125,18 @@ std::unique_ptr<Action> FleeAi::act(flecs::entity self) {
               (map.isWalkable(next) ||
                (self.has<Flying>() && map.isFlyable(next)))) {
             ret.push_back(next);
-          } else if (ecs.query_builder<const Position>()
-                         .with<Openable>()
-                         .with(flecs::ChildOf, mapEntity)
-                         .build()
-                         .find([next](auto &p) { return p == next; })) {
+          } else if (qOpen.find([next](auto &p) { return p == next; })) {
             ret.push_back(next);
           }
         }
-        flecs::entity e = ecs.query_builder<Position>()
-                              .with(ecs.component<Portal>(), flecs::Wildcard)
-                              .with(flecs::ChildOf, mapEntity)
-                              .build()
-                              .find([xy](auto &p) { return p == xy; });
+        flecs::entity e = qPortal.find([xy](auto &p) { return p == xy; });
         if (e) {
           ret.push_back(e.target<Portal>().get<Position>());
         }
         return ret;
       },
       [&](auto xy) {
-        if (ecs.query_builder<const Position>()
-                .with<Openable>()
-                .with(flecs::ChildOf, mapEntity)
-                .build()
-                .find([xy](auto &p) { return p == xy; })) {
+        if (qOpen.find([xy](auto &p) { return p == xy; })) {
           if (!map.isWalkable(xy)) {
             return 2;
           }
@@ -246,6 +231,8 @@ std::unique_ptr<Action> WanderAi::act(flecs::entity self) {
     }
   }
 
+  auto qOpen = mapQuery<positionQuery::Openable>(ecs, mapEntity);
+  auto qPortal = mapQuery<positionQuery::Portal>(ecs, mapEntity);
   auto dij = pathfinding::WanderDijkstra(
       {map.getWidth(), map.getHeight()}, memory,
       [&](auto &xy) {
@@ -257,30 +244,18 @@ std::unique_ptr<Action> WanderAi::act(flecs::entity self) {
               (map.isWalkable(next) ||
                (self.has<Flying>() && map.isFlyable(next)))) {
             ret.push_back(next);
-          } else if (ecs.query_builder<const Position>()
-                         .with<Openable>()
-                         .with(flecs::ChildOf, mapEntity)
-                         .build()
-                         .find([next](auto &p) { return p == next; })) {
+          } else if (qOpen.find([next](auto &p) { return p == next; })) {
             ret.push_back(next);
           }
         }
-        flecs::entity e = ecs.query_builder<Position>()
-                              .with(ecs.component<Portal>(), flecs::Wildcard)
-                              .with(flecs::ChildOf, mapEntity)
-                              .build()
-                              .find([xy](auto &p) { return p == xy; });
+        flecs::entity e = qPortal.find([xy](auto &p) { return p == xy; });
         if (e) {
           ret.push_back(e.target<Portal>().get<Position>());
         }
         return ret;
       },
       [&](auto xy) {
-        if (ecs.query_builder<const Position>()
-                .with<Openable>()
-                .with(flecs::ChildOf, mapEntity)
-                .build()
-                .find([xy](auto &p) { return p == xy; })) {
+        if (qOpen.find([xy](auto &p) { return p == xy; })) {
           if (!map.isWalkable(xy)) {
             return 2;
           }

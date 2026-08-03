@@ -7,6 +7,7 @@
 #include <cstddef>
 
 #include "engine.hpp"
+#include "map_queries.hpp"
 #include "map_shared.hpp"
 
 static void tunnel_between(GameMap &map, const std::array<int, 2> &start,
@@ -53,9 +54,7 @@ static void place_entities(flecs::entity map, const RectangularRoom &r,
       rng.getInt(0, getMaxValueForFloor(max_items_by_floor, level));
 
   auto ecs = map.world();
-  auto q = ecs.query_builder<const Position>("module::position")
-               .with(flecs::ChildOf, map)
-               .build();
+  auto q = mapQuery<positionQuery::Position>(ecs, map);
 
   for (auto i = 0; i < monster_count; i++) {
     auto x = rng.getInt(r.x1 + 1, r.x2 - 1);
