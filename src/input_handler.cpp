@@ -306,13 +306,7 @@ std::unique_ptr<Action> KeybindMenu::keyDown(Command cmd, flecs::world ecs) {
         assert(idx[0] == 1);
         Command::init_wasd();
       }
-      for (auto &k : keys) {
-        for (auto &c : Command::mapping) {
-          if (k.first == c.second) {
-            k.second = c.first;
-          }
-        }
-      }
+      refresh_keys();
     } else {
       auto i = idx[0] * maxIdx[0] + idx[1];
       ecs.set<std::unique_ptr<InputHandler>>(std::make_unique<KeyBinding>(
@@ -324,6 +318,45 @@ std::unique_ptr<Action> KeybindMenu::keyDown(Command cmd, flecs::world ecs) {
     break;
   }
 
+  return nullptr;
+}
+
+std::unique_ptr<Action> KeybindMenu::click(SDL_MouseButtonEvent &button,
+                                           flecs::world ecs) {
+  auto frameX = getFrameX(dim[0]);
+  auto frameY = (dim[1] - COMMAND_MENU_HEIGHT) / 2;
+
+  if ((int)button.y == frameY + 4) {
+    if ((frameX + 2 <= (int)button.x) &&
+        ((int)button.x <= frameX + 2 + (int)strlen(vi))) {
+      Command::init();
+      refresh_keys();
+    } else if ((frameX + 2 + (COMMAND_MENU_WIDTH / 2) <= (int)button.x) &&
+               ((int)button.x <=
+                frameX + 2 + (COMMAND_MENU_WIDTH / 2) + (int)strlen(vi))) {
+      Command::init_wasd();
+      refresh_keys();
+    }
+    return nullptr;
+  }
+
+  auto x = 0;
+  auto y = 0;
+  for (auto &key : keys) {
+    if ((int)button.y == frameY + y + 6 &&
+        frameX + 2 + x * (COMMAND_MENU_WIDTH / 2) <= (int)button.x &&
+        (int)button.x <= frameX + 2 + x * (COMMAND_MENU_WIDTH / 2) +
+                             (int)strlen(CommandTypeDescription(key.first))) {
+      ecs.set<std::unique_ptr<InputHandler>>(
+          std::make_unique<KeyBinding>(*this, Command::mapping[key.second]));
+      return nullptr;
+    }
+    y++;
+    if (y == maxIdx[x]) {
+      y = 0;
+      x++;
+    }
+  }
   return nullptr;
 }
 
@@ -346,12 +379,11 @@ void KeybindMenu::on_render(flecs::world ecs, Console &console) {
                 "Movement from arrow keys and numpad is always enabled.",
                 color::text, std::nullopt);
 
-  console.print({frameX + 2, frameY + 4}, "Set default vi keybindings",
+  console.print({frameX + 2, frameY + 4}, vi,
                 idx[0] == 0 && idx[1] == -1 ? color::background : color::text,
                 idx[0] == 0 && idx[1] == -1 ? std::optional(color::menu_border)
                                             : std::nullopt);
-  console.print({frameX + 2 + (COMMAND_MENU_WIDTH / 2), frameY + 4},
-                "Set default wasd keybindings",
+  console.print({frameX + 2 + (COMMAND_MENU_WIDTH / 2), frameY + 4}, wasd,
                 idx[0] == 1 && idx[1] == -1 ? color::background : color::text,
                 idx[0] == 1 && idx[1] == -1 ? std::optional(color::menu_border)
                                             : std::nullopt);
@@ -371,6 +403,16 @@ void KeybindMenu::on_render(flecs::world ecs, Console &console) {
     if (y == maxIdx[x]) {
       y = 0;
       x++;
+    }
+  }
+}
+
+void KeybindMenu::refresh_keys(void) {
+  for (auto &k : keys) {
+    for (auto &c : Command::mapping) {
+      if (k.first == c.second) {
+        k.second = c.first;
+      }
     }
   }
 }
@@ -661,6 +703,9 @@ ActionResult MainHandler::handle_action(flecs::world ecs,
       ecs.query<Temporary>().each([](auto e, auto &t) { t.update(e); });
       ecs.defer_end();
       ecs.lookup("turn").get_mut<Turn>().turn++;
+      // if (ret.saveGame) {
+      //   Engine::save_as(ecs, data_dir / saveFilename);
+      // }
     }
     // if (player.has<TrackerConsumable>()) {
     //   auto &t = player.get_mut<TrackerConsumable>();

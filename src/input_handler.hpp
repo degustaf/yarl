@@ -110,11 +110,18 @@ struct KeybindMenu : MainMenuInputHandler {
   virtual ~KeybindMenu() = default;
 
   virtual std::unique_ptr<Action> keyDown(Command, flecs::world) override;
+  virtual std::unique_ptr<Action> click(SDL_MouseButtonEvent &,
+                                        flecs::world) override;
   virtual void on_render(flecs::world, Console &) override;
 
   std::array<int, 2> idx;
   std::array<int, 2> maxIdx;
   std::vector<std::pair<CommandType, SDL_Scancode>> keys;
+
+private:
+  static constexpr auto vi = "Set default vi keybindings";
+  static constexpr auto wasd = "Set default wasd keybindings";
+  void refresh_keys(void);
 };
 
 struct KeyBinding : KeybindMenu {
@@ -122,6 +129,10 @@ struct KeyBinding : KeybindMenu {
   ~KeyBinding() = default;
 
   virtual std::unique_ptr<Action> keyDown(Command, flecs::world) override;
+  virtual std::unique_ptr<Action> click(SDL_MouseButtonEvent &,
+                                        flecs::world) override {
+    return nullptr;
+  };
   virtual void on_render(flecs::world, Console &) override;
 
   CommandType c;
