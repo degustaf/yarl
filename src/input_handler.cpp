@@ -703,9 +703,9 @@ ActionResult MainHandler::handle_action(flecs::world ecs,
       ecs.query<Temporary>().each([](auto e, auto &t) { t.update(e); });
       ecs.defer_end();
       ecs.lookup("turn").get_mut<Turn>().turn++;
-      // if (ret.saveGame) {
-      //   Engine::save_as(ecs, data_dir / saveFilename);
-      // }
+      if (ret.saveGame) {
+        Engine::save_as(ecs, data_dir / saveFilename);
+      }
     }
     // if (player.has<TrackerConsumable>()) {
     //   auto &t = player.get_mut<TrackerConsumable>();

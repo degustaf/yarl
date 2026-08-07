@@ -20,6 +20,7 @@ struct ActionResult {
   std::string msg;
   float exertion;
   color::RGB fg = color::text;
+  bool saveGame = false;
 
   inline operator bool() {
     switch (type) {

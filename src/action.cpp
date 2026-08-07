@@ -302,9 +302,9 @@ ActionResult TakeStairsAction::perform(flecs::entity e) const {
     gameMap.nextFloor(e, false);
 
     return {ActionResultType::Success, "You descend the staircase.", 0.0f,
-            color::descend};
+            color::descend, true};
   }
-  return {ActionResultType::Failure, "There is no elevator here.", 0.0f,
+  return {ActionResultType::Failure, "There is no staircase here.", 0.0f,
           color::impossible};
 }
 
@@ -327,7 +327,7 @@ ActionResult JumpAction::perform(flecs::entity e) const {
 
   auto msg = stringf("You jump down the chasm taking %d damage.", fallDamage);
 
-  return {ActionResultType::Success, msg, 1.0f, color::descend};
+  return {ActionResultType::Success, msg, 1.0f, color::descend, true};
 }
 
 ActionResult EquipAction::perform(flecs::entity e) const {
