@@ -74,6 +74,10 @@ struct Fighter {
   int base_power;
 };
 
+struct Splitter {
+  int minHP;
+};
+
 struct Regenerator {
   int healTurns;
   int turns = 0;

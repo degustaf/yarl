@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <vector>
 
 #include "ai.hpp"
 #include "color.hpp"
@@ -10,6 +11,8 @@
 #include "inventory.hpp"
 #include "level.hpp"
 #include "message_log.hpp"
+#include "position.hpp"
+#include "random.hpp"
 #include "string.hpp"
 
 const std::vector<RenderOrder> allRenderOrders = {
@@ -58,6 +61,38 @@ int Fighter::heal(int amount, flecs::entity self) {
 
 void Fighter::take_damage(int amount, flecs::entity self) {
   set_hp(_hp - amount, self);
+  if (self.has<Splitter>()) {
+    auto split = self.get<Splitter>();
+    if (_hp >= split.minHP) {
+      auto pos = self.get_mut<Position>();
+      auto currentMap = self.world().lookup("currentMap");
+      auto tg = currentMap.target<CurrentMap>();
+      auto &map = tg.get<GameMap>();
+      auto newPos = std::vector<Position>{};
+      for (auto dx = -3; dx <= 3; dx++) {
+        for (auto dy = -3; dy <= 3; dy++) {
+          if (map.isWalkable(pos + std::array{dx, dy})) {
+            auto e = GameMap::get_blocking_entity(currentMap,
+                                                  pos + std::array{dx, dy});
+            if (e == e.null()) {
+              newPos.push_back(pos + std::array{dx, dy});
+            }
+          }
+        }
+      }
+
+      if (!newPos.empty()) {
+        auto rng = TCODRandom::getInstance();
+        random_shuffle(&newPos[0], &newPos[newPos.size() - 1],
+                       [&](auto n) { return rng->getInt(0, (int)n); });
+
+        auto newHp = _hp / 2;
+        set_hp(newHp, self);
+        auto clone = self.clone();
+        clone.set<Position>(newPos[0]);
+      }
+    }
+  }
 }
 
 void Fighter::die(flecs::entity self) {
