@@ -19,7 +19,7 @@ static constexpr auto keep_aspect = false;
 static constexpr auto align_x = 0.5f;
 static constexpr auto align_y = 0.5f;
 
-static SDL_ScaleMode get_sdl2_scale_mode_hint() {
+static SDL_ScaleMode get_sdl3_scale_mode_hint() {
   static constexpr SDL_ScaleMode DEFAULT_SCALE_MODE = SDL_SCALEMODE_NEAREST;
   const auto scale_mode_hint = SDL_GetHint("SDL_RENDER_SCALE_QUALITY");
   if (!scale_mode_hint)
@@ -76,7 +76,7 @@ static void render_texture_setup(SDL_Renderer *renderer,
           SDL_GetError());
     }
     if (scale_mode == SDL_SCALEMODE_INVALID)
-      scale_mode = get_sdl2_scale_mode_hint();
+      scale_mode = get_sdl3_scale_mode_hint();
     if (scale_mode != SDL_SCALEMODE_INVALID)
       SDL_SetTextureScaleMode(target.get(), scale_mode);
   }

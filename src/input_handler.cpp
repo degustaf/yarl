@@ -157,8 +157,7 @@ std::unique_ptr<Action> InputHandler::dispatch(SDL_Event *event,
     return keyDown(Command::get(event->key), ecs);
 
   case SDL_EVENT_MOUSE_MOTION:
-    mouse_loc = {(int)event->motion.x, (int)event->motion.y};
-    return nullptr;
+    return mouseMove(event->motion);
 
   case SDL_EVENT_MOUSE_BUTTON_DOWN:
     return click(event->button, ecs);
@@ -208,12 +207,23 @@ std::unique_ptr<Action> MainMenuInputHandler::keyDown(Command cmd,
 }
 
 std::unique_ptr<Action>
+MainMenuInputHandler::mouseMove(SDL_MouseMotionEvent &motion) {
+  InputHandler::mouseMove(motion);
+  const auto printX = (ImageWidth / 2 + dim[0]) / 2;
+  const auto i = mouse_loc[1] - dim[1] / 2 + 2;
+  if (0 <= i && i < (int)choices.size() &&
+      mouse_loc[0] >= (int)(printX - strlen(choices[i]) / 2)) {
+    idx = i;
+  }
+  return nullptr;
+}
+
+std::unique_ptr<Action>
 MainMenuInputHandler::click(SDL_MouseButtonEvent &button, flecs::world ecs) {
-  const auto printX = (ImageWidth / 2.0f + (float)dim[0]) / 2.0f;
-  for (auto i = 0; i < (int)choices.size(); i++) {
-    auto printY = (float)dim[1] / 2.0f - 2 + (float)i;
-    if (button.x >= (float)(printX - (float)strlen(choices[i]) / 2) &&
-        printY <= button.y && button.y < printY + 1) {
+  const auto i = mouse_loc[1] - dim[1] / 2 + 2;
+  if (0 <= i && i < (int)choices.size() && i == idx) {
+    const auto printX = (ImageWidth / 2 + dim[0]) / 2;
+    if (button.x >= (float)(printX - strlen(choices[i]) / 2)) {
       return processChoice(i, ecs);
     }
   }
@@ -319,6 +329,11 @@ std::unique_ptr<Action> KeybindMenu::keyDown(Command cmd, flecs::world ecs) {
   }
 
   return nullptr;
+}
+
+std::unique_ptr<Action> KeybindMenu::mouseMove(SDL_MouseMotionEvent &motion) {
+  return InputHandler::mouseMove(motion);
+  // TODO
 }
 
 std::unique_ptr<Action> KeybindMenu::click(SDL_MouseButtonEvent &button,
@@ -535,6 +550,12 @@ std::unique_ptr<Action> VolumeControls::keyDown(Command cmd, flecs::world ecs) {
     break;
   }
   return nullptr;
+}
+
+std::unique_ptr<Action>
+VolumeControls::mouseMove(SDL_MouseMotionEvent &motion) {
+  return InputHandler::mouseMove(motion);
+  // TODO
 }
 
 std::unique_ptr<Action> VolumeControls::click(SDL_MouseButtonEvent &,
