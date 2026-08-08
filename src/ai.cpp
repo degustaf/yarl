@@ -12,6 +12,7 @@
 #include "game_map.hpp"
 #include "map_queries.hpp"
 #include "pathfinding.hpp"
+#include "random.hpp"
 #include "string.hpp"
 
 std::unique_ptr<Action> HostileAi::act(flecs::entity self) {
@@ -96,7 +97,7 @@ std::unique_ptr<Action> ConfusedAi::act(flecs::entity self) {
     return std::make_unique<MessageAction>(msg);
   }
 
-  auto rng = TCODRandom::getInstance();
+  auto rng = Random::getInstance();
   auto idx = rng->getInt(0, nDirections - 1);
   auto dxy = directions[idx];
   turns_remaining--;

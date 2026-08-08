@@ -61,11 +61,11 @@ std::string join(const std::vector<std::string> &v, int n) {
   return ret;
 }
 
-Book randomBook(TCODRandom &rng, int width) {
+Book randomBook(Random &rng, int width) {
   static const auto lorem = split(loremIpsum, ' ');
   static const auto loremLength = (int)lorem.size();
 
-  auto len = rng.get(loremLength / 4, loremLength);
+  auto len = rng.getInt(loremLength / 4, loremLength);
   auto text = join(lorem, len);
   return {"Lorem Ipsum", splitLines(text, width)};
 }

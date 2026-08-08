@@ -13,6 +13,7 @@
 #include "inventory.hpp"
 #include "map_queries.hpp"
 #include "position.hpp"
+#include "random.hpp"
 #include "string.hpp"
 #include "util.hpp"
 
@@ -195,7 +196,7 @@ ActionResult BatheAction::perform(flecs::entity e) const {
   if (scent) {
     scent->power = 0;
     auto msg = std::string("You bathe and feel refreshingly clean.");
-    if (TCODRandom::getInstance()->getInt(1, 3) == 1) {
+    if (Random::getInstance()->getInt(1, 3) == 1) {
       fountain.remove<Fountain>();
       fountain.get_mut<Renderable>().fg = color::dryFountain;
       msg += " The fountain dries up.";

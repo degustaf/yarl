@@ -9,9 +9,10 @@
 #include "engine.hpp"
 #include "map_queries.hpp"
 #include "map_shared.hpp"
+#include "random.hpp"
 
 static void tunnel_between(GameMap &map, const std::array<int, 2> &start,
-                           const std::array<int, 2> &end, TCODRandom &rng) {
+                           const std::array<int, 2> &end, Random &rng) {
   auto center = [&] {
     if (rng.getInt(0, 1) == 0) {
       return std::array<int, 2>{start[0], end[1]};
@@ -47,7 +48,7 @@ static constexpr auto enemy_weights =
                                   {7, 60, "module::troll"}};
 
 static void place_entities(flecs::entity map, const RectangularRoom &r,
-                           int level, TCODRandom &rng) {
+                           int level, Random &rng) {
   const auto monster_count =
       rng.getInt(0, getMaxValueForFloor(max_monsters_by_floor, level));
   const auto item_count =
@@ -96,7 +97,7 @@ void basicDungeon::generateDungeon(flecs::entity map, GameMap &dungeon,
   auto rooms = std::array<RectangularRoom, MAX_ROOMS>();
   size_t roomCount = 0;
   auto seed = map.world().lookup("seed").get<Seed>();
-  auto rng = TCODRandom(seed.seed + dungeon.level);
+  auto rng = Random(seed.seed + dungeon.level);
   auto width = dungeon.getWidth();
   auto height = dungeon.getHeight();
 

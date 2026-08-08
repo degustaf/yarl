@@ -82,7 +82,7 @@ void Fighter::take_damage(int amount, flecs::entity self) {
       }
 
       if (!newPos.empty()) {
-        auto rng = TCODRandom::getInstance();
+        auto rng = Random::getInstance();
         random_shuffle(&newPos[0], &newPos[newPos.size() - 1],
                        [&](auto n) { return rng->getInt(0, (int)n); });
 

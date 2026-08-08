@@ -1482,7 +1482,7 @@ void WinScreen::animate(flecs::world ecs, uint64_t t) {
     ecs.lookup("for now").get_mut<CenterTextBox>().fg = color::text;
     break;
   default:
-    auto rng = TCODRandom::getInstance();
+    auto rng = Random::getInstance();
     if (rng->getDouble(0.0, 0.25) < (double)ts / 1000.0) {
       auto i = rng->getInt(0, 20);
       ecs.entity().set<BloodDrop>({i - 10});

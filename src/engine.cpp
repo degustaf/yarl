@@ -14,6 +14,7 @@
 #include "inventory.hpp"
 #include "level.hpp"
 #include "message_log.hpp"
+#include "random.hpp"
 #include "room_accretion.hpp"
 #include "scent.hpp"
 
@@ -100,7 +101,7 @@ bool Engine::load(flecs::world ecs, const std::filesystem::path &file_name,
 }
 
 void Engine::new_game(flecs::world ecs, int map_width, int map_height) {
-  auto seed = (uint32_t)TCODRandom::getInstance()->getInt(
+  auto seed = (uint32_t)Random::getInstance()->getInt(
       0, (int)std::numeric_limits<int32_t>::max());
   ecs.entity("seed").set<Seed>({seed});
   ecs.entity("turn").set<Turn>({0});

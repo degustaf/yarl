@@ -7,6 +7,8 @@
 #include <libtcod.hpp>
 #include <utf8proc.h>
 
+#include "random.hpp"
+
 static bool is_newline(int codepoint) {
   const utf8proc_property_t *property = utf8proc_get_property(codepoint);
   switch (property->category) {
@@ -425,9 +427,9 @@ static constexpr auto maxDimRatio = 10.0f;
 
 Console::shake Console::getShake(uint64_t t) const {
   static auto noise = TCODNoise(2, TCOD_NOISE_PERLIN);
-  static auto r_seed = TCODRandom::getInstance()->get(0.0f, 100.0f);
-  static auto x_seed = TCODRandom::getInstance()->get(0.0f, 100.0f);
-  static auto y_seed = TCODRandom::getInstance()->get(0.0f, 100.0f);
+  static auto r_seed = Random::getInstance()->getFloat(0.0f, 100.0f);
+  static auto x_seed = Random::getInstance()->getFloat(0.0f, 100.0f);
+  static auto y_seed = Random::getInstance()->getFloat(0.0f, 100.0f);
 
   float pt[2] = {(float)t, r_seed};
   auto r = maxR * trauma * trauma * noise.get(pt);

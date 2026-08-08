@@ -15,6 +15,7 @@
 #include "map_queries.hpp"
 #include "message_log.hpp"
 #include "position.hpp"
+#include "random.hpp"
 #include "scent.hpp"
 #include "string.hpp"
 
@@ -202,15 +203,15 @@ FireballDamageConsumable::selected(flecs::entity item,
   ecs.defer_end();
   item.destruct();
 
-  auto rng = TCODRandom::getInstance();
+  auto rng = Random::getInstance();
   for (auto i = 0; i < 1000; i++) {
-    auto dx = rng->get(-1.0f, 1.0f);
-    auto dy = rng->get(-1.0f, 1.0f);
+    auto dx = rng->getFloat(-1.0f, 1.0f);
+    auto dy = rng->getFloat(-1.0f, 1.0f);
     auto r2 = dx * dx + dy * dy;
     if (r2 > 1.0f)
       continue;
 
-    auto scale = rng->get(0.5f, 2.0f);
+    auto scale = rng->getFloat(0.5f, 2.0f);
     auto center = FPosition{(float)target[0], (float)target[1]};
     ecs.entity()
         .set<FPosition>(center)
@@ -307,7 +308,7 @@ ActionResult TransporterConsumable::activate(flecs::entity item,
   auto ecs = consumer.world();
   auto mapEntity = ecs.lookup("currentMap").target<CurrentMap>();
   auto &map = mapEntity.get<GameMap>();
-  auto rng = TCODRandom::getInstance();
+  auto rng = Random::getInstance();
   while (true) {
     auto x = rng->getInt(0, map.getWidth() - 1);
     auto y = rng->getInt(0, map.getHeight() - 1);

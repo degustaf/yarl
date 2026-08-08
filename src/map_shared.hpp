@@ -4,6 +4,7 @@
 #include <cassert>
 
 #include "game_map.hpp"
+#include "random.hpp"
 
 static constexpr auto MAX_ROOMS = 30;
 
@@ -69,7 +70,7 @@ struct WeightsByFloor {
 template <size_t N>
 static const char *
 get_entity_at_random(const std::array<WeightsByFloor, N> &weights, int floor,
-                     TCODRandom &rng) {
+                     Random &rng) {
   auto totalWeight = 0;
   for (const auto &w : weights) {
     if (w.minFloor > floor) {

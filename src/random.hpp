@@ -2,6 +2,26 @@
 
 #include <algorithm>
 
+#include <libtcod.hpp>
+
+struct Random {
+  Random(uint32_t seed) : rng(seed) {};
+
+  static inline Random *getInstance() {
+    static Random *instance = new Random();
+    return instance;
+  }
+  inline int getInt(int min, int max) { return rng.getInt(min, max); }
+  inline float getFloat(float min, float max) { return rng.getFloat(min, max); }
+  inline double getDouble(double min, double max) {
+    return rng.getDouble(min, max);
+  }
+
+private:
+  Random() : rng() {};
+  TCODRandom rng;
+};
+
 template <typename _RandomAccessIterator, typename _RandomNumberGenerator>
 void random_shuffle(_RandomAccessIterator __first, _RandomAccessIterator __last,
                     _RandomNumberGenerator &&__rand) {

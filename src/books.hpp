@@ -3,11 +3,11 @@
 #include <string>
 #include <vector>
 
-#include <libtcod.hpp>
+#include "random.hpp"
 
 struct Book {
   std::string title;
   std::vector<std::string> body;
 };
 
-Book randomBook(TCODRandom &rng, int width);
+Book randomBook(Random &rng, int width);
