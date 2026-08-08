@@ -103,7 +103,7 @@ void GameMap::render(Console &console, uint64_t time) {
     for (auto x = 0; x < width; x++) {
       vec[0] = (float)x;
       if (isVisible(x, y)) {
-        auto t = luminosity[y * width + x];
+        auto t = tiles[y * width + x].luminosity;
         console.at({x, y}) =
             isStairs({x, y}) ? lerp(stairs_light, stairs_dark, t)
             : isKnownBloody({x, y})
@@ -146,8 +146,8 @@ void GameMap::update_fov(flecs::entity mapEntity, flecs::entity player) {
   auto pos = player.get<Position>();
   computeFov(mapEntity, *this, pos, 8);
   if (lit) {
-    for (auto &l : luminosity) {
-      l = 1.0f;
+    for (auto &t : tiles) {
+      t.luminosity = 1.0f;
     }
   } else {
     addLight(mapEntity, *this);
@@ -209,7 +209,9 @@ void GameMap::update_scent(flecs::entity map) {
     }
   }
 
-  scent = newScents;
+  for (size_t i = 0; i < tiles.size(); i++) {
+    tiles[i].scent = newScents[i];
+  }
 }
 
 void GameMap::reveal() {

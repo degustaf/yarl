@@ -157,8 +157,8 @@ static void addLumens(flecs::entity mapEntity, GameMap &map,
 }
 
 static inline void addLight(flecs::entity mapEntity, GameMap &map) {
-  for (auto &l : map.luminosity) {
-    l = 0.0f;
+  for (auto &t : map.tiles) {
+    t.luminosity = 0.0f;
   }
 
   mapEntity.world()

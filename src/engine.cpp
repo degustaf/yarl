@@ -1,7 +1,5 @@
 #include "engine.hpp"
 
-#include <libtcod.hpp>
-
 #include <filesystem>
 #include <fstream>
 #include <sstream>

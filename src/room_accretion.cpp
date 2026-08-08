@@ -1,11 +1,8 @@
 #include "room_accretion.hpp"
 
-#include <algorithm>
 #include <array>
 #include <optional>
 #include <queue>
-
-#include <libtcod.hpp>
 
 #include "actor.hpp"
 #include "ai.hpp"
@@ -253,6 +250,22 @@ struct Lake {
   int miny;
   int maxx;
   int maxy;
+
+  void append(std::array<int, 2> tile) {
+    tiles.push_back(tile);
+    if (tile[0] < minx) {
+      minx = tile[0];
+    }
+    if (tile[0] > maxx) {
+      maxx = tile[0];
+    }
+    if (tile[1] < miny) {
+      miny = tile[1];
+    }
+    if (tile[1] > maxy) {
+      maxy = tile[1];
+    }
+  }
 };
 
 static Lake floodFill(std::vector<bool> &area, int width, int height, int x,
@@ -271,42 +284,12 @@ static Lake floodFill(std::vector<bool> &area, int width, int height, int x,
           area[y1 * width + x1]) {
         q.push({x1, y1});
         area[y1 * width + x1] = false;
-        ret.tiles.push_back({x1, y1});
-        if (x1 < ret.minx) {
-          ret.minx = x1;
-        }
-        if (x1 > ret.maxx) {
-          ret.maxx = x1;
-        }
-        if (y1 < ret.miny) {
-          ret.miny = y1;
-        }
-        if (y1 > ret.maxy) {
-          ret.maxy = y1;
-        }
+        ret.append({x1, y1});
       }
     }
   }
 
   return ret;
-}
-
-static void floodFill(TCODMap &m, int x, int y) {
-  std::queue<std::array<int, 2>> q;
-  q.push({x, y});
-
-  while (!q.empty()) {
-    auto next = q.front();
-    q.pop();
-    for (auto dir : fourDirections) {
-      auto x1 = next[0] + dir[0];
-      auto y1 = next[1] + dir[1];
-      if (m.isWalkable(x1, y1)) {
-        q.push({x1, y1});
-        m.setProperties(x1, y1, false, false);
-      }
-    }
-  }
 }
 
 static void addLake(const Config &cfg, int width, int height, Random &rng,
@@ -360,20 +343,24 @@ static void addLake(const Config &cfg, int width, int height, Random &rng,
   }
 
   if (cfg.FORCE_CONNECTED) {
-    TCODMap m(width, height);
-    m.copy(&map.get());
+    auto area = std::vector<bool>(width * height);
+    for (auto y = 0; y < height; y++) {
+      for (auto x = 0; x < height; x++) {
+        area[y * width + x] = map.isWalkable(x, y);
+      }
+    }
     for (auto &xy : best.tiles) {
-      m.setProperties(xy[0], xy[1], true, false);
+      area[xy[1] * width + xy[0]] = false;
     }
     auto found = false;
     for (auto y = 0; y < height; y++) {
       for (auto x = 0; x < width; x++) {
-        if (m.isWalkable(x, y)) {
+        if (area[y * width + x]) {
           if (found) {
             // Lake disconnects the map. reject it;
             return;
           } else {
-            floodFill(m, x, y);
+            floodFill(area, width, height, x, y);
             found = true;
           }
         }

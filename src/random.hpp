@@ -33,3 +33,12 @@ void random_shuffle(_RandomAccessIterator __first, _RandomAccessIterator __last,
       std::iter_swap(__i, __j);
   }
 }
+
+template <int N> struct Noise {
+
+  Noise() : noise(N, N == 2 ? TCOD_NOISE_PERLIN : TCOD_NOISE_DEFAULT) {};
+  inline float get(const float (&pt)[N]) { return noise.get(pt); }
+
+private:
+  TCODNoise noise;
+};

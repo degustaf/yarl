@@ -4,7 +4,6 @@
 #include <cstdint>
 #include <optional>
 
-#include <libtcod.hpp>
 #include <utf8proc.h>
 
 #include "random.hpp"
@@ -426,7 +425,7 @@ static constexpr auto maxR = 10.0f;
 static constexpr auto maxDimRatio = 10.0f;
 
 Console::shake Console::getShake(uint64_t t) const {
-  static auto noise = TCODNoise(2, TCOD_NOISE_PERLIN);
+  static auto noise = Noise<2>();
   static auto r_seed = Random::getInstance()->getFloat(0.0f, 100.0f);
   static auto x_seed = Random::getInstance()->getFloat(0.0f, 100.0f);
   static auto y_seed = Random::getInstance()->getFloat(0.0f, 100.0f);

@@ -7,6 +7,7 @@
 #include <flecs.h>
 #include <libtcod.hpp>
 
+#include "random.hpp"
 #include "scent.hpp"
 
 struct BlocksMovement {};
@@ -23,15 +24,22 @@ struct Light {
 struct CurrentMap {};
 
 struct Tile {
-  Tile() : flags(0) {};
-  uint8_t flags = 0;
+  using type = uint16_t;
+  Tile() : flags(0), scent(), luminosity(0.0f) {};
 
-  static constexpr auto Explored = uint8_t(0x1);
-  static constexpr auto Stairs = uint8_t(0x2);
-  static constexpr auto Bloody = uint8_t(0x4);
-  static constexpr auto KnownBloody = uint8_t(0x8);
-  static constexpr auto Sensed = uint8_t(0x10);
-  static constexpr auto Water = uint8_t(0x20);
+  type flags;
+  Scent scent;
+  float luminosity;
+
+  static constexpr auto Walkable = type(0x01);
+  static constexpr auto Transparent = type(0x02);
+  static constexpr auto inFov = type(0x04);
+  static constexpr auto Explored = type(0x8);
+  static constexpr auto Stairs = type(0x10);
+  static constexpr auto Bloody = type(0x20);
+  static constexpr auto KnownBloody = type(0x40);
+  static constexpr auto Sensed = type(0x80);
+  static constexpr auto Water = type(0x100);
 };
 
 void deleteMapEntity(flecs::entity map);
@@ -40,10 +48,7 @@ void deleteMapEntity(flecs::world ecs);
 struct GameMap {
   GameMap(int width = 0, int height = 0, int level = 1, bool lit = true)
       : width(width), height(height), level(level), lit(lit),
-        tiles(width * height, Tile()), scent(width * height, Scent()),
-        luminosity(width * height, 0.0f), map(width, height), noise(3) {
-    map.clear();
-  };
+        tiles(width * height, Tile()), map(width, height), noise() {};
 
   void init() { map = TCODMap(width, height); }
 
@@ -56,7 +61,7 @@ struct GameMap {
     return inBounds(xy[0], xy[1]);
   }
   inline bool inLight(std::array<int, 2> xy, float brightness = 0.0f) const {
-    return luminosity[xy[1] * width + xy[0]] > brightness;
+    return tiles[xy[1] * width + xy[0]].luminosity > brightness;
   }
   inline bool canSeePlayer(std::array<int, 2> xy,
                            std::array<int, 2> player) const {
@@ -67,6 +72,9 @@ struct GameMap {
   }
   inline bool isVisible(int x, int y) const {
     return map.isInFov(x, y) && inLight({x, y});
+  }
+  inline bool isInFov(std::array<int, 2> xy) const {
+    return map.isInFov(xy[0], xy[1]);
   }
   inline bool isInFov(std::array<float, 2> xy) const {
     return map.isInFov((int)xy[0], (int)xy[1]);
@@ -130,15 +138,15 @@ struct GameMap {
     return isTransparent(xy) && !isWalkable(xy) && !isWater(xy);
   };
   inline Scent &getScent(std::array<int, 2> xy) {
-    return scent[xy[1] * width + xy[0]];
+    return tiles[xy[1] * width + xy[0]].scent;
   }
   inline const Scent &getScent(std::array<int, 2> xy) const {
-    return scent[xy[1] * width + xy[0]];
+    return tiles[xy[1] * width + xy[0]].scent;
   }
   inline void addLuminosity(std::array<int, 2> xy, float lumens) {
     assert(0 <= xy[0] && xy[0] < width);
     assert(0 <= xy[1] && xy[1] < height);
-    auto &l = luminosity[xy[1] * width + xy[0]];
+    auto &l = tiles[xy[1] * width + xy[0]].luminosity;
     l = std::clamp(l + lumens, 0.0f, 1.0f);
   }
 
@@ -148,7 +156,6 @@ struct GameMap {
   void update_fov(flecs::entity mapEntity, flecs::entity player);
   void update_scent(flecs::entity map);
   void reveal();
-  inline const TCODMap &get(void) const { return map; };
   inline void setProperties(int x, int y, bool isTransparent, bool isWalkable) {
     map.setProperties(x, y, isTransparent, isWalkable);
   }
@@ -163,10 +170,9 @@ struct GameMap {
   int level;
   bool lit;
   std::vector<Tile> tiles;
-  std::vector<Scent> scent;
-  std::vector<float> luminosity;
+  // std::vector<float> luminosity;
 
 private:
   TCODMap map;
-  TCODNoise noise;
+  Noise<3> noise;
 };

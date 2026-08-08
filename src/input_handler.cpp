@@ -231,10 +231,6 @@ MainMenuInputHandler::click(SDL_MouseButtonEvent &button, flecs::world ecs) {
 }
 
 void MainMenuInputHandler::on_render(flecs::world, Console &console) {
-  // static const auto background_image = TCODImage("assets/teeth.png");
-  // assert(background_image.getSize()[0] == ImageWidth);
-  // tcod::draw_quartergraphics(console, background_image);
-
   const auto printY = (ImageWidth / 2 + console.get_width()) / 2;
   console.print({printY, console.get_height() / 2 - 4}, "Yet Another Roguelike",
                 color::menu_title, std::nullopt, Console::Alignment::CENTER);
