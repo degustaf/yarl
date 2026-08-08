@@ -1,11 +1,11 @@
 #pragma once
 
+#include <array>
 #include <cassert>
 #include <cstdint>
 #include <vector>
 
 #include <flecs.h>
-#include <libtcod.hpp>
 
 #include "random.hpp"
 #include "scent.hpp"
@@ -48,9 +48,7 @@ void deleteMapEntity(flecs::world ecs);
 struct GameMap {
   GameMap(int width = 0, int height = 0, int level = 1, bool lit = true)
       : width(width), height(height), level(level), lit(lit),
-        tiles(width * height, Tile()), map(width, height), noise() {};
-
-  void init() { map = TCODMap(width, height); }
+        tiles(width * height, Tile()), noise() {};
 
   inline int getWidth() const { return width; }
   inline int getHeight() const { return height; }
@@ -65,33 +63,39 @@ struct GameMap {
   }
   inline bool canSeePlayer(std::array<int, 2> xy,
                            std::array<int, 2> player) const {
-    return map.isInFov(xy[0], xy[1]) && inLight(player);
+    return isInFov(xy) && inLight(player);
   }
   inline bool isVisible(std::array<int, 2> xy) const {
     return isVisible(xy[0], xy[1]);
   }
   inline bool isVisible(int x, int y) const {
-    return map.isInFov(x, y) && inLight({x, y});
+    return isInFov(std::array<int, 2>{x, y}) && inLight({x, y});
   }
   inline bool isInFov(std::array<int, 2> xy) const {
-    return map.isInFov(xy[0], xy[1]);
+    return tile(xy).flags & Tile::inFov;
   }
   inline bool isInFov(std::array<float, 2> xy) const {
-    return map.isInFov((int)xy[0], (int)xy[1]);
+    return isInFov(std::array<int, 2>{(int)xy[0], (int)xy[1]});
   }
   inline void setFov(std::array<int, 2> xy, bool visible) {
-    return map.setInFov(xy[0], xy[1], visible);
+    if (visible) {
+      tile(xy).flags |= Tile::inFov;
+    } else {
+      tile(xy).flags &= ~Tile::inFov;
+    }
   }
   inline bool isTransparent(std::array<int, 2> xy) const {
-    return isTransparent(xy[0], xy[1]);
+    return inBounds(xy) && (tile(xy).flags & Tile::Transparent);
   }
   inline bool isTransparent(int x, int y) const {
-    return inBounds(x, y) && map.isTransparent(x, y);
+    return isTransparent(std::array<int, 2>{x, y});
   }
   inline bool isWalkable(std::array<int, 2> xy) const {
-    return inBounds(xy) && isWalkable(xy[0], xy[1]);
+    return inBounds(xy) && (tile(xy).flags & Tile::Walkable);
   }
-  inline bool isWalkable(int x, int y) const { return map.isWalkable(x, y); }
+  inline bool isWalkable(int x, int y) const {
+    return isWalkable(std::array<int, 2>{x, y});
+  }
   inline bool isFlyable(std::array<int, 2> xy) const {
     return isFlyable(xy[0], xy[1]);
   }
@@ -149,6 +153,12 @@ struct GameMap {
     auto &l = tiles[xy[1] * width + xy[0]].luminosity;
     l = std::clamp(l + lumens, 0.0f, 1.0f);
   }
+  inline Tile &tile(std::array<int, 2> xy) {
+    return tiles[xy[1] * width + xy[0]];
+  }
+  inline const Tile &tile(std::array<int, 2> xy) const {
+    return tiles[xy[1] * width + xy[0]];
+  }
 
   void carveOut(int x, int y);
   void nextFloor(flecs::entity player, bool lit) const;
@@ -157,7 +167,18 @@ struct GameMap {
   void update_scent(flecs::entity map);
   void reveal();
   inline void setProperties(int x, int y, bool isTransparent, bool isWalkable) {
-    map.setProperties(x, y, isTransparent, isWalkable);
+    assert(inBounds(x, y));
+    auto &flags = tile(std::array<int, 2>{x, y}).flags;
+    if (isTransparent) {
+      flags |= Tile::Transparent;
+    } else {
+      flags &= ~Tile::Transparent;
+    }
+    if (isWalkable) {
+      flags |= Tile::Walkable;
+    } else {
+      flags &= ~Tile::Walkable;
+    }
   }
   ScentType detectScent(flecs::entity e, std::array<int, 2> &strongest) const;
   std::string detectScent(flecs::entity e) const;
@@ -170,9 +191,7 @@ struct GameMap {
   int level;
   bool lit;
   std::vector<Tile> tiles;
-  // std::vector<float> luminosity;
 
 private:
-  TCODMap map;
   Noise<3> noise;
 };

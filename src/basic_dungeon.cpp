@@ -1,18 +1,17 @@
 #include "basic_dungeon.hpp"
 
-#include <libtcod.hpp>
-
 #include <array>
 #include <cassert>
 #include <cstddef>
+#include <utility>
 
 #include "engine.hpp"
 #include "map_queries.hpp"
 #include "map_shared.hpp"
 #include "random.hpp"
 
-static void tunnel_between(GameMap &map, const std::array<int, 2> &start,
-                           const std::array<int, 2> &end, Random &rng) {
+static void tunnel_between(GameMap &map, std::array<int, 2> start,
+                           std::array<int, 2> end, Random &rng) {
   auto center = [&] {
     if (rng.getInt(0, 1) == 0) {
       return std::array<int, 2>{start[0], end[1]};
@@ -21,11 +20,20 @@ static void tunnel_between(GameMap &map, const std::array<int, 2> &start,
     }
   }();
 
-  for (const auto &xy : tcod::BresenhamLine(start, center)) {
-    map.carveOut(xy[0], xy[1]);
+  if (start[0] != center[0]) {
+    std::swap(start, end);
   }
-  for (const auto &xy : tcod::BresenhamLine(center, end)) {
-    map.carveOut(xy[0], xy[1]);
+
+  assert(start[0] == center[0]);
+  for (auto y = std::min(start[1], center[1]);
+       y != std::max(start[1], center[1]); y++) {
+    map.carveOut(start[0], y);
+  }
+
+  assert(end[1] == center[1]);
+  for (auto x = std::min(end[0], center[0]); x != std::min(end[0], center[0]);
+       x++) {
+    map.carveOut(x, end[1]);
   }
 }
 

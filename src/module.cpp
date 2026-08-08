@@ -156,6 +156,7 @@ module::module(flecs::world ecs) {
       .member<int>("_hp")
       .member<int>("defense")
       .member<int>("power");
+  ecs.component<Splitter>().member<int>("minHP");
   ecs.component<Regenerator>().member<int>("healTurns").member<int>("turns");
   ecs.component<OnDeath>();
   ecs.component<Frozen>();
@@ -261,15 +262,18 @@ module::module(flecs::world ecs) {
       .member<int>("outerRadius")
       .member<float>("decayFactor");
   ecs.component<CurrentMap>().add(flecs::Exclusive);
-  ecs.component<Tile>().member<uint8_t>("flags");
+  ecs.component<Tile>()
+      .member<uint16_t>("flags")
+      .member<Scent>("scent")
+      .member<float>("luminosity");
   ecs.component<std::vector<Tile>>().opaque(std_vector_support<Tile>);
   ecs.component<std::vector<Scent>>().opaque(std_vector_support<Scent>);
   ecs.component<GameMap>()
       .member<int>("width")
       .member<int>("height")
       .member<int>("level")
-      .member<std::vector<Tile>>("tiles")
-      .member<std::vector<Scent>>("scent");
+      .member<bool>("lit")
+      .member<std::vector<Tile>>("tiles");
 
   // input_handler.hpp
   ecs.component<InputHandler>();

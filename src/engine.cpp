@@ -87,13 +87,12 @@ bool Engine::load(flecs::world ecs, const std::filesystem::path &file_name,
     makePopup<decltype(f)>(ecs, f, handler);
     return false;
   }
-  auto map = currentmap.target<CurrentMap>();
-  auto &gamemap = map.get_mut<GameMap>();
-  gamemap.init();
-  auto player = ecs.lookup("player");
-  const auto cfg = roomAccretion::Config{};
-  roomAccretion::generateDungeon(cfg, map, gamemap, player, false);
-  gamemap.update_fov(map, player);
+  // auto map = currentmap.target<CurrentMap>();
+  // auto &gamemap = map.get_mut<GameMap>();
+  // auto player = ecs.lookup("player");
+  // const auto cfg = roomAccretion::Config{};
+  // roomAccretion::generateDungeon(cfg, map, gamemap, player, false);
+  // gamemap.update_fov(map, player);
 
   return true;
 }

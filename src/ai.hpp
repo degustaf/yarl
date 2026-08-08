@@ -40,6 +40,7 @@ struct FleeAi : Ai {
 };
 
 struct WanderAi : Ai {
+  WanderAi() : Ai() {};
   WanderAi(const GameMap &map);
   virtual std::unique_ptr<Action> act(flecs::entity self);
   virtual ~WanderAi() = default;
