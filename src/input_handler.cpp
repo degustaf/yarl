@@ -332,8 +332,42 @@ std::unique_ptr<Action> KeybindMenu::keyDown(Command cmd, flecs::world ecs) {
 }
 
 std::unique_ptr<Action> KeybindMenu::mouseMove(SDL_MouseMotionEvent &motion) {
-  return InputHandler::mouseMove(motion);
-  // TODO
+  InputHandler::mouseMove(motion);
+
+  auto frameX = getFrameX(dim[0]);
+  auto frameY = (dim[1] - COMMAND_MENU_HEIGHT) / 2;
+
+  if (mouse_loc[1] == frameY + 4) {
+    if ((frameX + 2 <= mouse_loc[0]) &&
+        (mouse_loc[0] <= frameX + 2 + (int)strlen(vi))) {
+      idx = {0, -1};
+      refresh_keys();
+    } else if ((frameX + 2 + (COMMAND_MENU_WIDTH / 2) <= mouse_loc[0]) &&
+               (mouse_loc[0] <=
+                frameX + 2 + (COMMAND_MENU_WIDTH / 2) + (int)strlen(vi))) {
+      idx = {1, -1};
+      refresh_keys();
+    }
+    return nullptr;
+  }
+
+  auto x = 0;
+  auto y = 0;
+  for (auto &key : keys) {
+    if (mouse_loc[1] == frameY + y + 6 &&
+        frameX + 2 + x * (COMMAND_MENU_WIDTH / 2) <= mouse_loc[0] &&
+        mouse_loc[0] <= frameX + 2 + x * (COMMAND_MENU_WIDTH / 2) +
+                            (int)strlen(CommandTypeDescription(key.first))) {
+      idx = {x, y};
+      return nullptr;
+    }
+    y++;
+    if (y == maxIdx[x]) {
+      y = 0;
+      x++;
+    }
+  }
+  return nullptr;
 }
 
 std::unique_ptr<Action> KeybindMenu::click(SDL_MouseButtonEvent &button,
@@ -455,6 +489,10 @@ std::unique_ptr<Action> KeyBinding::keyDown(Command cmd, flecs::world ecs) {
   default:
     return nullptr;
   }
+}
+
+std::unique_ptr<Action> KeyBinding::mouseMove(SDL_MouseMotionEvent &motion) {
+  return InputHandler::mouseMove(motion);
 }
 
 void KeyBinding::on_render(flecs::world ecs, Console &console) {

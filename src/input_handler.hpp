@@ -135,6 +135,7 @@ struct KeyBinding : KeybindMenu {
   ~KeyBinding() = default;
 
   virtual std::unique_ptr<Action> keyDown(Command, flecs::world) override;
+  virtual std::unique_ptr<Action> mouseMove(SDL_MouseMotionEvent &) override;
   virtual std::unique_ptr<Action> click(SDL_MouseButtonEvent &,
                                         flecs::world) override {
     return nullptr;
