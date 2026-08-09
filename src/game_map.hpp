@@ -69,7 +69,8 @@ struct GameMap {
     return isVisible(xy[0], xy[1]);
   }
   inline bool isVisible(int x, int y) const {
-    return isInFov(std::array<int, 2>{x, y}) && inLight({x, y});
+    return inBounds(x, y) && isInFov(std::array<int, 2>{x, y}) &&
+           inLight({x, y});
   }
   inline bool isInFov(std::array<int, 2> xy) const {
     return tile(xy).flags & Tile::inFov;
