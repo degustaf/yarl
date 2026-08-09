@@ -148,7 +148,7 @@ static void commandsMenu(flecs::world ecs, InputHandler &handler) {
 }
 
 std::unique_ptr<Action> InputHandler::dispatch(SDL_Event *event,
-                                               flecs::world &ecs) {
+                                               flecs::world ecs) {
   switch (event->type) {
   case SDL_EVENT_QUIT:
     return std::make_unique<ExitAction>();
@@ -157,7 +157,8 @@ std::unique_ptr<Action> InputHandler::dispatch(SDL_Event *event,
     return keyDown(Command::get(event->key), ecs);
 
   case SDL_EVENT_MOUSE_MOTION:
-    return mouseMove(event->motion);
+    mouseMove(event->motion, ecs);
+    return nullptr;
 
   case SDL_EVENT_MOUSE_BUTTON_DOWN:
     return click(event->button, ecs);
@@ -206,16 +207,15 @@ std::unique_ptr<Action> MainMenuInputHandler::keyDown(Command cmd,
   return nullptr;
 }
 
-std::unique_ptr<Action>
-MainMenuInputHandler::mouseMove(SDL_MouseMotionEvent &motion) {
-  InputHandler::mouseMove(motion);
+void MainMenuInputHandler::mouseMove(SDL_MouseMotionEvent &motion,
+                                     flecs::world ecs) {
+  InputHandler::mouseMove(motion, ecs);
   const auto printX = (ImageWidth / 2 + dim[0]) / 2;
   const auto i = mouse_loc[1] - dim[1] / 2 + 2;
   if (0 <= i && i < (int)choices.size() &&
       mouse_loc[0] >= (int)(printX - strlen(choices[i]) / 2)) {
     idx = i;
   }
-  return nullptr;
 }
 
 std::unique_ptr<Action>
@@ -327,8 +327,8 @@ std::unique_ptr<Action> KeybindMenu::keyDown(Command cmd, flecs::world ecs) {
   return nullptr;
 }
 
-std::unique_ptr<Action> KeybindMenu::mouseMove(SDL_MouseMotionEvent &motion) {
-  InputHandler::mouseMove(motion);
+void KeybindMenu::mouseMove(SDL_MouseMotionEvent &motion, flecs::world ecs) {
+  InputHandler::mouseMove(motion, ecs);
 
   auto frameX = getFrameX(dim[0]);
   auto frameY = (dim[1] - COMMAND_MENU_HEIGHT) / 2;
@@ -344,7 +344,7 @@ std::unique_ptr<Action> KeybindMenu::mouseMove(SDL_MouseMotionEvent &motion) {
       idx = {1, -1};
       refresh_keys();
     }
-    return nullptr;
+    return;
   }
 
   auto x = 0;
@@ -355,7 +355,7 @@ std::unique_ptr<Action> KeybindMenu::mouseMove(SDL_MouseMotionEvent &motion) {
         mouse_loc[0] <= frameX + 2 + x * (COMMAND_MENU_WIDTH / 2) +
                             (int)strlen(CommandTypeDescription(key.first))) {
       idx = {x, y};
-      return nullptr;
+      return;
     }
     y++;
     if (y == maxIdx[x]) {
@@ -363,7 +363,6 @@ std::unique_ptr<Action> KeybindMenu::mouseMove(SDL_MouseMotionEvent &motion) {
       x++;
     }
   }
-  return nullptr;
 }
 
 std::unique_ptr<Action> KeybindMenu::click(SDL_MouseButtonEvent &button,
@@ -487,8 +486,9 @@ std::unique_ptr<Action> KeyBinding::keyDown(Command cmd, flecs::world ecs) {
   }
 }
 
-std::unique_ptr<Action> KeyBinding::mouseMove(SDL_MouseMotionEvent &motion) {
-  return InputHandler::mouseMove(motion);
+void KeyBinding::mouseMove(SDL_MouseMotionEvent &motion, flecs::world ecs) {
+  InputHandler::mouseMove(motion, ecs);
+  // TODO
 }
 
 void KeyBinding::on_render(flecs::world ecs, Console &console) {
@@ -586,9 +586,8 @@ std::unique_ptr<Action> VolumeControls::keyDown(Command cmd, flecs::world ecs) {
   return nullptr;
 }
 
-std::unique_ptr<Action>
-VolumeControls::mouseMove(SDL_MouseMotionEvent &motion) {
-  return InputHandler::mouseMove(motion);
+void VolumeControls::mouseMove(SDL_MouseMotionEvent &motion, flecs::world ecs) {
+  InputHandler::mouseMove(motion, ecs);
   // TODO
 }
 
@@ -640,10 +639,67 @@ void VolumeControls::on_render(flecs::world ecs, Console &console) {
                   "SFX Volume", idx == 2);
 }
 
+void MainHandler::mouseMove(SDL_MouseMotionEvent &motion, flecs::world ecs) {
+  InputHandler::mouseMove(motion, ecs);
+  auto map = ecs.lookup("currentMap").target<CurrentMap>();
+  auto &gameMap = map.get_mut<GameMap>();
+  if (gameMap.inBounds(mouse_loc)) {
+    if (mouse_loc != lastMouseLoc) {
+      if (gameMap.isExplored(mouse_loc)) {
+        auto player = ecs.lookup("player");
+        assert(player);
+        const auto &orig = player.get<Position>();
+        auto qOpen = mapQuery<positionQuery::Openable>(ecs, map);
+        auto qPortal = mapQuery<positionQuery::Portal>(ecs, map);
+        auto dij = pathfinding::Dijkstra(
+            {gameMap.getWidth(), gameMap.getHeight()},
+            [=](auto xy) { return orig == xy; },
+            [&](auto &xy) {
+              auto ret = std::vector<pathfinding::Index>();
+              ret.reserve(9); // 8 directions plus a portal
+              for (auto &dir : directions) {
+                auto next = pathfinding::Index{xy[0] + dir[0], xy[1] + dir[1]};
+                if (gameMap.inBounds(next) && gameMap.isExplored(next) &&
+                    (gameMap.isWalkable(next) ||
+                     (player.has<Flying>() && gameMap.isFlyable(next)))) {
+                  ret.push_back(next);
+                }
+              }
+              flecs::entity e = qPortal.find([xy](auto &p) { return p == xy; });
+              if (e) {
+                ret.push_back(e.target<Portal>().get<Position>());
+              }
+              return ret;
+            },
+            [&](auto xy) {
+              if (qOpen.find([xy](auto &p) { return p == xy; })) {
+                if (!gameMap.isWalkable(xy)) {
+                  return 2;
+                }
+              }
+              return 1;
+            });
+        dij.scan();
+        path = pathfinding::constructPath(orig, mouse_loc, dij.cameFrom);
+      }
+    }
+  } else {
+    lastMouseLoc = {-1, -1};
+    path.clear();
+  }
+}
+
 void MainHandler::on_render(flecs::world ecs, Console &console) {
   auto map = ecs.lookup("currentMap").target<CurrentMap>();
   auto &gMap = map.get_mut<GameMap>();
   gMap.render(console, time);
+
+  color::RGBA green = color::_private::green;
+  green.a = 128;
+  for (auto &tl : path) {
+    auto &color = console.at(tl).bg;
+    color = green * color;
+  }
 
   auto q =
       ecs.query_builder<const Position, const MoveAnimation *,

@@ -26,14 +26,13 @@ struct InputHandler {
                     COMMAND_BUTTON_WIDTH, HUD_HEIGHT - 2}) {};
   virtual ~InputHandler() = default;
 
-  std::unique_ptr<Action> dispatch(SDL_Event *event, flecs::world &ecs);
+  std::unique_ptr<Action> dispatch(SDL_Event *event, flecs::world ecs);
 
   virtual std::unique_ptr<Action> keyDown(Command, flecs::world) {
     return nullptr;
   };
-  virtual std::unique_ptr<Action> mouseMove(SDL_MouseMotionEvent &motion) {
+  virtual void mouseMove(SDL_MouseMotionEvent &motion, flecs::world) {
     mouse_loc = {(int)motion.x, (int)motion.y};
-    return nullptr;
   };
   virtual std::unique_ptr<Action> click(SDL_MouseButtonEvent &, flecs::world) {
     return nullptr;
@@ -47,7 +46,7 @@ struct InputHandler {
   static constexpr auto HUD_HEIGHT = 5;
   static constexpr auto COMMAND_BUTTON_WIDTH = 12;
 
-  std::array<int, 2> mouse_loc = {0, 0};
+  std::array<int, 2> mouse_loc = {-1, -1};
   std::array<int, 2> dim;
   std::array<int, 4> commandBox;
   uint64_t time = 0;
@@ -78,7 +77,7 @@ struct MainMenuInputHandler : InputHandler {
   virtual ~MainMenuInputHandler() = default;
 
   virtual std::unique_ptr<Action> keyDown(Command, flecs::world) override;
-  virtual std::unique_ptr<Action> mouseMove(SDL_MouseMotionEvent &) override;
+  virtual void mouseMove(SDL_MouseMotionEvent &, flecs::world) override;
   virtual std::unique_ptr<Action> click(SDL_MouseButtonEvent &,
                                         flecs::world) override;
   virtual void on_render(flecs::world, Console &) override;
@@ -115,7 +114,7 @@ struct KeybindMenu : MainMenuInputHandler {
   virtual ~KeybindMenu() = default;
 
   virtual std::unique_ptr<Action> keyDown(Command, flecs::world) override;
-  virtual std::unique_ptr<Action> mouseMove(SDL_MouseMotionEvent &) override;
+  virtual void mouseMove(SDL_MouseMotionEvent &, flecs::world) override;
   virtual std::unique_ptr<Action> click(SDL_MouseButtonEvent &,
                                         flecs::world) override;
   virtual void on_render(flecs::world, Console &) override;
@@ -135,7 +134,7 @@ struct KeyBinding : KeybindMenu {
   ~KeyBinding() = default;
 
   virtual std::unique_ptr<Action> keyDown(Command, flecs::world) override;
-  virtual std::unique_ptr<Action> mouseMove(SDL_MouseMotionEvent &) override;
+  virtual void mouseMove(SDL_MouseMotionEvent &, flecs::world) override;
   virtual std::unique_ptr<Action> click(SDL_MouseButtonEvent &,
                                         flecs::world) override {
     return nullptr;
@@ -150,7 +149,7 @@ struct VolumeControls : MainMenuInputHandler {
   virtual ~VolumeControls() = default;
 
   virtual std::unique_ptr<Action> keyDown(Command, flecs::world) override;
-  virtual std::unique_ptr<Action> mouseMove(SDL_MouseMotionEvent &) override;
+  virtual void mouseMove(SDL_MouseMotionEvent &, flecs::world) override;
   virtual std::unique_ptr<Action> click(SDL_MouseButtonEvent &,
                                         flecs::world) override;
   virtual void on_render(flecs::world, Console &) override;
@@ -163,9 +162,13 @@ struct MainHandler : InputHandler {
   MainHandler(const InputHandler &h) : InputHandler(h) {};
   virtual ~MainHandler() = default;
 
+  virtual void mouseMove(SDL_MouseMotionEvent &, flecs::world) override;
   virtual void on_render(flecs::world, Console &) override;
   virtual ActionResult handle_action(flecs::world,
                                      std::unique_ptr<Action>) override;
+
+  std::array<int, 2> lastMouseLoc = {-1, -1};
+  std::vector<std::array<int, 2>> path;
 };
 
 struct MainAnimation : MainHandler {

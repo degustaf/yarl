@@ -85,6 +85,16 @@ struct RGBA {
             (uint8_t)std::clamp(a * t, 0.0f, 255.0f)};
   }
 
+  constexpr inline RGBA operator*(RGBA rhs) {
+    auto af = a / 255.0f;
+    auto rhs_af = rhs.a / 255.0f;
+    auto a_final = af + rhs_af * (1.0f - af);
+    auto ret = *this * af + rhs * rhs_af * (1.0f - af);
+    ret = ret * a_final;
+    ret.a = (uint8_t)(255 * a_final);
+    return ret;
+  }
+
   constexpr inline RGBA operator+(RGBA rhs) {
     return {(uint8_t)std::clamp(r + rhs.r, 0, 255),
             (uint8_t)std::clamp(g + rhs.g, 0, 255),
