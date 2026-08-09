@@ -76,7 +76,7 @@ template <> float Noise<3>::get(const float (&pt)[3]) {
   float r[3];
   float w[3];
 
-  for (int i = 0; i < 2; i++) {
+  for (int i = 0; i < 3; i++) {
     n[i] = (int)std::floor(pt[i]);
     r[i] = pt[i] - (float)n[i];
     w[i] = cubic(r[i]);
