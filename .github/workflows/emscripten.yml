@@ -39,7 +39,7 @@ jobs:
         run: git fetch --unshallow
       - name: Install local vcpkg
         run: ${{github.workspace}}/vcpkg/bootstrap-vcpkg.sh
-      - uses: mymindstorm/setup-emsdk@v14
+      - uses: mymindstorm/setup-emsdk@v16
       - name: Verify emscripten
         run: emcc -v
       - uses: lukka/get-cmake@latest
