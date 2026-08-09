@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <cstdint>
 #include <ctime>
@@ -71,6 +72,8 @@ template <int N> struct Noise {
 
     for (auto i = 255; i >= 0; i--) {
       auto j = rng->getInt(0, 255);
+      assert(0 <= j);
+      assert(j < 256);
       std::swap(map[i], map[j]);
     }
   };

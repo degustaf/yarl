@@ -26,7 +26,10 @@ int Random::getInt(int min, int max) {
     return min;
   assert(min < max);
   auto delta = max - min + 1;
-  return (int)getU32() % delta + min;
+  auto ret = (int)(getU32() % (uint32_t)delta) + min;
+  assert(min <= ret);
+  assert(ret <= max);
+  return ret;
 }
 
 float Random::getFloat(float min, float max) {
