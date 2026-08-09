@@ -1,5 +1,23 @@
 module PFs
 
+prefab fountain {
+  Renderable: {
+    ch: '&'
+    fg: {
+      r: 0
+      g: 0
+      b: 0xff
+      a: 0xff
+    }
+    layer: Actor
+  }
+  Named: {
+    name: "fountain"
+  }
+  BlocksMovement
+  Fountain
+}
+
 prefab light {
   Renderable: {
     ch: '*'

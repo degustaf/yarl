@@ -75,14 +75,21 @@ std_optional_support(flecs::world &world) {
           *data = std::nullopt;
           break;
         case 1:
-          *data = Elem();
+          if (!data->has_value()) {
+            *data = Elem();
+          }
           break;
         default:
           assert(false);
         }
       })
-      .ensure_element(
-          [](std::optional<Elem> *data, size_t) { return &**data; });
+      .ensure_element([](std::optional<Elem> *data, size_t size) {
+        (void)size;
+        if (!data->has_value()) {
+          *data = Elem();
+        }
+        return &data->value();
+      });
 }
 
 template <typename Elem, std::size_t N, typename Array = std::array<Elem, N>>
@@ -409,18 +416,6 @@ Module::Module(flecs::world ecs) {
       .add<Flammable>()
       .add<RopeConsumable>();
 
-  ecs.prefab("dagger")
-      .set<Renderable>({'/', color::weapon, std::nullopt, RenderOrder::Item})
-      .set<Named>({"Dagger"})
-      .add<Item>()
-      .set<Equippable>({EquipmentType::Weapon, 2, 0});
-
-  ecs.prefab("sword")
-      .set<Renderable>({'/', color::weapon, std::nullopt, RenderOrder::Item})
-      .set<Named>({"Sword"})
-      .add<Item>()
-      .set<Equippable>({EquipmentType::Weapon, 4, 0});
-
   ecs.prefab("leatherArmor")
       .set<Renderable>({'[', color::armor, std::nullopt, RenderOrder::Item})
       .set<Named>({"Leather armor"})
@@ -433,55 +428,9 @@ Module::Module(flecs::world ecs) {
       .add<Item>()
       .set<Equippable>({EquipmentType::Armor, 0, 3});
 
-  ecs.prefab("22")
-      .set<Renderable>({0x2310, color::weapon, std::nullopt, RenderOrder::Item})
-      .set<Named>({".22"})
-      .add<Item>()
-      .set<Ranged>({8})
-      .set<Equippable>({EquipmentType::Weapon, 4, 0});
-
-  ecs.prefab("45")
-      .set<Renderable>({0x2310, color::weapon, std::nullopt, RenderOrder::Item})
-      .set<Named>({".45"})
-      .add<Item>()
-      .set<Ranged>({8})
-      .set<Equippable>({EquipmentType::Weapon, 8, 0});
-
-  ecs.prefab("taser")
-      .set<Renderable>({0x2310, color::weapon, std::nullopt, RenderOrder::Item})
-      .set<Named>({"taser"})
-      .add<Item>()
-      .set<Taser>({3})
-      .set<Equippable>({EquipmentType::Weapon, 0, 0});
-
-  ecs.prefab("book")
-      .set<Renderable>({'&', color::tool, std::nullopt, RenderOrder::Item})
-      .set<Named>({"book"})
-      .add<Item>();
-
-  ecs.prefab("yendor")
-      .set<Renderable>({0x263C, color::laser, std::nullopt, RenderOrder::Item})
-      .set<Named>({"Laser of Yendor"})
-      .add<Item>()
-      .set<Ranged>({8})
-      .set<Equippable>({EquipmentType::Weapon, 50, 0});
-
   ecs.prefab("door")
       .set<Renderable>(
           {'+', color::background, color::door, RenderOrder::Actor, false})
       .set<Named>({"door"})
       .add<Openable>();
-
-  ecs.prefab("fountain")
-      .set<Renderable>(
-          {'&', color::fountain, std::nullopt, RenderOrder::Actor, false})
-      .set<Named>({"fountain"})
-      .add<BlocksMovement>()
-      .add<Fountain>();
-
-  // ecs.prefab("light")
-  //     .set<Renderable>(
-  //         {'*', color::lightning, std::nullopt, RenderOrder::Corpse})
-  //     .set<Named>({"light"})
-  //     .set<Light>({3, 6, 0.8f});
 }

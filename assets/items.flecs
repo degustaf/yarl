@@ -1,0 +1,18 @@
+module PFs
+
+prefab book {
+  Renderable: {
+    ch: '&'
+    fg: {
+      r: 0x9f
+      g: 0x9f
+      b: 0x9f
+      a: 0xff
+    }
+    layer: Item
+  }
+  Named: {
+    name: "book"
+  }
+  Item
+}

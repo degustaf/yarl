@@ -1,0 +1,145 @@
+module PFs
+
+prefab dagger {
+  Renderable: {
+    ch: '/'
+    fg: {
+      r: 0x02
+      g: 0xa4
+      b: 0xd3
+      a: 0xff
+    }
+    layer: Item
+  }
+  Named: {
+    name: "Dagger"
+  }
+  Item
+  Equippable: {
+    type: Weapon
+    power_bonus: 2
+    defense_bonus: 0
+  }
+}
+
+prefab sword {
+  Renderable: {
+    ch: '/'
+    fg: {
+      r: 0x02
+      g: 0xa4
+      b: 0xd3
+      a: 0xff
+    }
+    layer: Item
+  }
+  Named: {
+    name: "Sword"
+  }
+  Item
+  Equippable: {
+    type: Weapon
+    power_bonus: 4
+    defense_bonus: 0
+  }
+}
+
+prefab "22" {
+  Renderable: {
+    ch: 0x2310
+    fg: {
+      r: 0x02
+      g: 0xa4
+      b: 0xd3
+      a: 0xff
+    }
+    layer: Item
+  }
+  Named: {
+    name: ".22"
+  }
+  Item
+  Ranged: {
+    range: 8
+  }
+  Equippable: {
+    type: Weapon
+    power_bonus: 4
+    defense_bonus: 0
+  }
+}
+
+prefab "45" {
+  Renderable: {
+    ch: 0x2310
+    fg: {
+      r: 0x02
+      g: 0xa4
+      b: 0xd3
+      a: 0xff
+    }
+    layer: Item
+  }
+  Named: {
+    name: ".45"
+  }
+  Item
+  Ranged: {
+    range: 8
+  }
+  Equippable: {
+    type: Weapon
+    power_bonus: 8
+    defense_bonus: 0
+  }
+}
+
+prefab taser {
+  Renderable: {
+    ch: 0x2310
+    fg: {
+      r: 0x02
+      g: 0xa4
+      b: 0xd3
+      a: 0xff
+    }
+    layer: Item
+  }
+  Named: {
+    name: "taser"
+  }
+  Item
+  Taser: {
+    turns: 3
+  }
+  Equippable: {
+    type: Weapon
+    power_bonus: 0
+    defense_bonus: 0
+  }
+}
+
+prefab yendor {
+  Renderable: {
+    ch: 0x263c
+    fg: {
+      r: 0xff
+      g: 0x6e
+      b: 0
+      a: 0xff
+    }
+    layer: Item
+  }
+  Named: {
+    name: "Laser of Yendor"
+  }
+  Item
+  Ranged: {
+    range: 8
+  }
+  Equippable: {
+    type: Weapon
+    power_bonus: 50
+    defense_bonus: 0
+  }
+}

@@ -9,6 +9,8 @@
 
 #include <flecs.h>
 
+#include <filesystem>
+
 #include "audio.hpp"
 #include "color.hpp"
 #include "defines.hpp"
@@ -37,7 +39,11 @@ SDL_AppResult SDL_AppInit(void **data, [[maybe_unused]] int argc,
   auto *ecs = new flecs::world();
   *data = ecs;
   ecs->import <Module>();
-  ecs->script_run_file("assets/prefabs.flecs");
+  for (const auto &fl : std::filesystem::directory_iterator("assets")) {
+    if (fl.path().extension().string() == ".flecs") {
+      ecs->script_run_file(fl.path().string().c_str());
+    }
+  }
   ecs->emplace<SDLData>(width, height, 15.0f, "Yet Another Roguelike",
                         "assets/CodeNewRoman.ttf",
                         "assets/death_on_the_pale_horse.png");
