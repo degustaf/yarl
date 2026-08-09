@@ -2,6 +2,6 @@
 
 #include <flecs.h>
 
-struct module {
-  module(flecs::world ecs);
+struct Module {
+  Module(flecs::world ecs);
 };

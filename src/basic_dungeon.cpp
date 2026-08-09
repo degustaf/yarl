@@ -41,19 +41,19 @@ static constexpr auto ROOM_MAX_SIZE = 10;
 static constexpr auto ROOM_MIN_SIZE = 6;
 
 static constexpr auto item_weights = std::array<WeightsByFloor, 6>{
-    WeightsByFloor{0, 35, "module::healthPotion"},
-    {2, 10, "module::confusionScroll"},
-    {4, 25, "module::lightningScroll"},
-    {4, 5, "module::sword"},
-    {6, 25, "module::fireballScroll"},
-    {6, 15, "module::chainMail"},
+    WeightsByFloor{0, 35, "PFs::healthPotion"},
+    {2, 10, "PFs::confusionScroll"},
+    {4, 25, "PFs::lightningScroll"},
+    {4, 5, "PFs::sword"},
+    {6, 25, "PFs::fireballScroll"},
+    {6, 15, "PFs::chainMail"},
 };
 
 static constexpr auto enemy_weights =
-    std::array<WeightsByFloor, 4>{WeightsByFloor{0, 80, "module::orc"},
-                                  {3, 15, "module::troll"},
-                                  {5, 30, "module::troll"},
-                                  {7, 60, "module::troll"}};
+    std::array<WeightsByFloor, 4>{WeightsByFloor{0, 80, "PFs::orc"},
+                                  {3, 15, "PFs::troll"},
+                                  {5, 30, "PFs::troll"},
+                                  {7, 60, "PFs::troll"}};
 
 static void place_entities(flecs::entity map, const RectangularRoom &r,
                            int level, Random &rng) {

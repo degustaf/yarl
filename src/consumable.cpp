@@ -53,7 +53,7 @@ ActionResult LightningDamageConsumable::activate(flecs::entity item,
   auto &gameMap = map.get<GameMap>();
   auto &consumerPos = consumer.get<Position>();
   auto target = consumer.null();
-  auto q = ecs.query_builder<const Position, const Fighter>("module::fighter")
+  auto q = ecs.query_builder<const Position, const Fighter>("PFs::fighter")
                .with(flecs::ChildOf, map)
                .build();
   q.each([&](auto e, auto &p, auto &f) {
@@ -127,8 +127,8 @@ ActionResult ConfusionConsumable::selected(flecs::entity item,
       stringf("The eyes of the %s look vacant, as it starts to stumble around!",
               target_entity.get<Named>().name.c_str());
 
-  auto ai = ecs.lookup("module::Ai");
-  auto q = ecs.query_builder("module::ai").with(flecs::IsA, ai).build();
+  auto ai = ecs.lookup("PFs::Ai");
+  auto q = ecs.query_builder("PFs::ai").with(flecs::IsA, ai).build();
   q.each([target_entity](auto ai) {
     if (target_entity.has(ai) && target_entity.enabled(ai)) {
       target_entity.disable(ai);
@@ -171,14 +171,14 @@ FireballDamageConsumable::selected(flecs::entity item,
   }
 
   auto q = ecs.query_builder<const Position, Fighter, const Named>(
-                  "module::fighterPosition")
+                  "PFs::fighterPosition")
                .with(flecs::ChildOf, map)
                .build();
-  auto flammableQ = ecs.query_builder<const Position, const Named>(
-                           "module::flammablePosition")
-                        .with<Flammable>()
-                        .with(flecs::ChildOf, map)
-                        .build();
+  auto flammableQ =
+      ecs.query_builder<const Position, const Named>("PFs::flammablePosition")
+          .with<Flammable>()
+          .with(flecs::ChildOf, map)
+          .build();
   auto targets_hit = false;
   auto &messageLog = ecs.lookup("messageLog").get_mut<MessageLog>();
   ecs.defer_begin();
@@ -271,7 +271,7 @@ void TrackerConsumable<T>::render(Console &console, flecs::entity map) const {
   auto &gMap = map.get<GameMap>();
   auto q =
       ecs.query_builder<const Position, const Renderable, const Invisible *>(
-             std::string("module::Tracker ") + typeid(T).name())
+             std::string("PFs::Tracker ") + typeid(T).name())
           .with(flecs::ChildOf, map)
           .with<T>()
           .build();

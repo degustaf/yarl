@@ -105,8 +105,8 @@ flecs::opaque<Array, Elem> std_array_support(flecs::world &world) {
       .ensure_element([](Array *data, size_t elem) { return &(*data)[elem]; });
 }
 
-module::module(flecs::world ecs) {
-  ecs.module<module>("module");
+Module::Module(flecs::world ecs) {
+  ecs.module<Module>("PFs");
 
   // STL
   ecs.component<std::string>()
@@ -479,9 +479,9 @@ module::module(flecs::world ecs) {
       .add<BlocksMovement>()
       .add<Fountain>();
 
-  ecs.prefab("light")
-      .set<Renderable>(
-          {'*', color::lightning, std::nullopt, RenderOrder::Corpse})
-      .set<Named>({"light"})
-      .set<Light>({3, 6, 0.8f});
+  // ecs.prefab("light")
+  //     .set<Renderable>(
+  //         {'*', color::lightning, std::nullopt, RenderOrder::Corpse})
+  //     .set<Named>({"light"})
+  //     .set<Light>({3, 6, 0.8f});
 }

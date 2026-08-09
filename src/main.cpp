@@ -36,7 +36,8 @@ SDL_AppResult SDL_AppInit(void **data, [[maybe_unused]] int argc,
 
   auto *ecs = new flecs::world();
   *data = ecs;
-  ecs->import <module>();
+  ecs->import <Module>();
+  ecs->script_run_file("assets/prefabs.flecs");
   ecs->emplace<SDLData>(width, height, 15.0f, "Yet Another Roguelike",
                         "assets/CodeNewRoman.ttf",
                         "assets/death_on_the_pale_horse.png");

@@ -399,21 +399,20 @@ static std::array<int, 2> generateStairs(std::vector<RectangularRoom> &rooms,
 }
 
 static constexpr auto item_weights = std::array<WeightsByFloor, 11>{
-    WeightsByFloor{1, 350, "module::lightningScroll"},
-    WeightsByFloor{1, 35, "module::healthPotion"},
-    WeightsByFloor{1, 35, "module::deodorant"},
-    WeightsByFloor{1, 35, "module::dung"},
-    WeightsByFloor{2, 35, "module::rope"},
-    WeightsByFloor{2, 35, "module::taser"},
-    WeightsByFloor{3, 35, "module::scanner"},
-    WeightsByFloor{3, 35, "module::transporter"},
-    WeightsByFloor{3, 35, "module::mapper"},
-    WeightsByFloor{3, 35, "module::tracker"},
-    WeightsByFloor{4, 30, "module::45"}};
+    WeightsByFloor{1, 350, "PFs::lightningScroll"},
+    WeightsByFloor{1, 35, "PFs::healthPotion"},
+    WeightsByFloor{1, 35, "PFs::deodorant"},
+    WeightsByFloor{1, 35, "PFs::dung"},
+    WeightsByFloor{2, 35, "PFs::rope"},
+    WeightsByFloor{2, 35, "PFs::taser"},
+    WeightsByFloor{3, 35, "PFs::scanner"},
+    WeightsByFloor{3, 35, "PFs::transporter"},
+    WeightsByFloor{3, 35, "PFs::mapper"},
+    WeightsByFloor{3, 35, "PFs::tracker"},
+    WeightsByFloor{4, 30, "PFs::45"}};
 
-static constexpr auto monster_weights =
-    std::array<WeightsByFloor, 2>{WeightsByFloor{1, 20, "module::orc"},
-                                  WeightsByFloor{4, 20, "module::cysts"}};
+static constexpr auto monster_weights = std::array<WeightsByFloor, 2>{
+    WeightsByFloor{1, 20, "PFs::orc"}, WeightsByFloor{4, 20, "PFs::cysts"}};
 
 static void populateRoom(const Config &cfg, flecs::entity map,
                          flecs::entity player, Random &rng, bool &first,
@@ -426,7 +425,7 @@ static void populateRoom(const Config &cfg, flecs::entity map,
       auto x = rng.getInt(room.x1 + 1, room.x2 - 1);
       auto y = rng.getInt(room.y1 + 1, room.y2 - 1);
       ecs.entity()
-          .is_a(ecs.lookup("module::light"))
+          .is_a(ecs.lookup("PFs::light"))
           .set<Position>({x, y})
           .add(flecs::ChildOf, map);
     }
@@ -437,7 +436,7 @@ static void populateRoom(const Config &cfg, flecs::entity map,
         if (dungeon.isWalkable(x, y) && q.find([x, y](const Position &p) {
               return p == Position{x, y};
             }) == map.null()) {
-          auto prefab = ecs.lookup("module::cat");
+          auto prefab = ecs.lookup("PFs::cat");
           assert(prefab);
           ecs.entity()
               .is_a(prefab)
@@ -487,7 +486,7 @@ static void populateRoom(const Config &cfg, flecs::entity map,
         auto x = rng.getInt(room.x1 + 1, room.x2 - 1);
         auto y = rng.getInt(room.y1 + 1, room.y2 - 1);
         ecs.entity()
-            .is_a(ecs.lookup("module::light"))
+            .is_a(ecs.lookup("PFs::light"))
             .set<Position>({x, y})
             .add(flecs::ChildOf, map);
       }
@@ -584,7 +583,7 @@ void roomAccretion::generateDungeon(const Config &cfg, flecs::entity map,
   addPortals(cfg, map, dungeon, rng);
 
   if (dungeon.level == MAX_DUNGEON_LEVEL) {
-    auto yendor = ecs.lookup("module::yendor");
+    auto yendor = ecs.lookup("PFs::yendor");
     assert(yendor);
     ecs.entity().is_a(yendor).set<Position>(stairs).add(flecs::ChildOf, map);
   }
@@ -602,7 +601,7 @@ void roomAccretion::generateDungeon(const Config &cfg, flecs::entity map,
         rng.getDouble(0.0, 0.1) < cfg.FOUNTAIN_PERCENT) {
       ecs.entity()
           .set<Position>(center)
-          .is_a(ecs.lookup("module::fountain"))
+          .is_a(ecs.lookup("PFs::fountain"))
           .add(flecs::ChildOf, map);
     }
   }
@@ -611,7 +610,7 @@ void roomAccretion::generateDungeon(const Config &cfg, flecs::entity map,
     if (rng.getDouble(0.0, 1.0) < cfg.DOOR_PERCENTAGE) {
       if (dungeon.isWalkable(d) && dungeon.isTransparent(d)) {
         auto e = ecs.entity()
-                     .is_a(ecs.lookup("module::door"))
+                     .is_a(ecs.lookup("PFs::door"))
                      .set<Position>(d)
                      .add<BlocksMovement>()
                      .add<BlocksFov>()

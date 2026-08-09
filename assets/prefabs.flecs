@@ -1,0 +1,22 @@
+module PFs
+
+prefab light {
+  Renderable: {
+    ch: '*'
+    fg: {
+      r: 0xff
+      g: 0xff
+      b: 0
+      a: 0xff
+    }
+    layer: Corpse
+  }
+  Named: {
+    name: "light"
+  }
+  Light : {
+    innerRadius: 3
+    outerRadius: 6
+    decayFactor: 0.8
+  }
+}

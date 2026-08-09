@@ -19,9 +19,8 @@
 void Engine::handle_enemy_turns(flecs::world ecs) {
   auto map = ecs.lookup("currentMap").target<CurrentMap>();
 
-  auto q = ecs.query_builder<Ai>("module::monsterAi")
-               .with(flecs::ChildOf, map)
-               .build();
+  auto q =
+      ecs.query_builder<Ai>("PFs::monsterAi").with(flecs::ChildOf, map).build();
 
   ecs.defer_begin();
   q.run([](flecs::iter &it) {
@@ -114,7 +113,7 @@ void Engine::new_game(flecs::world ecs, int map_width, int map_height) {
                     .set<ScentWarning>({false})
                     .set<Smeller>({200});
   auto sword =
-      ecs.entity().is_a(ecs.lookup("module::sword")).add<ContainedBy>(player);
+      ecs.entity().is_a(ecs.lookup("PFs::sword")).add<ContainedBy>(player);
   toggleEquip<false>(player, sword);
 
   auto map = ecs.entity();

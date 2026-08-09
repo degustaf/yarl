@@ -20,21 +20,21 @@ enum class positionQuery {
 
 template <auto q> static inline constexpr auto queryName() {
   if constexpr (q == positionQuery::Position) {
-    return "module::position";
+    return "PFs::position";
   } else if constexpr (q == positionQuery::Openable) {
-    return "module::positionOpenable";
+    return "PFs::positionOpenable";
   } else if constexpr (q == positionQuery::Portal) {
-    return "module::positionPortal";
+    return "PFs::positionPortal";
   } else if constexpr (q == positionQuery::Item) {
-    return "module::positionItem";
+    return "PFs::positionItem";
   } else if constexpr (q == positionQuery::NewItem) {
-    return "module::positionNewItem";
+    return "PFs::positionNewItem";
   } else if constexpr (q == positionQuery::Blocks) {
-    return "module::positionBlocks";
+    return "PFs::positionBlocks";
   } else if constexpr (q == positionQuery::Ai) {
-    return "module::positionAi";
+    return "PFs::positionAi";
   } else if constexpr (q == positionQuery::Describable) {
-    return "module::positionDescribable";
+    return "PFs::positionDescribable";
   } else {
     return "";
   }

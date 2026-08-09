@@ -104,7 +104,7 @@ void Fighter::die(flecs::entity self) {
 
   auto ecs = self.world();
   auto win = false;
-  ecs.query_builder("module::ai")
+  ecs.query_builder("PFs::ai")
       .with(flecs::IsA, ecs.component<Ai>())
       .build()
       .each([&](auto e) {
@@ -113,7 +113,7 @@ void Fighter::die(flecs::entity self) {
         }
       });
 
-  ecs.query_builder("module::onDeath")
+  ecs.query_builder("PFs::onDeath")
       .with(flecs::IsA, ecs.component<OnDeath>())
       .build()
       .each([self](auto e) {

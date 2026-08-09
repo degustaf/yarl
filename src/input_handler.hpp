@@ -241,7 +241,7 @@ struct InventoryInputHandler : AskUserInputHandler {
   InventoryInputHandler(const std::string &title, flecs::world ecs,
                         const InputHandler &handler)
       : AskUserInputHandler(handler), title(title),
-        q(ecs.query_builder<const Named>("module::playerItem")
+        q(ecs.query_builder<const Named>("PFs::playerItem")
               .with<ContainedBy>(ecs.lookup("player"))
               .with<Item>()
               .cached()
