@@ -1,0 +1,37 @@
+module PFs
+
+const armor_color = RGBA: {0x7e, 0x3a, 0x15, 0xff}
+
+prefab leatherArmor {
+  Renderable: {
+    ch: '['
+    fg: $armor_color
+    layer: Item
+  }
+  Named: {
+    name: "Leather armor"
+  }
+  Item
+  Equippable: {
+    type: Armor
+    power_bonus: 0
+    defense_bonus: 1
+  }
+}
+
+prefab chainMail {
+  Renderable: {
+    ch: '['
+    fg: $armor_color
+    layer: Item
+  }
+  Named: {
+    name: "Chain mail"
+  }
+  Item
+  Equippable: {
+    type: Armor
+    power_bonus: 0
+    defense_bonus: 3
+  }
+}

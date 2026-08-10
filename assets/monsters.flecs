@@ -1,0 +1,105 @@
+module PFs
+
+prefab orc {
+  Renderable: {
+    ch: 'o'
+    fg: {
+      r: 0x3d
+      g: 0x7d
+      b: 0x52
+      a: 0xff
+    }
+    layer: Actor
+  }
+  Named: {
+    name: "Orc"
+  }
+  Describable
+  BlocksMovement
+  HostileAi
+  Fighter: {
+    max_hp: 10
+    _hp: 10
+    defense: 0
+    power: 3
+  }
+  XP: {
+    given: 35
+  }
+}
+
+prefab troll {
+  Renderable: {
+    ch: 'T'
+    fg: {
+      r: 0x0A
+      g: 0x69
+      b: 0x06
+      a: 0xff
+    }
+    layer: Actor
+  }
+  Named: {
+    name: "Troll"
+  }
+  Describable
+  BlocksMovement
+  HostileAi
+  Fighter: {
+    max_hp: 16
+    _hp: 16
+    defense: 1
+    power: 4
+  }
+  XP: {
+    given: 100
+  }
+}
+
+prefab cyst {
+  Renderable: {
+    ch: 0xB6
+    fg: {
+      r: 0
+      g: 0
+      b: 0
+      a: 0xff
+    }
+    layer: Actor
+  }
+  Named: {
+    name: "Fiend cysts"
+  }
+  Describable
+  BlocksMovement
+  ScentOnDeath: {
+    type: fiend
+    power: 100.0
+  }
+  Fighter: {
+    max_hp: 1
+    _hp: 1
+    defense: 0
+    power: 0
+  }
+}
+
+prefab corpse {
+  Renderable: {
+    ch: '%'
+    fg: {
+      r: 0xff
+      g: 0
+      b: 0
+      a: 0xff
+    }
+    layer: Actor
+  }
+  Named: {
+    name: "Rotting corpse"
+  }
+  Scent: {
+    type: decay
+    power: 1000.0
+  }
+}

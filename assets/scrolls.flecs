@@ -1,0 +1,114 @@
+module PFs
+
+prefab lightningScroll {
+  Renderable: {
+    ch: '~'
+    fg: {
+      r: 0xff
+      g: 0xff
+      b: 0
+      a: 0xff
+    }
+    layer: Item
+  }
+  Named: {
+    name: "Lightning Scroll"
+  }
+  Item
+  Flammable
+  LightningDamageConsumable: {
+    damage: 20
+    maximumRange: 5
+  }
+}
+
+prefab confusionScroll {
+  Renderable: {
+    ch: '~'
+    fg: {
+      r: 0xdf
+      g: 0x73
+      b: 0xff
+      a: 0xff
+    }
+    layer: Item
+  }
+  Named: {
+    name: "Confusion Scroll"
+  }
+  Item
+  Flammable
+  ConfusionConsumable: {
+    number_of_turns: 10
+  }
+}
+
+prefab fireballScroll {
+  Renderable: {
+    ch: '~'
+    fg: {
+      r: 0xff
+      g: 0
+      b: 0
+      a: 0xff
+    }
+    layer: Item
+  }
+  Named: {
+    name: "Fireball Scroll"
+  }
+  Item
+  Flammable
+  FireballDamageConsumable: {
+    damage: 12
+    radius: 3
+  }
+}
+
+prefab lightScroll {
+  Renderable: {
+    ch: '~'
+    fg: {
+      r: 0x6a
+      g: 0x5d
+      b: 0x1b
+      a: 0xff
+    }
+    layer: Item
+  }
+  Named: {
+    name: "Light Scroll"
+  }
+  Item
+  Flammable
+  LightConsumable: {
+    turns: 10
+    innerRadius: 2
+    outerRadius: 4
+    decayFactor: 0.6
+  }
+}
+
+prefab dung {
+  Renderable: {
+    ch: '~'
+    fg: {
+      r: 0x6a
+      g: 0x4a
+      b: 0x3a
+      a: 0xff
+    }
+    layer: Item
+  }
+  Named: {
+    name: "Fiend dung"
+  }
+  Item
+  Flammable
+  ScentConsumable: {
+    scent: {
+      fiend,
+      100
+    }
+  }
+}

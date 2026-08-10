@@ -1,14 +1,11 @@
 module PFs
 
+const weapon_color = RGBA: {0x02, 0xa4, 0xd3, 0xff}
+
 prefab dagger {
   Renderable: {
     ch: '/'
-    fg: {
-      r: 0x02
-      g: 0xa4
-      b: 0xd3
-      a: 0xff
-    }
+    fg: $weapon_color
     layer: Item
   }
   Named: {
@@ -25,12 +22,7 @@ prefab dagger {
 prefab sword {
   Renderable: {
     ch: '/'
-    fg: {
-      r: 0x02
-      g: 0xa4
-      b: 0xd3
-      a: 0xff
-    }
+    fg: $weapon_color
     layer: Item
   }
   Named: {
@@ -47,12 +39,7 @@ prefab sword {
 prefab "22" {
   Renderable: {
     ch: 0x2310
-    fg: {
-      r: 0x02
-      g: 0xa4
-      b: 0xd3
-      a: 0xff
-    }
+    fg: $weapon_color
     layer: Item
   }
   Named: {
@@ -72,12 +59,7 @@ prefab "22" {
 prefab "45" {
   Renderable: {
     ch: 0x2310
-    fg: {
-      r: 0x02
-      g: 0xa4
-      b: 0xd3
-      a: 0xff
-    }
+    fg: $weapon_color
     layer: Item
   }
   Named: {
@@ -97,12 +79,7 @@ prefab "45" {
 prefab taser {
   Renderable: {
     ch: 0x2310
-    fg: {
-      r: 0x02
-      g: 0xa4
-      b: 0xd3
-      a: 0xff
-    }
+    fg: $weapon_color
     layer: Item
   }
   Named: {

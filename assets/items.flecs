@@ -1,18 +1,42 @@
 module PFs
 
+const tool_color = RGBA: {0x9f, 0x9f, 0x9f, 0xff}
+
 prefab book {
   Renderable: {
     ch: '&'
-    fg: {
-      r: 0x9f
-      g: 0x9f
-      b: 0x9f
-      a: 0xff
-    }
+    fg: $tool_color
     layer: Item
   }
   Named: {
     name: "book"
   }
   Item
+}
+
+prefab rope {
+  Renderable: {
+    ch: 0x2320
+    fg: $tool_color
+    layer: Item
+  }
+  Named: {
+    name: "Rope"
+  }
+  Item
+  Flammable
+  RopeConsumable
+}
+
+prefab transporter {
+  Renderable: {
+    ch: 0x00A1
+    fg: $tool_color
+    layer: Item
+  }
+  Named: {
+    name: "Transporter"
+  }
+  Item
+  TransporterConsumable
 }

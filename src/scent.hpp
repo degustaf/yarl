@@ -54,8 +54,9 @@ struct ScentWarning {
 };
 
 struct ScentOnDeath : OnDeath {
+  ScentOnDeath() = default;
   ScentOnDeath(ScentType type, float power)
-      : OnDeath(), type(type), power(power){};
+      : OnDeath(), type(type), power(power) {};
   ScentType type;
   float power;
 

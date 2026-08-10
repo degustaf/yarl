@@ -399,7 +399,7 @@ static std::array<int, 2> generateStairs(std::vector<RectangularRoom> &rooms,
 }
 
 static constexpr auto item_weights = std::array<WeightsByFloor, 11>{
-    WeightsByFloor{1, 350, "PFs::lightningScroll"},
+    WeightsByFloor{1, 35, "PFs::lightningScroll"},
     WeightsByFloor{1, 35, "PFs::healthPotion"},
     WeightsByFloor{1, 35, "PFs::deodorant"},
     WeightsByFloor{1, 35, "PFs::dung"},
