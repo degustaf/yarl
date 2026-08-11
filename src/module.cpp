@@ -319,24 +319,6 @@ Module::Module(flecs::world ecs) {
       .add<Describable>()
       .add<BlocksMovement>();
 
-  ecs.prefab("healthPotion")
-      .set<Renderable>({'!', color::potion, std::nullopt, RenderOrder::Item})
-      .set<Named>({"Vitamyn syringe"})
-      .add<Item>()
-      .set<HealingConsumable>({4});
-
-  ecs.prefab("deodorant")
-      .set<Renderable>({'!', color::deodorant, std::nullopt, RenderOrder::Item})
-      .set<Named>({"Deodorant"})
-      .add<Item>()
-      .set<DeodorantConsumable>({25});
-
-  ecs.prefab("mapper")
-      .set<Renderable>({0x00A1, color::tool, std::nullopt, RenderOrder::Item})
-      .set<Named>({"Mapper"})
-      .add<Item>()
-      .add<MagicMappingConsumable>();
-
   ecs.prefab("door")
       .set<Renderable>(
           {'+', color::background, color::door, RenderOrder::Actor, false})

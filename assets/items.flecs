@@ -2,6 +2,59 @@ module PFs
 
 const tool_color = RGBA: {0x9f, 0x9f, 0x9f, 0xff}
 
+prefab healthPotion {
+  Renderable: {
+    ch: '!'
+    fg: {
+      r: 0x8b
+      g: 0
+      b: 0xff
+      a: 0xff
+    }
+    layer: Item
+  }
+  Named: {
+    name: "Vitamyn syringe"
+  }
+  Item
+  HealingConsumable: {
+    amount: 4
+  }
+}
+
+prefab deodorant {
+  Renderable: {
+    ch: '!'
+    fg: {
+      r: 0xff
+      g: 0x3f
+      b: 0x34
+      a: 0xff
+    }
+    layer: Item
+  }
+  Named: {
+    name: "Deodorant"
+  }
+  Item
+  DeodorantConsumable: {
+    amount: 25
+  }
+}
+
+prefab mapper {
+  Renderable: {
+    ch: 0x00A1
+    fg: $tool_color
+    layer: Item
+  }
+  Named: {
+    name: "Mapper"
+  }
+  Item
+  MagicMappingConsumable
+}
+
 prefab book {
   Renderable: {
     ch: '&'
