@@ -26,6 +26,11 @@ prefab orc {
   XP: {
     given: 35
   }
+  FloorWeights: {
+    data: [
+      {1, 20}
+    ]
+  }
 }
 
 prefab troll {
@@ -54,6 +59,13 @@ prefab troll {
   XP: {
     given: 100
   }
+  FloorWeights: {
+    data: [
+      {3, 15},
+      {5, 30},
+      {7, 60}
+    ]
+  }
 }
 
 prefab cyst {
@@ -81,6 +93,11 @@ prefab cyst {
     _hp: 1
     defense: 0
     power: 0
+  }
+  FloorWeights: {
+    data: [
+      {4, 20}
+    ]
   }
 }
 

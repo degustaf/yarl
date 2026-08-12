@@ -40,23 +40,11 @@ static void tunnel_between(GameMap &map, std::array<int, 2> start,
 static constexpr auto ROOM_MAX_SIZE = 10;
 static constexpr auto ROOM_MIN_SIZE = 6;
 
-static constexpr auto item_weights = std::array<WeightsByFloor, 6>{
-    WeightsByFloor{0, 35, "PFs::healthPotion"},
-    {2, 10, "PFs::confusionScroll"},
-    {4, 25, "PFs::lightningScroll"},
-    {4, 5, "PFs::sword"},
-    {6, 25, "PFs::fireballScroll"},
-    {6, 15, "PFs::chainMail"},
-};
-
-static constexpr auto enemy_weights =
-    std::array<WeightsByFloor, 4>{WeightsByFloor{0, 80, "PFs::orc"},
-                                  {3, 15, "PFs::troll"},
-                                  {5, 30, "PFs::troll"},
-                                  {7, 60, "PFs::troll"}};
-
 static void place_entities(flecs::entity map, const RectangularRoom &r,
                            int level, Random &rng) {
+  static const auto monster_weights = buildMonsterWeights(map.world());
+  static const auto item_weights = buildItemWeights(map.world());
+
   const auto monster_count =
       rng.getInt(0, getMaxValueForFloor(max_monsters_by_floor, level));
   const auto item_count =
@@ -72,7 +60,8 @@ static void place_entities(flecs::entity map, const RectangularRoom &r,
 
     auto e = q.find([&](const auto &p) { return p == pos; });
     if (e == e.null()) {
-      auto prefab = ecs.lookup(get_entity_at_random(enemy_weights, level, rng));
+      auto prefab =
+          ecs.lookup(get_entity_at_random(monster_weights, level, rng).c_str());
       assert(prefab);
       ecs.entity().is_a(prefab).set<Position>(pos).add(flecs::ChildOf, map);
     }
@@ -85,7 +74,8 @@ static void place_entities(flecs::entity map, const RectangularRoom &r,
 
     auto e = q.find([&](const auto &p) { return p == pos; });
     if (e == e.null()) {
-      auto prefab = ecs.lookup(get_entity_at_random(item_weights, level, rng));
+      auto prefab =
+          ecs.lookup(get_entity_at_random(item_weights, level, rng).c_str());
       assert(prefab);
       ecs.entity().is_a(prefab).set<Position>(pos).add(flecs::ChildOf, map);
     }

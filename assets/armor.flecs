@@ -17,6 +17,11 @@ prefab leatherArmor {
     power_bonus: 0
     defense_bonus: 1
   }
+  FloorWeights: {
+    data: [
+      {0, 35}
+    ]
+  }
 }
 
 prefab chainMail {
@@ -33,5 +38,10 @@ prefab chainMail {
     type: Armor
     power_bonus: 0
     defense_bonus: 3
+  }
+  FloorWeights: {
+    data: [
+      {6, 15}
+    ]
   }
 }

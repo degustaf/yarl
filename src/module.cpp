@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <memory>
 #include <optional>
+#include <vector>
 
 #include "actor.hpp"
 #include "ai.hpp"
@@ -20,6 +21,7 @@
 #include "input_handler.hpp"
 #include "inventory.hpp"
 #include "level.hpp"
+#include "map_shared.hpp"
 #include "message_log.hpp"
 #include "position.hpp"
 #include "renderer.hpp"
@@ -304,6 +306,16 @@ Module::Module(flecs::world ecs) {
   // level.hpp
   ecs.component<XP>().member<int>("given");
   ecs.component<Level>().member<int>("current").member<int>("xp");
+
+  // map_shared.hpp
+  ecs.component<WeightData>().member<int>("minFloor").member<int>("weight");
+  ecs.component<std::vector<WeightData>>().opaque(
+      std_vector_support<WeightData>);
+  ecs.component<FloorWeights>().member<std::vector<WeightData>>("data");
+  ecs.component<WeightsByFloor>()
+      .member<int>("minFloor")
+      .member<int>("weight")
+      .member<std::string>("name");
 
   // message_log.hpp
   ecs.component<Message>()

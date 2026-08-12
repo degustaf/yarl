@@ -20,6 +20,11 @@ prefab lightningScroll {
     damage: 20
     maximumRange: 5
   }
+  FloorWeights: {
+    data: [
+      {4, 25}
+    ]
+  }
 }
 
 prefab confusionScroll {
@@ -40,6 +45,11 @@ prefab confusionScroll {
   Flammable
   ConfusionConsumable: {
     number_of_turns: 10
+  }
+  FloorWeights: {
+    data: [
+      {2, 10}
+    ]
   }
 }
 
@@ -62,6 +72,11 @@ prefab fireballScroll {
   FireballDamageConsumable: {
     damage: 12
     radius: 3
+  }
+  FloorWeights: {
+    data: [
+      {6, 25}
+    ]
   }
 }
 
@@ -87,6 +102,11 @@ prefab lightScroll {
     outerRadius: 4
     decayFactor: 0.6
   }
+  FloorWeights: {
+    data: [
+      {1, 350}
+    ]
+  }
 }
 
 prefab dung {
@@ -110,5 +130,10 @@ prefab dung {
       fiend,
       100
     }
+  }
+  FloorWeights: {
+    data: [
+      {1, 35}
+    ]
   }
 }

@@ -17,6 +17,11 @@ prefab dagger {
     power_bonus: 2
     defense_bonus: 0
   }
+  FloorWeights: {
+    data: [
+      {0, 35}
+    ]
+  }
 }
 
 prefab sword {
@@ -33,6 +38,11 @@ prefab sword {
     type: Weapon
     power_bonus: 4
     defense_bonus: 0
+  }
+  FloorWeights: {
+    data: [
+      {4, 5}
+    ]
   }
 }
 
@@ -54,6 +64,11 @@ prefab "22" {
     power_bonus: 4
     defense_bonus: 0
   }
+  FloorWeights: {
+    data: [
+      {0, 5}
+    ]
+  }
 }
 
 prefab "45" {
@@ -74,6 +89,11 @@ prefab "45" {
     power_bonus: 8
     defense_bonus: 0
   }
+  FloorWeights: {
+    data: [
+      {4, 30}
+    ]
+  }
 }
 
 prefab taser {
@@ -93,6 +113,11 @@ prefab taser {
     type: Weapon
     power_bonus: 0
     defense_bonus: 0
+  }
+  FloorWeights: {
+    data: [
+      {2, 35}
+    ]
   }
 }
 

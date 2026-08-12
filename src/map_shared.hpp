@@ -2,6 +2,9 @@
 
 #include <array>
 #include <cassert>
+#include <vector>
+
+#include <flecs.h>
 
 #include "game_map.hpp"
 #include "random.hpp"
@@ -61,31 +64,43 @@ static int getMaxValueForFloor(const std::array<MaxByFloor, N> &maxByFloor,
   return currentCount;
 }
 
+struct WeightData {
+  int minFloor;
+  int weight;
+};
+
+struct FloorWeights {
+  std::vector<WeightData> data;
+};
+
 struct WeightsByFloor {
   int minFloor;
   int weight;
-  const char *name;
+  std::string name;
 };
 
-template <size_t N>
-static const char *
-get_entity_at_random(const std::array<WeightsByFloor, N> &weights, int floor,
-                     Random &rng) {
+template <typename T>
+static const std::string get_entity_at_random(const T &weights, int floor,
+                                              Random &rng) {
   auto totalWeight = 0;
   for (const auto &w : weights) {
-    if (w.minFloor > floor) {
-      break;
+    if (w.minFloor <= floor) {
+      totalWeight += w.weight;
     }
-    totalWeight += w.weight;
   }
 
   auto choice = rng.getInt(1, totalWeight);
   for (const auto &w : weights) {
-    if (choice <= w.weight) {
-      return w.name;
+    if (w.minFloor <= floor) {
+      if (choice <= w.weight) {
+        return w.name;
+      }
+      choice -= w.weight;
     }
-    choice -= w.weight;
   }
   assert(false);
   return "";
 }
+
+std::vector<WeightsByFloor> buildMonsterWeights(flecs::world);
+std::vector<WeightsByFloor> buildItemWeights(flecs::world);

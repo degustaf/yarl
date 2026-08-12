@@ -20,6 +20,11 @@ prefab healthPotion {
   HealingConsumable: {
     amount: 4
   }
+  FloorWeights: {
+    data: [
+      {1, 35}
+    ]
+  }
 }
 
 prefab deodorant {
@@ -40,6 +45,11 @@ prefab deodorant {
   DeodorantConsumable: {
     amount: 25
   }
+  FloorWeights: {
+    data: [
+      {1, 35}
+    ]
+  }
 }
 
 prefab mapper {
@@ -53,6 +63,11 @@ prefab mapper {
   }
   Item
   MagicMappingConsumable
+  FloorWeights: {
+    data: [
+      {3, 35}
+    ]
+  }
 }
 
 prefab book {
@@ -79,6 +94,11 @@ prefab rope {
   Item
   Flammable
   RopeConsumable
+  FloorWeights: {
+    data: [
+      {2, 35}
+    ]
+  }
 }
 
 prefab transporter {
@@ -92,4 +112,9 @@ prefab transporter {
   }
   Item
   TransporterConsumable
+  FloorWeights: {
+    data: [
+      {3, 35}
+    ]
+  }
 }

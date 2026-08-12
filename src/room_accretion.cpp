@@ -398,26 +398,18 @@ static std::array<int, 2> generateStairs(std::vector<RectangularRoom> &rooms,
   return {0, 0};
 }
 
-static constexpr auto item_weights = std::array<WeightsByFloor, 11>{
-    WeightsByFloor{1, 35, "PFs::lightningScroll"},
-    WeightsByFloor{1, 35, "PFs::healthPotion"},
-    WeightsByFloor{1, 35, "PFs::deodorant"},
-    WeightsByFloor{1, 35, "PFs::dung"},
-    WeightsByFloor{2, 35, "PFs::rope"},
-    WeightsByFloor{2, 35, "PFs::taser"},
+static const auto item_weights = std::array<WeightsByFloor, 11>{
     WeightsByFloor{3, 35, "PFs::scanner"},
-    WeightsByFloor{3, 35, "PFs::transporter"},
-    WeightsByFloor{3, 35, "PFs::mapper"},
     WeightsByFloor{3, 35, "PFs::tracker"},
-    WeightsByFloor{4, 30, "PFs::45"}};
-
-static constexpr auto monster_weights = std::array<WeightsByFloor, 2>{
-    WeightsByFloor{1, 20, "PFs::orc"}, WeightsByFloor{4, 20, "PFs::cysts"}};
+};
 
 static void populateRoom(const Config &cfg, flecs::entity map,
                          flecs::entity player, Random &rng, bool &first,
                          const GameMap &dungeon, const RectangularRoom &room,
                          flecs::query<const Position> q) {
+  static const auto monster_weights = buildMonsterWeights(map.world());
+  static const auto item_weights = buildItemWeights(map.world());
+
   auto ecs = map.world();
   if (first && dungeon.isWalkable(room.center())) {
     player.get_mut<Position>() = room.center();
@@ -457,8 +449,8 @@ static void populateRoom(const Config &cfg, flecs::entity map,
       if (dungeon.isWalkable(x, y) && q.find([x, y](const Position &p) {
             return p == Position{x, y};
           }) == map.null()) {
-        auto prefab =
-            ecs.lookup(get_entity_at_random(item_weights, dungeon.level, rng));
+        auto prefab = ecs.lookup(
+            get_entity_at_random(item_weights, dungeon.level, rng).c_str());
         assert(prefab);
         ecs.entity().is_a(prefab).set<Position>({x, y}).add(flecs::ChildOf,
                                                             map);
@@ -474,7 +466,7 @@ static void populateRoom(const Config &cfg, flecs::entity map,
             return p == Position{x, y};
           }) == map.null()) {
         auto prefab = ecs.lookup(
-            get_entity_at_random(monster_weights, dungeon.level, rng));
+            get_entity_at_random(monster_weights, dungeon.level, rng).c_str());
         assert(prefab);
         ecs.entity().is_a(prefab).set<Position>({x, y}).add(flecs::ChildOf,
                                                             map);
