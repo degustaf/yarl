@@ -1,12 +1,14 @@
 #include "render_functions.hpp"
 
 #include <SDL3/SDL.h>
+
 #include <optional>
 #include <string>
 
 #include "actor.hpp"
 #include "color.hpp"
 #include "defines.hpp"
+#include "map_queries.hpp"
 #include "scent.hpp"
 #include "string.hpp"
 
@@ -74,10 +76,7 @@ void renderNamesAtMouseLocation(Console &console, const std::array<int, 2> &xy,
   if (!gameMap.isExplored(mouse_loc))
     return;
 
-  auto q = map.world()
-               .query_builder<const Position, const Named>("PFs::namedPosition")
-               .with(flecs::ChildOf, map)
-               .build();
+  auto q = mapQuery<positionQuery::Named, Named>(map.world(), map);
   auto msg = std::string();
   q.each([&](auto &pos, auto &name) {
     if (pos == mouse_loc) {

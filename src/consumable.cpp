@@ -53,9 +53,7 @@ ActionResult LightningDamageConsumable::activate(flecs::entity item,
   auto &gameMap = map.get<GameMap>();
   auto &consumerPos = consumer.get<Position>();
   auto target = consumer.null();
-  auto q = ecs.query_builder<const Position, const Fighter>("PFs::fighter")
-               .with(flecs::ChildOf, map)
-               .build();
+  auto q = mapQuery<positionQuery::Fighter, Fighter>(ecs, map);
   q.each([&](auto e, auto &p, auto &f) {
     if ((e != consumer) && (f.hp() > 0) && (gameMap.isVisible(p))) {
       auto d2 = consumerPos.distanceSquared(p);
@@ -127,8 +125,7 @@ ActionResult ConfusionConsumable::selected(flecs::entity item,
       stringf("The eyes of the %s look vacant, as it starts to stumble around!",
               target_entity.get<Named>().name.c_str());
 
-  auto ai = ecs.lookup("PFs::Ai");
-  auto q = ecs.query_builder("PFs::ai").with(flecs::IsA, ai).build();
+  auto q = aiQuery(ecs);
   q.each([target_entity](auto ai) {
     if (target_entity.has(ai) && target_entity.enabled(ai)) {
       target_entity.disable(ai);
@@ -170,15 +167,9 @@ FireballDamageConsumable::selected(flecs::entity item,
             color::impossible};
   }
 
-  auto q = ecs.query_builder<const Position, Fighter, const Named>(
-                  "PFs::fighterPosition")
-               .with(flecs::ChildOf, map)
-               .build();
-  auto flammableQ =
-      ecs.query_builder<const Position, const Named>("PFs::flammablePosition")
-          .with<Flammable>()
-          .with(flecs::ChildOf, map)
-          .build();
+  auto q =
+      mapQuery<positionQuery::NamedFighter, Fighter, const Named>(ecs, map);
+  auto flammableQ = mapQuery<positionQuery::Flammable, Named>(ecs, map);
   auto targets_hit = false;
   auto &messageLog = ecs.lookup("messageLog").get_mut<MessageLog>();
   ecs.defer_begin();

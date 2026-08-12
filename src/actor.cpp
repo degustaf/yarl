@@ -104,14 +104,12 @@ void Fighter::die(flecs::entity self) {
 
   auto ecs = self.world();
   auto win = false;
-  ecs.query_builder("PFs::ai")
-      .with(flecs::IsA, ecs.component<Ai>())
-      .build()
-      .each([&](auto e) {
-        if (self.has(e)) {
-          self.remove(e);
-        }
-      });
+  auto q = aiQuery(ecs);
+  q.each([&](auto e) {
+    if (self.has(e)) {
+      self.remove(e);
+    }
+  });
 
   ecs.query_builder("PFs::onDeath")
       .with(flecs::IsA, ecs.component<OnDeath>())

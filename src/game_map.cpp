@@ -11,8 +11,9 @@
 #include "string.hpp"
 
 static inline void deleteMapEntity(flecs::world ecs, flecs::entity map) {
-  auto q =
-      ecs.query_builder("PFs::mapEntities").with(flecs::ChildOf, map).build();
+  auto q = ecs.query_builder("Queries::mapEntities")
+               .with(flecs::ChildOf, map)
+               .build();
 
   auto player = ecs.lookup("player");
   ecs.defer_begin();
@@ -22,7 +23,7 @@ static inline void deleteMapEntity(flecs::world ecs, flecs::entity map) {
   });
   ecs.defer_end();
 
-  auto module = ecs.lookup("PFs");
+  auto module = ecs.lookup("Queries");
   assert(module);
   auto q2 = ecs.query_builder()
                 .with(flecs::Query)
@@ -167,11 +168,8 @@ static constexpr auto decayFactor = 0.9f;
 static constexpr auto decayThreshold = 1.0f;
 
 void GameMap::update_scent(flecs::entity map) {
-  auto q = map.world()
-               .query_builder<const Scent, const Position>("PFs::scent")
-               .with(flecs::ChildOf, map)
-               .build();
-  q.each([&](auto s, auto p) { getScent(p) += s; });
+  auto q = mapQuery<positionQuery::Scent, Scent>(map.world(), map);
+  q.each([&](auto p, auto s) { getScent(p) += s; });
   auto player = map.world().lookup("player");
   getScent(player.get<Position>()) += player.get<Scent>();
 

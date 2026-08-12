@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cassert>
 #include <flecs.h>
 
 #include "ai.hpp"
@@ -16,34 +17,51 @@ enum class positionQuery {
   Blocks,
   Ai,
   Describable,
+  Scent,
+  Fighter,
+  Named,
+  Flammable,
+  NamedFighter,
 };
 
 template <auto q> static inline constexpr auto queryName() {
   if constexpr (q == positionQuery::Position) {
-    return "PFs::position";
+    return "position";
   } else if constexpr (q == positionQuery::Openable) {
-    return "PFs::positionOpenable";
+    return "positionOpenable";
   } else if constexpr (q == positionQuery::Portal) {
-    return "PFs::positionPortal";
+    return "positionPortal";
   } else if constexpr (q == positionQuery::Item) {
-    return "PFs::positionItem";
+    return "positionItem";
   } else if constexpr (q == positionQuery::NewItem) {
-    return "PFs::positionNewItem";
+    return "positionNewItem";
   } else if constexpr (q == positionQuery::Blocks) {
-    return "PFs::positionBlocks";
+    return "positionBlocks";
   } else if constexpr (q == positionQuery::Ai) {
-    return "PFs::positionAi";
+    return "positionAi";
   } else if constexpr (q == positionQuery::Describable) {
-    return "PFs::positionDescribable";
+    return "positionDescribable";
+  } else if constexpr (q == positionQuery::Scent) {
+    return "positionScent";
+  } else if constexpr (q == positionQuery::Fighter) {
+    return "positionFighter";
+  } else if constexpr (q == positionQuery::Named) {
+    return "positionNamed";
+  } else if constexpr (q == positionQuery::Flammable) {
+    return "positionFlammable";
+  } else if constexpr (q == positionQuery::NamedFighter) {
+    return "positionNamedFighter";
   } else {
-    return "";
+    static_assert(false);
   }
 }
 
 template <auto qName>
 static inline flecs::query<const Position> mapQuery(flecs::world ecs,
                                                     flecs::entity map) {
-  constexpr const char *name = queryName<qName>();
+  constexpr const char *qname = queryName<qName>();
+  static const auto n = std::string("Queries::") + qname;
+  static const auto name = n.c_str();
   auto e = ecs.lookup(name);
   if (e) {
     auto q = ecs.query(e);
@@ -89,12 +107,72 @@ static inline flecs::query<const Position> mapQuery(flecs::world ecs,
           .with<Ai>()
           .build();
     } else if constexpr (qName == positionQuery::Describable) {
-      return ecs.query_builder<const Position>()
+      return ecs.query_builder<const Position>(name)
           .with<Describable>()
           .with(flecs::ChildOf, map)
           .build();
     } else {
-      return ecs.query_builder<const Position>(name).build();
+      assert(false);
+    }
+  }
+}
+
+template <typename T> static inline constexpr const char *typeName();
+template <> inline constexpr const char *typeName<Named>() { return "Named"; }
+template <> inline constexpr const char *typeName<const Named>() {
+  return "ConstNamed";
+}
+template <> inline constexpr const char *typeName<Scent>() { return "Scent"; }
+template <> inline constexpr const char *typeName<Fighter>() {
+  return "Fighter";
+}
+
+template <auto qName, typename T>
+static inline flecs::query<const Position, const T>
+mapQuery(flecs::world ecs, flecs::entity map) {
+  constexpr const char *qname = queryName<qName>();
+  static const auto n = std::string("Queries::") + typeName<T>() + qname;
+  static const auto name = n.c_str();
+  auto e = ecs.lookup(name);
+  if (e) {
+    auto q = ecs.query(e);
+    return flecs::query<const Position, const T>(q);
+  } else {
+    if constexpr ((qName == positionQuery::Scent) ||
+                  (qName == positionQuery::Fighter) ||
+                  (qName == positionQuery::Named)) {
+      return ecs.query_builder<const Position, const T>(name)
+          .with(flecs::ChildOf, map)
+          .build();
+    } else if constexpr (qName == positionQuery::Flammable) {
+      return ecs.query_builder<const Position, const Named>(name)
+          .template with<Flammable>()
+          .with(flecs::ChildOf, map)
+          .build();
+    } else {
+      static_assert(false);
+    }
+  }
+}
+
+template <auto qName, typename T, typename U>
+static inline flecs::query<const Position, T, U> mapQuery(flecs::world ecs,
+                                                          flecs::entity map) {
+  constexpr const char *qname = queryName<qName>();
+  static const auto n =
+      std::string("Queries::") + typeName<T>() + typeName<U>() + qname;
+  static const auto name = n.c_str();
+  auto e = ecs.lookup(name);
+  if (e) {
+    auto q = ecs.query(e);
+    return flecs::query<const Position, T, U>(q);
+  } else {
+    if constexpr (qName == positionQuery::NamedFighter) {
+      return ecs.query_builder<const Position, Fighter, const Named>(name)
+          .with(flecs::ChildOf, map)
+          .build();
+    } else {
+      static_assert(false);
     }
   }
 }

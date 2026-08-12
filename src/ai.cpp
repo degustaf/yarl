@@ -84,8 +84,7 @@ std::unique_ptr<Action> ConfusedAi::act(flecs::entity self) {
     self.remove<ConfusedAi>();
 
     auto ecs = self.world();
-    auto ai = ecs.lookup("PFs::Ai");
-    auto q = ecs.query_builder("PFs::ai").with(flecs::IsA, ai).build();
+    auto q = aiQuery(ecs);
     q.each([self](auto ai) {
       if (self.has(ai) && !self.enabled(ai)) {
         self.enable(ai);

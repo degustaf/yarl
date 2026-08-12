@@ -47,3 +47,9 @@ struct WanderAi : Ai {
 
   std::vector<int> memory;
 };
+
+static inline auto aiQuery(flecs::world ecs) {
+  auto ai = ecs.lookup("PFs::Ai");
+  assert(ai);
+  return ecs.query_builder("PFs::ai").with(flecs::IsA, ai).build();
+}

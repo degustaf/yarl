@@ -704,7 +704,8 @@ void MainHandler::on_render(flecs::world ecs, Console &console) {
   auto q =
       ecs.query_builder<const Position, const MoveAnimation *,
                         const AttackAnimation *, const Renderable,
-                        const Openable *, const Invisible *>("PFs::renderable")
+                        const Openable *, const Invisible *>(
+             "Queries::on_render")
           .with(flecs::ChildOf, map)
           .order_by<const Renderable>([](auto, auto r1, auto, auto r2) {
             return static_cast<int>(r1->layer) - static_cast<int>(r2->layer);
@@ -739,7 +740,7 @@ void MainHandler::on_render(flecs::world ecs, Console &console) {
 
   auto q2 =
       ecs.query_builder<const FPosition, const Renderable, const Invisible *>(
-             "PFs::fpos")
+             "Queries::fpos")
           .with(flecs::ChildOf, map)
           .build();
   q2.each([&](auto &p, auto &r, auto inv) {
