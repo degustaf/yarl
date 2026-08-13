@@ -60,7 +60,7 @@ bool Engine::load(flecs::world ecs, const std::filesystem::path &file_name,
   if (input.fail()) {
     auto f = [](auto, auto &c) {
       c.print({c.get_width() / 2, c.get_height() / 2}, "No saved game to load.",
-              color::text, color::background, Console::Alignment::CENTER);
+              Colors::text, Colors::background, Console::Alignment::CENTER);
     };
     makePopup<decltype(f)>(ecs, f, handler);
     return false;
@@ -71,7 +71,7 @@ bool Engine::load(flecs::world ecs, const std::filesystem::path &file_name,
   if (ecs.from_json(buffer.str().c_str()) == nullptr) {
     auto f = [](auto, auto &c) {
       c.print({c.get_width() / 2, c.get_height() / 2}, "Failed to load save.",
-              color::text, color::background, Console::Alignment::CENTER);
+              Colors::text, Colors::background, Console::Alignment::CENTER);
     };
     makePopup<decltype(f)>(ecs, f, handler);
     return false;
@@ -81,7 +81,7 @@ bool Engine::load(flecs::world ecs, const std::filesystem::path &file_name,
   if (currentmap == currentmap.null()) {
     auto f = [](auto, auto &c) {
       c.print({c.get_width() / 2, c.get_height() / 2}, "Failed to load save.",
-              color::text, color::background, Console::Alignment::CENTER);
+              Colors::text, Colors::background, Console::Alignment::CENTER);
     };
     makePopup<decltype(f)>(ecs, f, handler);
     return false;
@@ -134,7 +134,7 @@ void Engine::new_game(flecs::world ecs, int map_width, int map_height) {
       .addMessage("You are in Facility 14. You must plumb the depths, avoiding "
                   "the Fiend until you find the Laser of Yendor, the only "
                   "thing that is capable of defeating it.",
-                  color::welcomeText);
+                  Colors::welcomeText);
 }
 
 void Engine::clear_game_data(flecs::world ecs) {

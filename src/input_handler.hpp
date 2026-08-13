@@ -382,7 +382,7 @@ template <bool useF> struct SelectInputHandler : AskUserInputHandler {
   virtual void on_render(flecs::world ecs, Console &console) override {
     AskUserInputHandler::on_render(ecs, console);
     auto &tile = console.at(mouse_loc);
-    tile.bg = color::text;
+    tile.bg = Colors::text;
   }
 
   virtual std::unique_ptr<Action> loc_selected(flecs::world ecs,
@@ -491,16 +491,18 @@ template <bool useRope> struct JumpConfirm : AskUserInputHandler {
     if (useRope) {
       console.print({console.get_width() / 2, console.get_height() / 2},
                     "Are you sure you want to climb into the chasm?",
-                    color::text, color::background, Console::Alignment::CENTER);
-      console.print({console.get_width() / 2, console.get_height() / 2 + 2},
-                    "(Y)es     (N)o     (J)ump", color::jump, color::background,
+                    Colors::text, Colors::background,
                     Console::Alignment::CENTER);
+      console.print({console.get_width() / 2, console.get_height() / 2 + 2},
+                    "(Y)es     (N)o     (J)ump", Colors::jump,
+                    Colors::background, Console::Alignment::CENTER);
     } else {
       console.print({console.get_width() / 2, console.get_height() / 2},
                     "Are you sure you want to jump into the chasm?",
-                    color::text, color::background, Console::Alignment::CENTER);
+                    Colors::text, Colors::background,
+                    Console::Alignment::CENTER);
       console.print({console.get_width() / 2, console.get_height() / 2 + 2},
-                    "(Y)es     (N)o", color::jump, color::background,
+                    "(Y)es     (N)o", Colors::jump, Colors::background,
                     Console::Alignment::CENTER);
     }
   }

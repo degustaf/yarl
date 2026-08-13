@@ -98,7 +98,7 @@ void Fighter::take_damage(int amount, flecs::entity self) {
 void Fighter::die(flecs::entity self) {
   auto &render = self.get_mut<Renderable>();
   render.ch = '%';
-  render.fg = color::blood;
+  render.fg = Colors::blood;
   render.layer = RenderOrder::Corpse;
   self.remove<BlocksMovement>();
 
@@ -126,11 +126,11 @@ void Fighter::die(flecs::entity self) {
   auto player = ecs.lookup("player");
   auto &messageLog = ecs.lookup("messageLog").get_mut<MessageLog>();
   if (self == player) {
-    messageLog.addMessage("You died!", color::playerDie);
+    messageLog.addMessage("You died!", Colors::playerDie);
     make<GameOver>(ecs);
   } else {
     auto msg = stringf("%s is dead!", name.name.c_str());
-    messageLog.addMessage(msg, color::enemyDie);
+    messageLog.addMessage(msg, Colors::monsterDie);
     auto xp = self.try_get<XP>();
     if (xp)
       player.get_mut<Level>().add_xp(ecs, xp->given);

@@ -8,14 +8,14 @@
 
 struct Message {
   std::string plain_text;
-  color::RGB fg;
+  color::RGBA fg;
   int count = 1;
 
   std::string fullText(void) const;
 };
 
 struct MessageLog {
-  void addMessage(const std::string &text, color::RGB fg = color::text,
+  void addMessage(const std::string &text, color::RGBA fg = Colors::text,
                   bool stack = true);
   size_t size(void) const { return messages.size(); };
   void render(Console &console, int x, int y, int width, int height) const;

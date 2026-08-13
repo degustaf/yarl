@@ -1,6 +1,7 @@
 module PFs
 
-const weapon_color = RGBA: {0x02, 0xa4, 0xd3, 0xff}
+const weapon_color : Colors.weapon_color
+const laser_color : Colors.laser
 
 prefab dagger {
   Renderable: {
@@ -124,12 +125,7 @@ prefab taser {
 prefab yendor {
   Renderable: {
     ch: 0x263c
-    fg: {
-      r: 0xff
-      g: 0x6e
-      b: 0
-      a: 0xff
-    }
+    fg: laser_color
     layer: Item
   }
   Named: {

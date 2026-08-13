@@ -66,11 +66,6 @@ static constexpr auto floor_dark =
 static constexpr auto floor_sensed =
     Console::Tile{'.', color::sensedFG, color::sensedFloor};
 
-static constexpr auto bloody_floor_light =
-    Console::Tile{'.', color::blood, color::lightFloor};
-static constexpr auto bloody_floor_dark =
-    Console::Tile{'.', color::blood, color::darkFloor};
-
 static constexpr auto wall_light =
     Console::Tile{'#', color::walls, color::lightWallbg};
 static constexpr auto wall_dark =
@@ -83,9 +78,6 @@ static constexpr auto stairs_dark =
 static constexpr auto stairs_sensed =
     Console::Tile{'>', color::stairs, color::sensedFloor};
 
-static constexpr auto shroud =
-    Console::Tile{' ', color::text, color::background};
-
 static constexpr auto water_light =
     Console::Tile{'~', color::water_fg, color::water_bg};
 static constexpr auto water_dark =
@@ -97,6 +89,13 @@ static constexpr auto chasm_dark =
     Console::Tile{0x2591, color::chasmFG, color::darkFloor};
 
 void GameMap::render(Console &console, uint64_t time) {
+  static const auto shroud =
+      Console::Tile{' ', Colors::text, Colors::background};
+  static const auto bloody_floor_light =
+      Console::Tile{'.', Colors::blood, color::lightFloor};
+  static const auto bloody_floor_dark =
+      Console::Tile{'.', Colors::blood, color::darkFloor};
+
   float vec[3] = {0, 0, (float)time / (1000.0f)};
   for (auto y = 0; y < height; y++) {
     vec[1] = (float)y;

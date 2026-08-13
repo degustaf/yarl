@@ -4,6 +4,7 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <filesystem>
 #include <memory>
 #include <optional>
 #include <vector>
@@ -320,20 +321,66 @@ Module::Module(flecs::world ecs) {
   // message_log.hpp
   ecs.component<Message>()
       .member<std::string>("plain_text")
-      .member<color::RGB>("fg")
+      .member<color::RGBA>("fg")
       .member<int>("count");
   ecs.component<MessageLog>().opaque(std_vector_support<Message>);
 
   ecs.prefab("cat")
       .set<Renderable>(
-          {'f', color::background, std::nullopt, RenderOrder::Actor})
+          {'f', Colors::background, std::nullopt, RenderOrder::Actor})
       .set<Named>({"cat"})
       .add<Describable>()
       .add<BlocksMovement>();
 
   ecs.prefab("door")
       .set<Renderable>(
-          {'+', color::background, color::door, RenderOrder::Actor, false})
+          {'+', Colors::background, color::door, RenderOrder::Actor, false})
       .set<Named>({"door"})
       .add<Openable>();
+}
+
+Colors::Colors(flecs::world ecs) {
+  ecs.module<Colors>("Colors");
+
+  ecs.component<color::RGBA>()
+      .member<uint8_t>("r")
+      .member<uint8_t>("g")
+      .member<uint8_t>("b")
+      .member<uint8_t>("a");
+
+  auto script = std::filesystem::path("assets/colors.flecs");
+  ecs.script().filename(script.string().c_str()).run();
+
+  ecs.get_const_var("text", text);
+  ecs.get_const_var("background", background);
+
+  ecs.get_const_var("impossible", impossible);
+  ecs.get_const_var("playerAtk", playerAtk);
+  ecs.get_const_var("monsterAtk", monsterAtk);
+  ecs.get_const_var("playerDie", playerDie);
+  ecs.get_const_var("monsterDie", monsterDie);
+  ecs.get_const_var("descend", descend);
+  ecs.get_const_var("healthRecovered", healthRecovered);
+  ecs.get_const_var("needsTarget", needsTarget);
+  ecs.get_const_var("statusEffectApplied", statusEffectApplied);
+  ecs.get_const_var("welcomeText", welcomeText);
+  ecs.get_const_var("jump", jump);
+
+  ecs.get_const_var("menu_border", menu_border);
+  ecs.get_const_var("menu_background", menu_background);
+  ecs.get_const_var("menu_title", menu_title);
+  ecs.get_const_var("menu_text", menu_text);
+
+  ecs.get_const_var("barText", barText);
+  ecs.get_const_var("barFilled", barFilled);
+  ecs.get_const_var("barEmpty", barEmpty);
+
+  ecs.get_const_var("go", go);
+  ecs.get_const_var("caution", caution);
+  ecs.get_const_var("extraCaution", extraCaution);
+  ecs.get_const_var("stop", stop);
+
+  ecs.get_const_var("dryFountain", dryFountain);
+  ecs.get_const_var("blood", blood);
+  ecs.get_const_var("dung", dung);
 }

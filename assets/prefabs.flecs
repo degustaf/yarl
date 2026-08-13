@@ -1,14 +1,12 @@
 module PFs
 
+const fountain_color : Colors.fountain
+const light_color : Colors.light
+
 prefab fountain {
   Renderable: {
     ch: '&'
-    fg: {
-      r: 0
-      g: 0
-      b: 0xff
-      a: 0xff
-    }
+    fg: fountain_color
     layer: Actor
   }
   Named: {
@@ -21,12 +19,7 @@ prefab fountain {
 prefab light {
   Renderable: {
     ch: '*'
-    fg: {
-      r: 0xff
-      g: 0xff
-      b: 0
-      a: 0xff
-    }
+    fg: light_color
     layer: Corpse
   }
   Named: {

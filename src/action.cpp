@@ -12,6 +12,7 @@
 #include "input_handler.hpp"
 #include "inventory.hpp"
 #include "map_queries.hpp"
+#include "module.hpp"
 #include "position.hpp"
 #include "random.hpp"
 #include "string.hpp"
@@ -26,7 +27,7 @@ static ActionResult attack(flecs::entity e, std::array<int, 2> pos,
   auto target = GameMap::get_blocking_entity(mapEntity, pos);
 
   auto attack_color =
-      (e == ecs.lookup("player")) ? color::playerAtk : color::enemyAtk;
+      (e == ecs.lookup("player")) ? Colors::playerAtk : Colors::monsterAtk;
 
   if (target != target.null()) {
     auto inv = e.try_get_mut<Invisible>();
@@ -64,7 +65,7 @@ static ActionResult attack(flecs::entity e, std::array<int, 2> pos,
     return {ActionResultType::Success, msg, 1.0f, attack_color};
   } else {
     return {ActionResultType::Failure, "Nothing to attack.", 0.0f,
-            color::impossible};
+            Colors::impossible};
   }
 }
 
@@ -113,7 +114,7 @@ ActionResult MoveAction::perform(flecs::entity e) const {
         }
         if (!inventory->hasRoom(e)) {
           return {ActionResultType::Success, "Your inventory is full.", 1.0f,
-                  color::impossible};
+                  Colors::impossible};
         }
 
         auto item = itemAtLocation(e);
@@ -134,7 +135,7 @@ ActionResult MoveAction::perform(flecs::entity e) const {
     }
   }
   return {ActionResultType::Failure, "That way is blocked.", 0.0f,
-          color::impossible};
+          Colors::impossible};
 }
 
 ActionResult MeleeAction::perform(flecs::entity e) const {
@@ -163,7 +164,7 @@ ActionResult DoorDirectionAction::perform(flecs::entity e) const {
     return {ActionResultType::Success, "", 0.0f};
   }
   return {ActionResultType::Failure, "There is nothing openable here.", 0.0f,
-          color::impossible};
+          Colors::impossible};
 }
 
 ActionResult DoorAction::perform(flecs::entity e) const {
@@ -187,7 +188,7 @@ ActionResult DoorAction::perform(flecs::entity e) const {
     return {ActionResultType::Success, "", 0.0f};
   }
   return {ActionResultType::Failure, "There is nothing openable here.", 0.0f,
-          color::impossible};
+          Colors::impossible};
 }
 
 ActionResult BatheAction::perform(flecs::entity e) const {
@@ -198,7 +199,7 @@ ActionResult BatheAction::perform(flecs::entity e) const {
     auto msg = std::string("You bathe and feel refreshingly clean.");
     if (Random::getInstance()->getInt(1, 3) == 1) {
       fountain.remove<Fountain>();
-      fountain.get_mut<Renderable>().fg = color::dryFountain;
+      fountain.get_mut<Renderable>().fg = Colors::dryFountain;
       msg += " The fountain dries up.";
     }
     return {ActionResultType::Success, msg, 0.0f};
@@ -252,7 +253,7 @@ ActionResult PickupAction::perform(flecs::entity e) const {
   auto &inventory = e.get<Inventory>();
   if (!inventory.hasRoom(e)) {
     return {ActionResultType::Failure, "Your inventory is full.", 0.0f,
-            color::impossible};
+            Colors::impossible};
   }
 
   auto item = itemAtLocation(e);
@@ -263,7 +264,7 @@ ActionResult PickupAction::perform(flecs::entity e) const {
     return {ActionResultType::Success, msg, 0.0f};
   }
   return {ActionResultType::Failure, "There is nothing here to pick up.", 0.0f,
-          color::impossible};
+          Colors::impossible};
 }
 
 ActionResult DropItemAction::perform(flecs::entity e) const {
@@ -303,10 +304,10 @@ ActionResult TakeStairsAction::perform(flecs::entity e) const {
     gameMap.nextFloor(e, false);
 
     return {ActionResultType::Success, "You descend the staircase.", 0.0f,
-            color::descend, true};
+            Colors::descend, true};
   }
   return {ActionResultType::Failure, "There is no staircase here.", 0.0f,
-          color::impossible};
+          Colors::impossible};
 }
 
 ActionResult JumpAction::perform(flecs::entity e) const {
@@ -318,7 +319,7 @@ ActionResult JumpAction::perform(flecs::entity e) const {
 
   if (useRope) {
     return {ActionResultType::Success, "You climb down the chasm.", 1.0f,
-            color::descend};
+            Colors::descend};
   }
   e.get_mut<Fighter>().take_damage(fallDamage, e);
   auto scent = e.try_get_mut<Scent>();
@@ -328,7 +329,7 @@ ActionResult JumpAction::perform(flecs::entity e) const {
 
   auto msg = stringf("You jump down the chasm taking %d damage.", fallDamage);
 
-  return {ActionResultType::Success, msg, 1.0f, color::descend, true};
+  return {ActionResultType::Success, msg, 1.0f, Colors::descend, true};
 }
 
 ActionResult EquipAction::perform(flecs::entity e) const {

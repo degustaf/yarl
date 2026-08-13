@@ -1,14 +1,15 @@
 module PFs
 
+const lightning : Colors.lightning
+const confusion : Colors.confusion
+const fireball : Colors.fireball
+const light : Colors.light
+const dung_color : Colors.dung
+
 prefab lightningScroll {
   Renderable: {
     ch: '~'
-    fg: {
-      r: 0xff
-      g: 0xff
-      b: 0
-      a: 0xff
-    }
+    fg: lightning
     layer: Item
   }
   Named: {
@@ -30,12 +31,7 @@ prefab lightningScroll {
 prefab confusionScroll {
   Renderable: {
     ch: '~'
-    fg: {
-      r: 0xdf
-      g: 0x73
-      b: 0xff
-      a: 0xff
-    }
+    fg: confusion
     layer: Item
   }
   Named: {
@@ -56,12 +52,7 @@ prefab confusionScroll {
 prefab fireballScroll {
   Renderable: {
     ch: '~'
-    fg: {
-      r: 0xff
-      g: 0
-      b: 0
-      a: 0xff
-    }
+    fg: fireball
     layer: Item
   }
   Named: {
@@ -83,12 +74,7 @@ prefab fireballScroll {
 prefab lightScroll {
   Renderable: {
     ch: '~'
-    fg: {
-      r: 0x6a
-      g: 0x5d
-      b: 0x1b
-      a: 0xff
-    }
+    fg: light
     layer: Item
   }
   Named: {
@@ -112,12 +98,7 @@ prefab lightScroll {
 prefab dung {
   Renderable: {
     ch: '~'
-    fg: {
-      r: 0x6a
-      g: 0x4a
-      b: 0x3a
-      a: 0xff
-    }
+    fg: dung_color
     layer: Item
   }
   Named: {

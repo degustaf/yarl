@@ -9,6 +9,6 @@
 struct CenterTextBox {
   std::array<int, 2> offset;
   std::string text;
-  color::RGB fg;
+  color::RGBA fg;
   Console::Alignment alignment;
 };

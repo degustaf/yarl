@@ -39,31 +39,31 @@ static Console buildCommandMenu(void) {
   auto con = Console(COMMAND_MENU_WIDTH, COMMAND_MENU_HEIGHT);
   con.clear();
   con.draw_frame({0, 0, COMMAND_MENU_WIDTH, COMMAND_MENU_HEIGHT}, DECORATION,
-                 color::menu_border, std::nullopt);
+                 Colors::menu_border, std::nullopt);
 
-  con.print({COMMAND_MENU_WIDTH / 2 - 4, 1}, "Commands", color::text,
+  con.print({COMMAND_MENU_WIDTH / 2 - 4, 1}, "Commands", Colors::text,
             std::nullopt);
 
   // vim directions
-  con.print({2, 3}, "y k u", color::text, std::nullopt);
-  con.print({2, 4}, " \\|/ ", color::text, std::nullopt);
-  con.print({2, 5}, "h-*-l", color::text, std::nullopt);
-  con.print({2, 6}, " /|\\ ", color::text, std::nullopt);
-  con.print({2, 7}, "b j n", color::text, std::nullopt);
+  con.print({2, 3}, "y k u", Colors::text, std::nullopt);
+  con.print({2, 4}, " \\|/ ", Colors::text, std::nullopt);
+  con.print({2, 5}, "h-*-l", Colors::text, std::nullopt);
+  con.print({2, 6}, " /|\\ ", Colors::text, std::nullopt);
+  con.print({2, 7}, "b j n", Colors::text, std::nullopt);
 
   // numpad directions.
-  con.print({10, 2}, "numpad", color::text, std::nullopt);
-  con.print({10, 3}, "7 8 9", color::text, std::nullopt);
-  con.print({10, 4}, " \\|/", color::text, std::nullopt);
-  con.print({10, 5}, "4-*-6", color::text, std::nullopt);
-  con.print({10, 6}, " /|\\", color::text, std::nullopt);
-  con.print({10, 7}, "1 2 3", color::text, std::nullopt);
+  con.print({10, 2}, "numpad", Colors::text, std::nullopt);
+  con.print({10, 3}, "7 8 9", Colors::text, std::nullopt);
+  con.print({10, 4}, " \\|/", Colors::text, std::nullopt);
+  con.print({10, 5}, "4-*-6", Colors::text, std::nullopt);
+  con.print({10, 6}, " /|\\", Colors::text, std::nullopt);
+  con.print({10, 7}, "1 2 3", Colors::text, std::nullopt);
 
   auto y = 9;
 
-  // con.print({2, y++}, "Hold <shift> to move 2 spaces", color::white,
+  // con.print({2, y++}, "Hold <shift> to move 2 spaces", Colors::text,
   //             std::nullopt);
-  // con.print({2, y++}, "Hold <ctrl> to move 3 spaces", color::white,
+  // con.print({2, y++}, "Hold <ctrl> to move 3 spaces", Colors::text,
   //             std::nullopt);
   // y++;
 
@@ -73,51 +73,51 @@ static Console buildCommandMenu(void) {
     case CommandType::UL: {
       auto buffer = stringf("%s", SDL_GetKeyName(SDL_GetKeyFromScancode(
                                       cmd.first, SDL_KMOD_NONE, true)));
-      con.print({2, 3}, buffer, color::text, std::nullopt);
+      con.print({2, 3}, buffer, Colors::text, std::nullopt);
       break;
     }
     case CommandType::UP: {
       auto buffer = stringf("%s", SDL_GetKeyName(SDL_GetKeyFromScancode(
                                       cmd.first, SDL_KMOD_NONE, true)));
-      con.print({4, 3}, buffer, color::text, std::nullopt);
+      con.print({4, 3}, buffer, Colors::text, std::nullopt);
       break;
     }
     case CommandType::UR: {
       auto buffer = stringf("%s", SDL_GetKeyName(SDL_GetKeyFromScancode(
                                       cmd.first, SDL_KMOD_NONE, true)));
-      con.print({6, 3}, buffer, color::text, std::nullopt);
+      con.print({6, 3}, buffer, Colors::text, std::nullopt);
       break;
     }
 
     case CommandType::LEFT: {
       auto buffer = stringf("%s", SDL_GetKeyName(SDL_GetKeyFromScancode(
                                       cmd.first, SDL_KMOD_NONE, true)));
-      con.print({2, 5}, buffer, color::text, std::nullopt);
+      con.print({2, 5}, buffer, Colors::text, std::nullopt);
       break;
     }
     case CommandType::RIGHT: {
       auto buffer = stringf("%s", SDL_GetKeyName(SDL_GetKeyFromScancode(
                                       cmd.first, SDL_KMOD_NONE, true)));
-      con.print({6, 5}, buffer, color::text, std::nullopt);
+      con.print({6, 5}, buffer, Colors::text, std::nullopt);
       break;
     }
 
     case CommandType::DL: {
       auto buffer = stringf("%s", SDL_GetKeyName(SDL_GetKeyFromScancode(
                                       cmd.first, SDL_KMOD_NONE, true)));
-      con.print({2, 7}, buffer, color::text, std::nullopt);
+      con.print({2, 7}, buffer, Colors::text, std::nullopt);
       break;
     }
     case CommandType::DOWN: {
       auto buffer = stringf("%s", SDL_GetKeyName(SDL_GetKeyFromScancode(
                                       cmd.first, SDL_KMOD_NONE, true)));
-      con.print({4, 7}, buffer, color::text, std::nullopt);
+      con.print({4, 7}, buffer, Colors::text, std::nullopt);
       break;
     }
     case CommandType::DR: {
       auto buffer = stringf("%s", SDL_GetKeyName(SDL_GetKeyFromScancode(
                                       cmd.first, SDL_KMOD_NONE, true)));
-      con.print({6, 7}, buffer, color::text, std::nullopt);
+      con.print({6, 7}, buffer, Colors::text, std::nullopt);
       break;
     }
 
@@ -126,7 +126,7 @@ static Console buildCommandMenu(void) {
                             SDL_GetKeyName(SDL_GetKeyFromScancode(
                                 cmd.first, SDL_KMOD_NONE, true)),
                             CommandTypeDescription(cmd.second));
-      con.print({2, y}, buffer, color::text, std::nullopt);
+      con.print({2, y}, buffer, Colors::text, std::nullopt);
       y++;
     }
     }
@@ -233,14 +233,14 @@ MainMenuInputHandler::click(SDL_MouseButtonEvent &button, flecs::world ecs) {
 void MainMenuInputHandler::on_render(flecs::world, Console &console) {
   const auto printY = (ImageWidth / 2 + console.get_width()) / 2;
   console.print({printY, console.get_height() / 2 - 4}, "Yet Another Roguelike",
-                color::menu_title, std::nullopt, Console::Alignment::CENTER);
+                Colors::menu_title, std::nullopt, Console::Alignment::CENTER);
   console.print({printY, console.get_height() - 2}, "By degustaf",
-                color::menu_title, std::nullopt, Console::Alignment::CENTER);
+                Colors::menu_title, std::nullopt, Console::Alignment::CENTER);
 
   for (auto i = 0; i < (int)choices.size(); i++) {
     auto str = i == idx ? stringf("\u2020 %s", choices[i]) : choices[i];
     console.print({printY, console.get_height() / 2 - 2 + i}, str,
-                  color::menu_text, color::background,
+                  Colors::menu_text, Colors::background,
                   Console::Alignment::CENTER);
   }
 }
@@ -417,19 +417,19 @@ void KeybindMenu::on_render(flecs::world ecs, Console &console) {
   assert(frameX + COMMAND_MENU_WIDTH < console.get_width());
 
   console.draw_frame({frameX, frameY, COMMAND_MENU_WIDTH, COMMAND_MENU_HEIGHT},
-                     DECORATION, color::menu_border, std::nullopt);
+                     DECORATION, Colors::menu_border, std::nullopt);
 
   console.print({frameX + 2, frameY + 2},
                 "Movement from arrow keys and numpad is always enabled.",
-                color::text, std::nullopt);
+                Colors::text, std::nullopt);
 
   console.print({frameX + 2, frameY + 4}, vi,
-                idx[0] == 0 && idx[1] == -1 ? color::background : color::text,
-                idx[0] == 0 && idx[1] == -1 ? std::optional(color::menu_border)
+                idx[0] == 0 && idx[1] == -1 ? Colors::background : Colors::text,
+                idx[0] == 0 && idx[1] == -1 ? std::optional(Colors::menu_border)
                                             : std::nullopt);
   console.print({frameX + 2 + (COMMAND_MENU_WIDTH / 2), frameY + 4}, wasd,
-                idx[0] == 1 && idx[1] == -1 ? color::background : color::text,
-                idx[0] == 1 && idx[1] == -1 ? std::optional(color::menu_border)
+                idx[0] == 1 && idx[1] == -1 ? Colors::background : Colors::text,
+                idx[0] == 1 && idx[1] == -1 ? std::optional(Colors::menu_border)
                                             : std::nullopt);
 
   auto x = 0;
@@ -438,11 +438,11 @@ void KeybindMenu::on_render(flecs::world ecs, Console &console) {
     auto buffer = stringf("%-25s: %s", CommandTypeDescription(key.first),
                           SDL_GetKeyName(SDL_GetKeyFromScancode(
                               key.second, SDL_KMOD_NONE, true)));
-    console.print({frameX + 2 + x * (COMMAND_MENU_WIDTH / 2), frameY + y + 6},
-                  buffer,
-                  x == idx[0] && y == idx[1] ? color::background : color::text,
-                  x == idx[0] && y == idx[1] ? std::optional(color::menu_border)
-                                             : std::nullopt);
+    console.print(
+        {frameX + 2 + x * (COMMAND_MENU_WIDTH / 2), frameY + y + 6}, buffer,
+        x == idx[0] && y == idx[1] ? Colors::background : Colors::text,
+        x == idx[0] && y == idx[1] ? std::optional(Colors::menu_border)
+                                   : std::nullopt);
     y++;
     if (y == maxIdx[x]) {
       y = 0;
@@ -506,8 +506,8 @@ void KeyBinding::on_render(flecs::world ecs, Console &console) {
   assert(frameX + (int)str.length() + 2 < console.get_width());
 
   console.draw_frame({frameX, frameY, (int)str.length() + 2, 3}, DECORATION,
-                     color::menu_border, std::nullopt);
-  console.print({frameX + 1, frameY + 1}, str, color::menu_text, std::nullopt);
+                     Colors::menu_border, std::nullopt);
+  console.print({frameX + 1, frameY + 1}, str, Colors::menu_text, std::nullopt);
 }
 
 static constexpr auto maxGain = 100;
@@ -602,11 +602,12 @@ static void renderVolumeBar(Console &console, int x, int y, int gain,
   auto str = stringf(selected ? "\u2020%14s: %3d " : "%15s: %3d ", label, gain);
   console.print({x, y}, str, std::nullopt, std::nullopt);
 
-  console.draw_rect({x + 25, y, total_width, 1}, 0x2591, color::menu_border,
-                    color::menu_background);
+  console.draw_rect({x + 25, y, total_width, 1}, 0x2591, Colors::menu_border,
+                    Colors::menu_background);
   auto barWidth = (gain * total_width) / maxGain;
   if (barWidth > 0) {
-    console.draw_rect({x + 25, y, barWidth, 1}, ' ', std::nullopt, color::text);
+    console.draw_rect({x + 25, y, barWidth, 1}, ' ', std::nullopt,
+                      Colors::text);
   }
 }
 
@@ -623,7 +624,7 @@ void VolumeControls::on_render(flecs::world ecs, Console &console) {
   assert(frameX + COMMAND_MENU_WIDTH < console.get_width());
 
   console.draw_frame({frameX, frameY, COMMAND_MENU_WIDTH, COMMAND_MENU_HEIGHT},
-                     DECORATION, color::menu_border, color::background);
+                     DECORATION, Colors::menu_border, Colors::background);
 
   auto &audio = ecs.get<SDLAudio>();
   auto x = frameX + 2;
@@ -832,10 +833,11 @@ ActionResult MainHandler::handle_action(flecs::world ecs,
       if (!warning.warned) {
         auto f = [](auto, auto &c) {
           c.print({c.get_width() / 2, c.get_height() / 2 - 1}, "Be careful...",
-                  color::blood, color::background, Console::Alignment::CENTER);
+                  Colors::blood, Colors::background,
+                  Console::Alignment::CENTER);
           c.print({c.get_width() / 2, c.get_height() / 2 + 1},
-                  "The Fiend can track you by your scent.", color::text,
-                  color::background, Console::Alignment::CENTER);
+                  "The Fiend can track you by your scent.", Colors::text,
+                  Colors::background, Console::Alignment::CENTER);
         };
         ecs.set<std::unique_ptr<InputHandler>>(
             std::make_unique<
@@ -1071,7 +1073,7 @@ void InventoryInputHandler::on_render(flecs::world ecs, Console &console) {
   auto x = menuXLocation(ecs.lookup("player"));
 
   console.draw_frame({x, 0, (int)title.size(), std::max(count + 2, 3)},
-                     DECORATION, color::text, color::background);
+                     DECORATION, Colors::text, Colors::background);
   console.print_rect({x, 0, (int)title.size(), 1}, title);
   if (count > 0) {
     auto player = ecs.lookup("player");
@@ -1098,27 +1100,27 @@ static void readBook(flecs::world, Console &console, const Book &b) {
   auto x = console.get_width() / 6;
   auto y = (console.get_height() - height) / 2;
   console.draw_frame({x - 1, y - 1, width + 2, height + 2}, DECORATION,
-                     color::menu_border, std::nullopt);
+                     Colors::menu_border, std::nullopt);
   {
     auto &tile = console.at({x - 1, y + 1});
     tile.ch = 0x251C;
-    tile.fg = color::menu_border;
+    tile.fg = Colors::menu_border;
   }
   {
     auto &tile = console.at({x + width, y + 1});
     tile.ch = 0x2524;
-    tile.fg = color::menu_border;
+    tile.fg = Colors::menu_border;
   }
   for (auto i = 0; i < width; i++) {
     auto &tile = console.at({x + i, y + 1});
     tile.ch = DECORATION[1];
-    tile.fg = color::menu_border;
+    tile.fg = Colors::menu_border;
   }
-  console.print({console.get_width() / 2, y}, b.title, color::menu_title,
+  console.print({console.get_width() / 2, y}, b.title, Colors::menu_title,
                 std::nullopt, Console::Alignment::CENTER);
   y += 2;
   for (auto &s : b.body) {
-    console.print({x, y}, s, color::menu_text, std::nullopt);
+    console.print({x, y}, s, Colors::menu_text, std::nullopt);
     y++;
   }
 }
@@ -1175,7 +1177,8 @@ void LevelupHandler::on_render(flecs::world ecs, Console &console) {
   AskUserInputHandler::on_render(ecs, console);
   auto player = ecs.lookup("player");
   auto x = menuXLocation(player);
-  console.draw_frame({x, 0, 35, 8}, DECORATION, color::text, color::background);
+  console.draw_frame({x, 0, 35, 8}, DECORATION, Colors::text,
+                     Colors::background);
   console.print_rect({x, 0, 35, 1}, "Level Up");
   console.print({x + 1, 1}, "Congratulations! You level up!", std::nullopt,
                 std::nullopt);
@@ -1249,8 +1252,8 @@ void CharacterScreenInputHandler::on_render(flecs::world ecs,
   auto player = ecs.lookup("player");
   auto x = menuXLocation(player);
   auto title = std::string{"Character Information"};
-  console.draw_frame({x, 0, (int)title.size() + 4, 5}, DECORATION, color::text,
-                     color::background);
+  console.draw_frame({x, 0, (int)title.size() + 4, 5}, DECORATION, Colors::text,
+                     Colors::background);
   console.print_rect({x, 0, (int)title.size() + 4, 1}, title);
 
   // auto level = player.get<Level>();
@@ -1475,33 +1478,33 @@ void WinScreen::animate(flecs::world ecs, uint64_t t) {
   case 0: {
     auto e = ecs.lookup("defeated");
     if (e) {
-      e.get_mut<CenterTextBox>().fg = {level, level, level};
+      e.get_mut<CenterTextBox>().fg = {level, level, level, 0xff};
     } else {
       e = ecs.entity("defeated");
       e.set<CenterTextBox>({{0, -1},
                             "The Fiend is defeated",
-                            {level, level, level},
+                            {level, level, level, 0xff},
                             Console::Alignment::CENTER});
     }
     break;
   }
   case 1: {
-    ecs.lookup("defeated").get_mut<CenterTextBox>().fg = color::text;
+    ecs.lookup("defeated").get_mut<CenterTextBox>().fg = Colors::text;
 
     auto e = ecs.lookup("win");
     if (e) {
-      e.get_mut<CenterTextBox>().fg = {level, level, level};
+      e.get_mut<CenterTextBox>().fg = {level, level, level, 0xff};
     } else {
       e = ecs.entity("win");
       e.set<CenterTextBox>({{-4, 1},
                             "You Win.",
-                            {level, level, level},
+                            {level, level, level, 0xff},
                             Console::Alignment::LEFT});
     }
     break;
   }
   case 2:
-    ecs.lookup("win").get_mut<CenterTextBox>().fg = color::text;
+    ecs.lookup("win").get_mut<CenterTextBox>().fg = Colors::text;
     break;
   case 5: {
     auto &tb = ecs.lookup("win").get_mut<CenterTextBox>();
@@ -1520,18 +1523,18 @@ void WinScreen::animate(flecs::world ecs, uint64_t t) {
   case 7: {
     auto e = ecs.lookup("for now");
     if (e) {
-      e.get_mut<CenterTextBox>().fg = {level, level, level};
+      e.get_mut<CenterTextBox>().fg = {level, level, level, 0xff};
     } else {
       e = ecs.entity("for now");
       e.set<CenterTextBox>({{-4, 3},
                             "for now",
-                            {level, level, level},
+                            {level, level, level, 0xff},
                             Console::Alignment::CENTER});
     }
     break;
   }
   case 8:
-    ecs.lookup("for now").get_mut<CenterTextBox>().fg = color::text;
+    ecs.lookup("for now").get_mut<CenterTextBox>().fg = Colors::text;
     break;
   default:
     auto rng = Random::getInstance();

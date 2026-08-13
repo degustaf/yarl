@@ -7,6 +7,7 @@
 #include <flecs.h>
 
 #include "color.hpp"
+#include "module.hpp"
 
 enum struct ActionResultType {
   Success,
@@ -19,7 +20,7 @@ struct ActionResult {
   ActionResultType type;
   std::string msg;
   float exertion;
-  color::RGB fg = color::text;
+  color::RGBA fg = Colors::text;
   bool saveGame = false;
 
   inline operator bool() {
@@ -157,10 +158,10 @@ struct TargetedItemAction : ItemAction {
 };
 
 struct MessageAction : Action {
-  MessageAction(std::string msg, color::RGB fg = color::text)
+  MessageAction(std::string msg, color::RGBA fg = Colors::text)
       : msg(msg), fg(fg) {};
   std::string msg;
-  color::RGB fg;
+  color::RGBA fg;
 
   virtual ActionResult perform(flecs::entity e) const override;
   virtual ~MessageAction() = default;

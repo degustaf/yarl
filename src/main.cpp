@@ -7,9 +7,9 @@
 #include <emscripten.h>
 #endif
 
-#include <flecs.h>
-
 #include <filesystem>
+
+#include <flecs.h>
 
 #include "audio.hpp"
 #include "color.hpp"
@@ -38,9 +38,11 @@ SDL_AppResult SDL_AppInit(void **data, [[maybe_unused]] int argc,
 
   auto *ecs = new flecs::world();
   *data = ecs;
+  ecs->import <Colors>();
   ecs->import <Module>();
   for (const auto &fl : std::filesystem::directory_iterator("assets")) {
-    if (fl.path().extension().string() == ".flecs") {
+    if ((fl.path().extension().string() == ".flecs") &&
+        (fl.path().filename() != "colors.flecs")) {
       ecs->script_run_file(fl.path().string().c_str());
     }
   }
@@ -96,7 +98,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
   auto &data = ecs.get_mut<SDLData>();
   auto renderer = data.renderer();
   SDL_SetRenderTarget(renderer, nullptr);
-  constexpr auto clear_color = color::RGBA(color::background);
+  const auto clear_color = Colors::background;
   SDL_SetRenderDrawColor(renderer, clear_color.r, clear_color.g, clear_color.b,
                          clear_color.a);
   SDL_RenderClear(renderer);

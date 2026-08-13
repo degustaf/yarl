@@ -1,16 +1,13 @@
 module PFs
 
-const tool_color = RGBA: {0x9f, 0x9f, 0x9f, 0xff}
+const tool_color : Colors.tool_color
+const potion : Colors.potion
+const deodorant : Colors.deodorant
 
 prefab healthPotion {
   Renderable: {
     ch: '!'
-    fg: {
-      r: 0x8b
-      g: 0
-      b: 0xff
-      a: 0xff
-    }
+    fg: $potion
     layer: Item
   }
   Named: {
@@ -30,12 +27,7 @@ prefab healthPotion {
 prefab deodorant {
   Renderable: {
     ch: '!'
-    fg: {
-      r: 0xff
-      g: 0x3f
-      b: 0x34
-      a: 0xff
-    }
+    fg: $deodorant
     layer: Item
   }
   Named: {

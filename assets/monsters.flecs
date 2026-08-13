@@ -1,14 +1,14 @@
 module PFs
 
+const orc_color : Colors.orc
+const troll_color : Colors.troll
+const cyst_color : Colors.cyst
+const blood : Colors.blood
+
 prefab orc {
   Renderable: {
     ch: 'o'
-    fg: {
-      r: 0x3d
-      g: 0x7d
-      b: 0x52
-      a: 0xff
-    }
+    fg: orc_color
     layer: Actor
   }
   Named: {
@@ -36,12 +36,7 @@ prefab orc {
 prefab troll {
   Renderable: {
     ch: 'T'
-    fg: {
-      r: 0x0A
-      g: 0x69
-      b: 0x06
-      a: 0xff
-    }
+    fg: troll_color
     layer: Actor
   }
   Named: {
@@ -71,12 +66,7 @@ prefab troll {
 prefab cyst {
   Renderable: {
     ch: 0xB6
-    fg: {
-      r: 0
-      g: 0
-      b: 0
-      a: 0xff
-    }
+    fg: cyst_color
     layer: Actor
   }
   Named: {
@@ -104,12 +94,7 @@ prefab cyst {
 prefab corpse {
   Renderable: {
     ch: '%'
-    fg: {
-      r: 0xff
-      g: 0
-      b: 0
-      a: 0xff
-    }
+    fg: $blood
     layer: Actor
   }
   Named: {

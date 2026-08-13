@@ -16,50 +16,50 @@ void renderBar(Console &console, int currentValue, int maxValue, int x, int y,
                int totalWidth) {
   auto bar_width = (int)(((double)currentValue) / maxValue * totalWidth);
 
-  console.draw_rect({x, y, totalWidth, 1}, ' ', std::nullopt, color::barEmpty);
+  console.draw_rect({x, y, totalWidth, 1}, ' ', std::nullopt, Colors::barEmpty);
 
   if (bar_width > 0) {
     console.draw_rect({x, y, bar_width, 1}, ' ', std::nullopt,
-                      color::barFilled);
+                      Colors::barFilled);
   }
 
   auto msg = stringf("HP: %d/%d", currentValue, maxValue);
-  console.print({x + 1, y}, msg, color::barText, std::nullopt);
+  console.print({x + 1, y}, msg, Colors::barText, std::nullopt);
 }
 
 void renderSmell(Console &console, flecs::entity player, int x, int y,
                  int totalWidth) {
   auto scent = player.get<Scent>();
-  auto bg = [](auto scent) {
+  auto bg = [](auto scent) -> color::RGBA {
     switch (scent.type) {
     case ScentType::player:
-      return scent.power < 25.0f   ? color::go
-             : scent.power < 50.0f ? color::caution
-             : scent.power < 75.0f ? color::extraCaution
-                                   : color::stop;
+      return scent.power < 25.0f   ? Colors::go
+             : scent.power < 50.0f ? Colors::caution
+             : scent.power < 75.0f ? Colors::extraCaution
+                                   : Colors::stop;
     case ScentType::fiend:
     case ScentType::decay:
-      return color::dung;
+      return Colors::dung;
     case ScentType::none:
     case ScentType::MAX:
       break;
     }
     assert(false);
-    return color::text;
+    return Colors::text;
   }(scent);
   auto bar_width =
       std::min((int)((scent.power * (float)totalWidth) / 100.0f), totalWidth);
 
-  console.draw_rect({x, y, totalWidth, 1}, ' ', std::nullopt, color::barEmpty);
+  console.draw_rect({x, y, totalWidth, 1}, ' ', std::nullopt, Colors::barEmpty);
   if (bar_width > 0) {
     console.draw_rect({x, y, bar_width, 1}, ' ', std::nullopt, bg);
   }
 
   auto msg = stringf("Scent: %d", (int)scent.power);
-  console.print({x + 1, y}, msg, color::barText, std::nullopt);
-  if (bg == color::caution) {
+  console.print({x + 1, y}, msg, Colors::barText, std::nullopt);
+  if (bg == Colors::caution) {
     for (x++; x < bar_width; x++) {
-      console.at({x, y}).fg = color::background;
+      console.at({x, y}).fg = Colors::background;
     }
   }
 }
@@ -106,15 +106,15 @@ void renderDescribableAtMouseLocation(Console &console,
                : mouse_loc[0] + 1;
   auto y = mouse_loc[1] + height > console.get_height() ? mouse_loc[1]
                                                         : mouse_loc[1] - height;
-  console.draw_frame({x, y, width, height}, DECORATION, color::text,
-                     color::background);
-  console.print({x + 1, y + 1}, Describable::describe(e), color::text,
+  console.draw_frame({x, y, width, height}, DECORATION, Colors::text,
+                     Colors::background);
+  console.print({x + 1, y + 1}, Describable::describe(e), Colors::text,
                 std::nullopt);
 }
 
 void renderCommandButton(Console &console, const std::array<int, 4> &xywh) {
-  console.draw_frame(xywh, DECORATION, color::menu_border,
-                     color::menu_background);
+  console.draw_frame(xywh, DECORATION, Colors::menu_border,
+                     Colors::menu_background);
   auto key = *SDL_GetKeyName(
       SDL_GetKeyFromScancode(SDL_SCANCODE_C, SDL_KMOD_NONE, true));
   auto str = key == 'C' ? "(C)ommands" : stringf("(%c)Commands", key);

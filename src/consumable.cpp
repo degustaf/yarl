@@ -11,9 +11,9 @@
 #include "defines.hpp"
 #include "game_map.hpp"
 #include "input_handler.hpp"
-#include "inventory.hpp"
 #include "map_queries.hpp"
 #include "message_log.hpp"
+#include "module.hpp"
 #include "position.hpp"
 #include "random.hpp"
 #include "scent.hpp"
@@ -27,10 +27,10 @@ ActionResult HealingConsumable::activate(flecs::entity item,
     auto msg = stringf("You consume the %s, and recover %d HP!",
                        item.get<Named>().name.c_str(), amount_recovered);
     item.destruct();
-    return {ActionResultType::Success, msg, 0.0f, color::healthRecovered};
+    return {ActionResultType::Success, msg, 0.0f, Colors::healthRecovered};
   } else {
     return {ActionResultType::Failure, "Your health is already full.", 0.0f,
-            color::impossible};
+            Colors::impossible};
   }
 }
 
@@ -41,7 +41,7 @@ ActionResult DeodorantConsumable::activate(flecs::entity item,
   auto msg = stringf("You apply the %s, and reduce your smell by %d.",
                      item.get<Named>().name.c_str(), (int)amount_reduced);
   item.destruct();
-  return {ActionResultType::Success, msg, 0.0f, color::healthRecovered};
+  return {ActionResultType::Success, msg, 0.0f, Colors::healthRecovered};
 }
 
 ActionResult LightningDamageConsumable::activate(flecs::entity item,
@@ -66,7 +66,7 @@ ActionResult LightningDamageConsumable::activate(flecs::entity item,
 
   if (target == consumer.null()) {
     return {ActionResultType::Failure, "No enemy is close enough to strike.",
-            0.0f, color::impossible};
+            0.0f, Colors::impossible};
   }
 
   ecs.get_mut<Trauma>().trauma += 0.25f;
@@ -95,7 +95,7 @@ ActionResult ConfusionConsumable::activate(flecs::entity item,
   });
 
   return {ActionResultType::Failure, "Select a target location.", 0.0f,
-          color::needsTarget};
+          Colors::needsTarget};
 }
 
 ActionResult ConfusionConsumable::selected(flecs::entity item,
@@ -107,18 +107,18 @@ ActionResult ConfusionConsumable::selected(flecs::entity item,
   if (!gameMap.isVisible(target)) {
     return {ActionResultType::Failure,
             "You cannot target an area that you cannot see.", 0.0f,
-            color::impossible};
+            Colors::impossible};
   }
 
   auto target_entity = mapQuery<positionQuery::Ai>(ecs, map).find(
       [target](auto &pos) { return pos == target; });
   if (target_entity == target_entity.null()) {
     return {ActionResultType::Failure, "You must select an enemy to target.",
-            0.0f, color::impossible};
+            0.0f, Colors::impossible};
   }
   if (target_entity == consumer) {
     return {ActionResultType::Failure, "You cannot confuse yourself!", 0.0f,
-            color::impossible};
+            Colors::impossible};
   }
 
   auto msg =
@@ -138,7 +138,7 @@ ActionResult ConfusionConsumable::selected(flecs::entity item,
   }
 
   item.destruct();
-  return {ActionResultType::Success, msg, 0.0f, color::statusEffectApplied};
+  return {ActionResultType::Success, msg, 0.0f, Colors::statusEffectApplied};
 }
 
 ActionResult FireballDamageConsumable::activate(flecs::entity item,
@@ -152,7 +152,7 @@ ActionResult FireballDamageConsumable::activate(flecs::entity item,
       radius);
 
   return {ActionResultType::Failure, "Select a target location.", 0.0f,
-          color::needsTarget};
+          Colors::needsTarget};
 }
 
 ActionResult
@@ -164,7 +164,7 @@ FireballDamageConsumable::selected(flecs::entity item,
   if (!gameMap.isVisible(target)) {
     return {ActionResultType::Failure,
             "You cannot target an area that you cannot see.", 0.0f,
-            color::impossible};
+            Colors::impossible};
   }
 
   auto q =
@@ -179,7 +179,7 @@ FireballDamageConsumable::selected(flecs::entity item,
       auto msg =
           stringf("The %s is engulfed in a fiery explosion, taking %d damage!",
                   name.name.c_str(), damage);
-      messageLog.addMessage(msg, color::enemyDie);
+      messageLog.addMessage(msg, Colors::monsterDie);
       f.take_damage(damage, e);
     }
   });
@@ -232,7 +232,7 @@ ActionResult ScentConsumable::activate(flecs::entity item,
       stringf("You apply the %s and now smell like %s.",
               item.get<Named>().name.c_str(), scentName(scent.type).c_str());
   item.destruct();
-  return {ActionResultType::Success, msg, 0.0f, color::healthRecovered};
+  return {ActionResultType::Success, msg, 0.0f, Colors::healthRecovered};
 }
 
 ActionResult MagicMappingConsumable::activate(flecs::entity item,
@@ -291,7 +291,7 @@ ActionResult RopeConsumable::activate(flecs::entity item,
     return {ActionResultType::Failure, "", 0.0f};
   }
   return {ActionResultType::Failure, "There is no chasm to climb down here.",
-          0.0f, color::impossible};
+          0.0f, Colors::impossible};
 }
 
 ActionResult TransporterConsumable::activate(flecs::entity item,

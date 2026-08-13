@@ -1,6 +1,7 @@
 #pragma once
 
 #include "color.hpp"
+#include "module.hpp"
 
 #include <algorithm>
 #include <array>
@@ -64,7 +65,7 @@ struct Console {
   Console(int w, int h)
       : chars(), w(w), h(h), elements(w * h), trauma(0.0f),
         tiles(std::make_unique<Tile[]>((size_t)elements)) {
-    clear({' ', color::text, color::background});
+    clear({' ', Colors::text, Colors::background});
   };
 
   [[nodiscard]] inline const Tile &at(const std::array<int, 2> &xy) const {
@@ -91,7 +92,7 @@ struct Console {
     return tiles.get() + elements;
   }
 
-  void clear(const Tile &tile = {' ', color::text, color::background,
+  void clear(const Tile &tile = {' ', Colors::text, Colors::background,
                                  false}) noexcept {
     for (auto &it : *this)
       it = tile;

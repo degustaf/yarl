@@ -109,7 +109,7 @@ template <typename T> static constexpr inline T lerp(T x, T y, float t) {
 
 //
 // I had no idea what to call lots of colors. There are only so many variations
-// of "blueish, I guess", so I sued the color naming tool at
+// of "blueish, I guess", so I used the color naming tool at
 // https://chir.ag/projects/name-that-color
 namespace _private {
 // shades of grey
@@ -171,20 +171,11 @@ constexpr auto paco = RGB{0x41, 0x1F, 0x10};
 constexpr auto copperCanyon = RGB{0x7E, 0x3A, 0x15};
 }; // namespace _private
 
-constexpr auto text = _private::white;
-constexpr auto background = _private::black;
 constexpr auto player = _private::navyBlue;
-constexpr auto playerAtk = _private::altoGrey;
-constexpr auto enemyAtk = _private::redOrange;
-constexpr auto needsTarget = _private::aqua;
-constexpr auto statusEffectApplied = _private::screaminGreen;
-constexpr auto descend = _private::electricViolet;
 constexpr auto stairs = _private::white;
 constexpr auto walls = _private::black;
 constexpr auto darkWallbg = _private::navyBlue;
 constexpr auto lightWallbg = _private::pesto;
-constexpr auto fountain = _private::blue;
-constexpr auto dryFountain = _private::lightGrey;
 constexpr auto lightFG = _private::himalaya;
 constexpr auto lightFloor = _private::oldGold;
 constexpr auto darkFG = _private::bunting;
@@ -193,52 +184,20 @@ constexpr auto sensedFloor = _private::doveGrey;
 constexpr auto chasmFG = _private::doveGrey;
 constexpr auto chasm = _private::mineShaft;
 constexpr auto sensedFG = _private::darkerGrey;
-constexpr auto tool = _private::lightGrey;
-constexpr auto weapon = _private::cerulean;
-constexpr auto laser = _private::orange;
-constexpr auto armor = _private::copperCanyon;
-constexpr auto jump = _private::red;
-constexpr auto blood = _private::red;
 constexpr auto areaTarget = _private::red;
 constexpr auto fireball = _private::red;
 constexpr auto lightning = _private::yellow;
-constexpr auto confusion = _private::heliotrope;
 constexpr auto door = _private::darkred;
 constexpr auto portal = _private::guardsmanRed;
 constexpr auto water_fg = _private::blue;
 constexpr auto water_bg = _private::blueRibbon;
 constexpr auto dark_water_fg = _private::navyBlue;
 constexpr auto dark_water_bg = _private::stratosBlue;
-constexpr auto deodorant = _private::redOrange;
-constexpr auto potion = _private::electricViolet;
 constexpr auto sensed = _private::neonGreen;
 
-constexpr auto playerDie = _private::redOrange;
-constexpr auto enemyDie = _private::sunshade;
+// constexpr auto go = _private::green;
+// constexpr auto caution = _private::yellow;
+// constexpr auto extraCaution = _private::orange;
+// constexpr auto stop = _private::red;
 
-constexpr auto invalid = _private::yellow;
-constexpr auto impossible = _private::doveGrey;
-constexpr auto error = _private::redOrange;
-
-constexpr auto welcomeText = _private::dodgerBlue;
-constexpr auto healthRecovered = _private::green;
-
-constexpr auto barText = _private::white;
-constexpr auto barFilled = _private::camarone;
-constexpr auto barEmpty = _private::paco;
-
-constexpr auto menu_title = _private::goldenFizz;
-constexpr auto menu_text = _private::white;
-constexpr auto menu_border = _private::earlsGreen;
-constexpr auto menu_background = _private::darkGrey;
-
-constexpr auto go = _private::green;
-constexpr auto caution = _private::yellow;
-constexpr auto extraCaution = _private::orange;
-constexpr auto stop = _private::red;
-
-constexpr auto cyst = _private::black;
-constexpr auto orc = _private::goblinGreen;
-constexpr auto troll = _private::japaneseLaurel;
-constexpr auto dung = _private::brown;
 }; // namespace color

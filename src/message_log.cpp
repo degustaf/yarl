@@ -15,7 +15,7 @@ std::string Message::fullText(void) const {
   return plain_text;
 }
 
-void MessageLog::addMessage(const std::string &text, color::RGB fg,
+void MessageLog::addMessage(const std::string &text, color::RGBA fg,
                             bool stack) {
   if (stack && messages.size() > 0 && messages.back().plain_text == text) {
     messages.back().count++;

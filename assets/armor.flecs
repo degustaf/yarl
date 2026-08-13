@@ -1,6 +1,6 @@
 module PFs
 
-const armor_color = RGBA: {0x7e, 0x3a, 0x15, 0xff}
+const armor_color : Colors.armor_color
 
 prefab leatherArmor {
   Renderable: {

@@ -1,0 +1,110 @@
+module Colors
+
+// shades of grey
+const white = RGBA: {0xFF, 0xFF, 0xFF, 0xff}
+const altoGrey = RGBA: {0xDB, 0xDB, 0xDB, 0xff}
+const lightGrey = RGBA: {0x9F, 0x9F, 0x9F, 0xff}
+const doveGrey = RGBA: {0x6C, 0x6C, 0x6C, 0xff}
+const darkGrey = RGBA: {0x3B, 0x3B, 0x3B, 0xff}
+const mineShaft = RGBA: {0x32, 0x32, 0x32, 0xff}
+const darkerGrey = RGBA: {0x19, 0x19, 0x19, 0xff}
+const black = RGBA: {0, 0, 0, 0xff}
+
+// reds
+const red = RGBA: {0xFF, 0, 0, 0xff}
+const darkred = RGBA: {0x99, 0, 0, 0xff}
+const maroon = RGBA: {0x80, 0, 0, 0xff}
+const guardsmanRed = RGBA: {0xBA, 0, 0, 0xff}
+const heliotrope = RGBA: {0xDF, 0x73, 0xFF, 0xff}
+
+// oranges
+const redOrange = RGBA: {0xFF, 0x3F, 0x34, 0xff}
+const orange = RGBA: {0xFF, 0x6E, 0, 0xff}
+const sunshade = RGBA: {0xFF, 0x9E, 0x2C, 0xff}
+
+// yellows
+const yellow = RGBA: {0xFF, 0xFF, 0, 0xff}
+const goldenFizz = RGBA: {0xF5, 0xFB, 0x3D, 0xff}
+const earlsGreen = RGBA: {0xC9, 0xB9, 0x3B, 0xff} // Actually a yellow
+const oldGold = RGBA: {0xCF, 0xB5, 0x3B, 0xff}
+const roti = RGBA: {0xC6, 0xA8, 0x4B, 0xff}
+const pesto = RGBA: {0x7C, 0x76, 0x31, 0xff}
+
+// green
+const green = RGBA: {0, 0xFF, 0, 0xff}
+const goblinGreen = RGBA: {0x3D, 0x7D, 0x52, 0xff}
+const camarone = RGBA: {0, 0x58, 0x1A, 0xff}
+const neonGreen = RGBA: {0x39, 0xFF, 0x14, 0xff}
+const screaminGreen = RGBA: {0x66, 0xFF, 0x66, 0xff}
+const himalaya = RGBA: {0x6A, 0x5D, 0x1B, 0xff}
+const japaneseLaurel = RGBA: {0x0A, 0x69, 0x06, 0xff}
+
+// blues
+const blue = RGBA: {0, 0, 0xFF, 0xff}
+const navyBlue = RGBA: {0, 0, 0x80, 0xff}
+const stratosBlue = RGBA: {0, 0x07, 0x41, 0xff}
+const blueRibbon = RGBA: {0, 0x66, 0xFF, 0xff}
+const cerulean = RGBA: {0x02, 0xA4, 0xD3, 0xff}
+const dodgerBlue = RGBA: {0x1E, 0x90, 0xFF, 0xff}
+const aqua = RGBA: {0x3F, 0xFF, 0xFF, 0xff}
+
+// purple
+const electricViolet = RGBA: {0x8B, 0, 0xFF, 0xff}
+const bunting = RGBA: {0x15, 0x1F, 0x4C, 0xff}
+const minsk = RGBA: {0x3F, 0x30, 0x7F, 0xff}
+
+// brown
+const brown = RGBA: {0x6A, 0x4A, 0x3A, 0xff}
+const paco = RGBA: {0x41, 0x1F, 0x10, 0xff}
+const copperCanyon = RGBA: {0x7E, 0x3A, 0x15, 0xff}
+
+// Used in C++
+
+// Used for text
+export const text : white
+export const background : black
+export const impossible : doveGrey
+export const playerAtk : altoGrey
+export const monsterAtk : redOrange
+export const playerDie : redOrange
+export const monsterDie : sunshade
+export const descend : electricViolet
+export const healthRecovered : green
+export const needsTarget : aqua
+export const statusEffectApplied : screaminGreen
+export const welcomeText : dodgerBlue
+export const jump : red
+
+export const menu_border : earlsGreen
+export const menu_background : darkGrey
+export const menu_title : goldenFizz
+export const menu_text : white
+
+export const barText : white
+export const barFilled : camarone
+export const barEmpty : paco
+
+export const go : green
+export const caution : yellow
+export const extraCaution : orange
+export const stop : red
+
+export const dryFountain : lightGrey
+export const blood : red
+export const dung : brown
+
+// Only used in scripts
+export const tool_color : lightGrey
+export const weapon_color : cerulean
+export const armor_color : copperCanyon
+export const cyst : black 
+export const orc : goblinGreen
+export const troll : japaneseLaurel
+export const potion : electricViolet
+export const deodorant : redOrange
+export const fountain : blue
+export const light : yellow
+export const laser : orange
+export const lightning : yellow
+export const confusion : heliotrope
+export const fireball : red
