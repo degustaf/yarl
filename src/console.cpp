@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <cstdint>
+#include <filesystem>
 #include <optional>
 
 #include <utf8proc.h>
@@ -438,4 +439,33 @@ Console::shake Console::getShake(uint64_t t) const {
   auto y = maxDimRatio * (float)h * trauma * trauma * noise.get(pt);
 
   return {r, x, y};
+}
+
+TileModule::TileModule(flecs::world ecs) {
+  ecs.module<TileModule>("Tiles");
+
+  ecs.component<Console::Tile>()
+      .member<int>("ch")
+      .member<color::RGBA>("fg")
+      .member<color::RGBA>("bg")
+      .member<bool>("flipped");
+
+  auto script = std::filesystem::path("assets/tiles.flecs");
+  ecs.script().filename(script.string().c_str()).run();
+
+  ecs.get_const_var("shroud", shroud);
+  ecs.get_const_var("floor_light", floor_light);
+  ecs.get_const_var("floor_dark", floor_dark);
+  ecs.get_const_var("floor_sensed", floor_sensed);
+  ecs.get_const_var("bloody_floor_light", bloody_floor_light);
+  ecs.get_const_var("bloody_floor_dark", bloody_floor_dark);
+  ecs.get_const_var("wall_light", wall_light);
+  ecs.get_const_var("wall_dark", wall_dark);
+  ecs.get_const_var("stairs_light", stairs_light);
+  ecs.get_const_var("stairs_dark", stairs_dark);
+  ecs.get_const_var("stairs_sensed", stairs_sensed);
+  ecs.get_const_var("water_light", water_light);
+  ecs.get_const_var("water_dark", water_dark);
+  ecs.get_const_var("chasm_light", chasm_light);
+  ecs.get_const_var("chasm_dark", chasm_dark);
 }

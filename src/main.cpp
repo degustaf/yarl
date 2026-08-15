@@ -40,9 +40,11 @@ SDL_AppResult SDL_AppInit(void **data, [[maybe_unused]] int argc,
   *data = ecs;
   ecs->import <Colors>();
   ecs->import <Module>();
+  ecs->import <TileModule>();
   for (const auto &fl : std::filesystem::directory_iterator("assets")) {
     if ((fl.path().extension().string() == ".flecs") &&
-        (fl.path().filename() != "colors.flecs")) {
+        (fl.path().filename() != "colors.flecs") &&
+        (fl.path().filename() != "tiles.flecs")) {
       ecs->script_run_file(fl.path().string().c_str());
     }
   }

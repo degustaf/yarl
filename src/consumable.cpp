@@ -269,7 +269,7 @@ void TrackerConsumable<T>::render(Console &console, flecs::entity map) const {
   q.each([&](auto &p, auto &r, auto i) {
     if (!gMap.isVisible(p) || (i && !i->paused)) {
       r.render(console, p, true);
-      console.at(p).bg = color::sensed;
+      console.at(p).bg = Colors::sensed;
     }
   });
 }

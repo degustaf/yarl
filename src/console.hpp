@@ -3,6 +3,8 @@
 #include "color.hpp"
 #include "module.hpp"
 
+#include <flecs.h>
+
 #include <algorithm>
 #include <array>
 #include <cassert>
@@ -148,3 +150,23 @@ static constexpr inline Console::Tile lerp(const Console::Tile &x,
   assert(x.flipped == y.flipped);
   return {x.ch, lerp(x.fg, y.fg, t), lerp(x.bg, y.bg, t), x.flipped};
 }
+
+struct TileModule {
+  TileModule(flecs::world);
+
+  static inline Console::Tile shroud;
+  static inline Console::Tile floor_light;
+  static inline Console::Tile floor_dark;
+  static inline Console::Tile floor_sensed;
+  static inline Console::Tile bloody_floor_light;
+  static inline Console::Tile bloody_floor_dark;
+  static inline Console::Tile wall_light;
+  static inline Console::Tile wall_dark;
+  static inline Console::Tile stairs_light;
+  static inline Console::Tile stairs_dark;
+  static inline Console::Tile stairs_sensed;
+  static inline Console::Tile water_light;
+  static inline Console::Tile water_dark;
+  static inline Console::Tile chasm_light;
+  static inline Console::Tile chasm_dark;
+};

@@ -46,4 +46,5 @@ struct Colors {
   static inline color::RGBA dryFountain;
   static inline color::RGBA blood;
   static inline color::RGBA dung;
+  static inline color::RGBA sensed;
 };

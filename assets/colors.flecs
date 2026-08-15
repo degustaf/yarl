@@ -94,6 +94,25 @@ export const blood : red
 export const dung : brown
 
 // Only used in scripts
+
+// Tile colors
+export const lightFG : himalaya
+export const lightFloor : oldGold
+export const darkFG : bunting
+export const darkFloor : minsk
+export const sensedFG : darkerGrey
+export const sensedFloor : doveGrey
+export const walls : black
+export const lightWallbg : pesto
+export const darkWallbg : navyBlue
+export const stairs : white
+export const water_fg : blue
+export const water_bg : blueRibbon
+export const dark_water_fg : navyBlue
+export const dark_water_bg : stratosBlue
+export const chasmFG : doveGrey
+export const chasm : mineShaft
+
 export const tool_color : lightGrey
 export const weapon_color : cerulean
 export const armor_color : copperCanyon

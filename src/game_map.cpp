@@ -3,6 +3,7 @@
 #include <cstddef>
 
 #include "color.hpp"
+#include "console.hpp"
 #include "defines.hpp"
 #include "fov.hpp"
 #include "map_queries.hpp"
@@ -59,43 +60,7 @@ void GameMap::nextFloor(flecs::entity player, bool lit) const {
   deleteMapEntity(oldMap);
 }
 
-static constexpr auto floor_light =
-    Console::Tile{'.', color::lightFG, color::lightFloor};
-static constexpr auto floor_dark =
-    Console::Tile{'.', color::darkFG, color::darkFloor};
-static constexpr auto floor_sensed =
-    Console::Tile{'.', color::sensedFG, color::sensedFloor};
-
-static constexpr auto wall_light =
-    Console::Tile{'#', color::walls, color::lightWallbg};
-static constexpr auto wall_dark =
-    Console::Tile{'#', color::walls, color::darkWallbg};
-
-static constexpr auto stairs_light =
-    Console::Tile{'>', color::stairs, color::lightFloor};
-static constexpr auto stairs_dark =
-    Console::Tile{'>', color::stairs, color::darkFloor};
-static constexpr auto stairs_sensed =
-    Console::Tile{'>', color::stairs, color::sensedFloor};
-
-static constexpr auto water_light =
-    Console::Tile{'~', color::water_fg, color::water_bg};
-static constexpr auto water_dark =
-    Console::Tile{'~', color::dark_water_fg, color::dark_water_bg};
-
-static constexpr auto chasm_light =
-    Console::Tile{0x2591, color::chasmFG, color::chasm};
-static constexpr auto chasm_dark =
-    Console::Tile{0x2591, color::chasmFG, color::darkFloor};
-
 void GameMap::render(Console &console, uint64_t time) {
-  static const auto shroud =
-      Console::Tile{' ', Colors::text, Colors::background};
-  static const auto bloody_floor_light =
-      Console::Tile{'.', Colors::blood, color::lightFloor};
-  static const auto bloody_floor_dark =
-      Console::Tile{'.', Colors::blood, color::darkFloor};
-
   float vec[3] = {0, 0, (float)time / (1000.0f)};
   for (auto y = 0; y < height; y++) {
     vec[1] = (float)y;
@@ -104,38 +69,43 @@ void GameMap::render(Console &console, uint64_t time) {
       if (isVisible(x, y)) {
         auto t = tiles[y * width + x].luminosity;
         console.at({x, y}) =
-            isStairs({x, y}) ? lerp(stairs_light, stairs_dark, t)
-            : isKnownBloody({x, y})
-                ? lerp(bloody_floor_light, bloody_floor_dark, t)
-            : isWalkable(x, y)    ? lerp(floor_light, floor_dark, t)
-            : isWater(x, y)       ? lerp(water_light, water_dark, t)
-            : isTransparent(x, y) ? lerp(chasm_light, chasm_dark, t)
-                                  : lerp(wall_light, wall_dark, t);
+            isStairs({x, y})
+                ? lerp(TileModule::stairs_light, TileModule::stairs_dark, t)
+            : isKnownBloody({x, y}) ? lerp(TileModule::bloody_floor_light,
+                                           TileModule::bloody_floor_dark, t)
+            : isWalkable(x, y)
+                ? lerp(TileModule::floor_light, TileModule::floor_dark, t)
+            : isWater(x, y)
+                ? lerp(TileModule::water_light, TileModule::water_dark, t)
+            : isTransparent(x, y)
+                ? lerp(TileModule::chasm_light, TileModule::chasm_dark, t)
+                : lerp(TileModule::wall_light, TileModule::wall_dark, t);
         if (isWater(x, y)) {
           auto scale = 63.0f * t + 31.0f * (1 - t);
           console.at({x, y}).bg += (int8_t)(scale * noise.get(vec));
         }
       } else if (isExplored(x, y)) {
-        console.at({x, y}) = isStairs({x, y})        ? stairs_dark
-                             : isKnownBloody({x, y}) ? bloody_floor_dark
-                             : isWalkable(x, y)      ? floor_dark
-                             : isWater(x, y)         ? water_dark
-                             : isTransparent(x, y)   ? chasm_dark
-                                                     : wall_dark;
+        console.at({x, y}) = isStairs({x, y}) ? TileModule::stairs_dark
+                             : isKnownBloody({x, y})
+                                 ? TileModule::bloody_floor_dark
+                             : isWalkable(x, y)    ? TileModule::floor_dark
+                             : isWater(x, y)       ? TileModule::water_dark
+                             : isTransparent(x, y) ? TileModule::chasm_dark
+                                                   : TileModule::wall_dark;
         if (isWater(x, y)) {
           console.at({x, y}).bg += (int8_t)(31.0f * noise.get(vec));
         }
       } else if (isSensed(x, y)) {
-        console.at({x, y}) = isStairs({x, y})      ? stairs_sensed
-                             : isWalkable(x, y)    ? floor_sensed
-                             : isWater(x, y)       ? water_dark
-                             : isTransparent(x, y) ? chasm_dark
-                                                   : wall_dark;
+        console.at({x, y}) = isStairs({x, y})      ? TileModule::stairs_sensed
+                             : isWalkable(x, y)    ? TileModule::floor_sensed
+                             : isWater(x, y)       ? TileModule::water_dark
+                             : isTransparent(x, y) ? TileModule::chasm_dark
+                                                   : TileModule::wall_dark;
         if (isWater(x, y)) {
           console.at({x, y}).bg += (int8_t)(31 * noise.get(vec));
         }
       } else {
-        console.at({x, y}) = shroud;
+        console.at({x, y}) = TileModule::shroud;
       }
     }
   }

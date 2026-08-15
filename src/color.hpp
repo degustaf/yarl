@@ -172,32 +172,10 @@ constexpr auto copperCanyon = RGB{0x7E, 0x3A, 0x15};
 }; // namespace _private
 
 constexpr auto player = _private::navyBlue;
-constexpr auto stairs = _private::white;
-constexpr auto walls = _private::black;
-constexpr auto darkWallbg = _private::navyBlue;
-constexpr auto lightWallbg = _private::pesto;
-constexpr auto lightFG = _private::himalaya;
-constexpr auto lightFloor = _private::oldGold;
-constexpr auto darkFG = _private::bunting;
-constexpr auto darkFloor = _private::minsk;
-constexpr auto sensedFloor = _private::doveGrey;
-constexpr auto chasmFG = _private::doveGrey;
-constexpr auto chasm = _private::mineShaft;
-constexpr auto sensedFG = _private::darkerGrey;
 constexpr auto areaTarget = _private::red;
 constexpr auto fireball = _private::red;
 constexpr auto lightning = _private::yellow;
 constexpr auto door = _private::darkred;
 constexpr auto portal = _private::guardsmanRed;
-constexpr auto water_fg = _private::blue;
-constexpr auto water_bg = _private::blueRibbon;
-constexpr auto dark_water_fg = _private::navyBlue;
-constexpr auto dark_water_bg = _private::stratosBlue;
-constexpr auto sensed = _private::neonGreen;
-
-// constexpr auto go = _private::green;
-// constexpr auto caution = _private::yellow;
-// constexpr auto extraCaution = _private::orange;
-// constexpr auto stop = _private::red;
 
 }; // namespace color

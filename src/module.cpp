@@ -383,4 +383,5 @@ Colors::Colors(flecs::world ecs) {
   ecs.get_const_var("dryFountain", dryFountain);
   ecs.get_const_var("blood", blood);
   ecs.get_const_var("dung", dung);
+  ecs.get_const_var("sensed", sensed);
 }

@@ -1,0 +1,111 @@
+module Tiles
+
+const text : Colors.text
+const background : Colors.background
+const lightFG : Colors.lightFG
+const lightFloor : Colors.lightFloor
+const darkFG : Colors.darkFG
+const darkFloor : Colors.darkFloor
+const sensedFG : Colors.sensedFG
+const sensedFloor : Colors.sensedFloor
+const blood : Colors.blood
+const walls : Colors.walls
+const lightWallbg : Colors.lightWallbg
+const darkWallbg : Colors.darkWallbg
+const stairs : Colors.stairs
+const water_fg : Colors.water_fg
+const water_bg : Colors.water_bg
+const dark_water_fg : Colors.dark_water_fg
+const dark_water_bg : Colors.dark_water_bg
+const chasmFG : Colors.chasmFG
+const chasm : Colors.chasm
+
+export const shroud = Tile: {
+  ch: ' '
+  fg: text
+  bg: background
+}
+
+export const floor_light = Tile: {
+  ch: '.'
+  fg: lightFG
+  bg: lightFloor
+}
+
+export const floor_dark = Tile: {
+  ch: '.'
+  fg: darkFG
+  bg: darkFloor
+}
+
+export const floor_sensed = Tile: {
+  ch: '.'
+  fg: sensedFG
+  bg: sensedFloor
+}
+
+export const bloody_floor_light = Tile: {
+  ch: '.'
+  fg: blood
+  bg: lightFloor
+}
+
+export const bloody_floor_dark = Tile: {
+  ch: '.'
+  fg: blood
+  bg: darkFloor
+}
+
+export const wall_light = Tile: {
+  ch: '#'
+  fg: walls
+  bg: lightWallbg
+}
+
+export const wall_dark = Tile: {
+  ch: '#'
+  fg: walls
+  bg: darkWallbg
+}
+
+export const stairs_light = Tile: {
+  ch: '>'
+  fg: stairs
+  bg: lightFloor
+}
+
+export const stairs_dark = Tile: {
+  ch: '>'
+  fg: stairs
+  bg: darkFloor
+}
+
+export const stairs_sensed = Tile: {
+  ch: '>'
+  fg: stairs
+  bg: sensedFloor
+}
+
+export const water_light = Tile: {
+  ch: '~'
+  fg: water_fg
+  bg: water_bg
+}
+
+export const water_dark = Tile: {
+  ch: '~'
+  fg: dark_water_fg
+  bg: dark_water_bg
+}
+
+export const chasm_light = Tile: {
+  ch: 0x2591
+  fg: chasmFG
+  bg: chasm
+}
+
+export const chasm_dark = Tile: {
+  ch: 0x2591
+  fg: chasmFG
+  bg: darkFloor
+}
