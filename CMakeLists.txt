@@ -27,7 +27,7 @@ file(
 if (MSVC)
     add_compile_options(/W2)
 elseif(EMSCRIPTEN)
-    add_compile_options(-Wall -Wextra -Wconversion -Werror -g)
+    add_compile_options(-Wall -Wextra -Wconversion -Werror -Wno-unused-template -g)
     add_compile_options(-fexceptions)
 else()
     add_compile_options(-Wall -Wextra -Wconversion -Werror -pedantic -g)
@@ -66,10 +66,10 @@ add_compile_definitions(FLECS_CPP_NO_AUTO_REGISTRATION)
 set(SDLIMAGE_PNG_LIBPNG ON)
 
 find_package(SDL3 CONFIG REQUIRED)
-find_package(flecs)
 find_package(SDL3_ttf CONFIG REQUIRED)
 find_package(SDL3_image CONFIG REQUIRED)
 find_package(SDL3_mixer CONFIG REQUIRED)
+find_package(flecs)
 find_package(utf8proc)
 target_link_libraries(${PROJECT_NAME}
 	PRIVATE SDL3::SDL3
