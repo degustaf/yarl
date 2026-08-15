@@ -4,6 +4,7 @@ const orc_color : Colors.orc
 const troll_color : Colors.troll
 const cyst_color : Colors.cyst
 const blood : Colors.blood
+const jelly_color : Colors.jelly
 
 prefab orc {
   Renderable: {
@@ -103,5 +104,34 @@ prefab corpse {
   Scent: {
     type: decay
     power: 1000.0
+  }
+}
+
+prefab jelly {
+  Renderable: {
+    ch: 'J'
+    fg: jelly_color
+    layer: Actor
+  }
+  Named: {
+    name: "Jelly"
+  }
+  Describable
+  BlocksMovement
+  HostileAi
+  Fighter: {
+    max_hp: 10
+    _hp: 10
+    defense: 0
+    power: 2
+  }
+  XP: {
+    given: 150
+  }
+  Splitter
+  FloorWeights: {
+    data: [
+      {2, 20}
+    ]
   }
 }

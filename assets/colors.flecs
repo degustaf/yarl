@@ -20,6 +20,7 @@ const darkred = RGBA: {0x99, 0, 0, 0xff}
 const maroon = RGBA: {0x80, 0, 0, 0xff}
 const guardsmanRed = RGBA: {0xBA, 0, 0, 0xff}
 const heliotrope = RGBA: {0xDF, 0x73, 0xFF, 0xff}
+const pinkFlamingo = RGBA: {0xff, 0x66, 0xff, 0xff}
 
 // oranges
 const redOrange = RGBA: {0xFF, 0x3F, 0x34, 0xff}
@@ -137,3 +138,4 @@ export const lightning : yellow
 export const confusion : heliotrope
 export const fireball : red
 export const portal : guardsmanRed
+export const jelly : pinkFlamingo

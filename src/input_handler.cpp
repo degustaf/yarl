@@ -249,8 +249,8 @@ std::unique_ptr<Action> MainMenuInputHandler::processChoice(int idx,
                                                             flecs::world ecs) {
   switch (idx) {
   case 0:
-    assert(mouse_loc[0] >= 0);
-    assert(mouse_loc[1] >= 0);
+    assert(mouse_loc[0] >= -1);
+    assert(mouse_loc[1] >= -1);
     Engine::clear_game_data(ecs);
     Engine::new_game(ecs, dim[0], dim[1] - HUD_HEIGHT - 2);
     make<MainGameInputHandler>(ecs);
@@ -775,11 +775,13 @@ void MainHandler::on_render(flecs::world ecs, Console &console) {
               BAR_WIDTH);
     renderSmell(console, player, 0, dim[1] - HUD_HEIGHT + 2, BAR_WIDTH);
     renderDungeonLevel(console, gMap.level, {0, dim[1] - HUD_HEIGHT + 4});
-    assert(mouse_loc[0] >= 0);
-    assert(mouse_loc[1] >= 0);
-    renderNamesAtMouseLocation(console,
-                               {BAR_WIDTH + 1, dim[1] - HUD_HEIGHT - 1},
-                               mouse_loc, map, gMap);
+    assert(mouse_loc[0] >= -1);
+    assert(mouse_loc[1] >= -1);
+    if (mouse_loc[0] >= 0 && mouse_loc[1] >= 0) {
+      renderNamesAtMouseLocation(console,
+                                 {BAR_WIDTH + 1, dim[1] - HUD_HEIGHT - 1},
+                                 mouse_loc, map, gMap);
+    }
     renderCommandButton(console, commandBox);
   }
 }

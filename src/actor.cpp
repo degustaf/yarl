@@ -86,10 +86,12 @@ void Fighter::take_damage(int amount, flecs::entity self) {
         random_shuffle(&newPos[0], &newPos[newPos.size() - 1],
                        [&](auto n) { return rng->getInt(0, (int)n); });
 
-        auto newHp = _hp / 2;
-        set_hp(newHp, self);
-        auto clone = self.clone();
-        clone.set<Position>(newPos[0]);
+        auto newHp = self.get<Fighter>().hp() / 2;
+        if (newHp > 0) {
+          set_hp(newHp, self);
+          auto clone = self.clone();
+          clone.set<Position>(newPos[0]);
+        }
       }
     }
   }
