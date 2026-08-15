@@ -1,5 +1,9 @@
 module Colors
 
+// I had no idea what to call lots of colors. There are only so many variations
+// of "blueish, I guess", so I used the color naming tool at
+// https://chir.ag/projects/name-that-color
+
 // shades of grey
 const white = RGBA: {0xFF, 0xFF, 0xFF, 0xff}
 const altoGrey = RGBA: {0xDB, 0xDB, 0xDB, 0xff}
@@ -32,6 +36,7 @@ const pesto = RGBA: {0x7C, 0x76, 0x31, 0xff}
 
 // green
 const green = RGBA: {0, 0xFF, 0, 0xff}
+const transparent_green = RGBA: {0, 0xFF, 0, 0x7f}
 const goblinGreen = RGBA: {0x3D, 0x7D, 0x52, 0xff}
 const camarone = RGBA: {0, 0x58, 0x1A, 0xff}
 const neonGreen = RGBA: {0x39, 0xFF, 0x14, 0xff}
@@ -92,6 +97,9 @@ export const stop : red
 export const dryFountain : lightGrey
 export const blood : red
 export const dung : brown
+export const sensed : neonGreen
+export const door : darkred
+export const mappingPath : transparent_green
 
 // Only used in scripts
 
@@ -113,6 +121,7 @@ export const dark_water_bg : stratosBlue
 export const chasmFG : doveGrey
 export const chasm : mineShaft
 
+export const player : navyBlue
 export const tool_color : lightGrey
 export const weapon_color : cerulean
 export const armor_color : copperCanyon
@@ -127,3 +136,4 @@ export const laser : orange
 export const lightning : yellow
 export const confusion : heliotrope
 export const fireball : red
+export const portal : guardsmanRed

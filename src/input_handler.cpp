@@ -695,11 +695,9 @@ void MainHandler::on_render(flecs::world ecs, Console &console) {
   auto &gMap = map.get_mut<GameMap>();
   gMap.render(console, time);
 
-  color::RGBA green = color::_private::green;
-  green.a = 128;
   for (auto &tl : path) {
     auto &color = console.at(tl).bg;
-    color = green * color;
+    color = Colors::mappingPath * color;
   }
 
   auto q =
@@ -1288,7 +1286,7 @@ void AreaTargetSelector::on_render(flecs::world ecs, Console &console) {
     for (auto x = 0; x < console.get_width(); x++) {
       auto dx = mouse_loc[0] - x;
       if (dx * dx + dy * dy <= radius * radius && gm.isVisible({x, y})) {
-        console.at({x, y}).bg = color::areaTarget;
+        console.at({x, y}).bg = areaTarget;
       }
     }
   }

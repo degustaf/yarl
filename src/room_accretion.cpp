@@ -504,20 +504,13 @@ static void addPortals(const Config &cfg, flecs::entity map, GameMap &dungeon,
                        Random &rng) {
   auto width = dungeon.getWidth();
   auto height = dungeon.getHeight();
+  auto ecs = map.world();
+  auto prefab = ecs.lookup("PFs::portal");
+  assert(prefab);
   for (auto i = 0; i < cfg.PORTALS; i++) {
-    auto e1 = map.world()
-                  .entity()
-                  .add(flecs::ChildOf, map)
-                  .add<BlocksFov>()
-                  .set<Renderable>({'A', color::portal, std::nullopt,
-                                    RenderOrder::Corpse, false});
-    auto e2 = map.world()
-                  .entity()
-                  .add(flecs::ChildOf, map)
-                  .add<Portal>(e1)
-                  .add<BlocksFov>()
-                  .set<Renderable>({'A', color::portal, std::nullopt,
-                                    RenderOrder::Corpse, false});
+    auto e1 = ecs.entity().is_a(prefab).add(flecs::ChildOf, map);
+    auto e2 =
+        ecs.entity().is_a(prefab).add(flecs::ChildOf, map).add<Portal>(e1);
     while (true) {
       auto x = rng.getInt(0, width - 1);
       auto y = rng.getInt(0, height - 1);

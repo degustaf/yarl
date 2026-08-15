@@ -139,10 +139,6 @@ Module::Module(flecs::world ecs) {
   ecs.component<SDLAudio>();
 
   // color.hpp
-  ecs.component<color::RGB>()
-      .member<uint8_t>("r")
-      .member<uint8_t>("g")
-      .member<uint8_t>("b");
   ecs.component<color::RGBA>()
       .member<uint8_t>("r")
       .member<uint8_t>("g")
@@ -153,12 +149,12 @@ Module::Module(flecs::world ecs) {
   ecs.component<Flying>();
   ecs.component<Invisible>().member<bool>("paused");
   ecs.component<RenderOrder>();
-  ecs.component<std::optional<color::RGB>>().opaque(
-      std_optional_support<color::RGB>);
+  ecs.component<std::optional<color::RGBA>>().opaque(
+      std_optional_support<color::RGBA>);
   ecs.component<Renderable>()
       .member<int32_t>("ch")
       .member<color::RGBA>("fg")
-      .member<std::optional<color::RGB>>("bg")
+      .member<std::optional<color::RGBA>>("bg")
       .member<RenderOrder>("layer");
   ecs.component<Named>().member<std::string>("name");
   ecs.component<Fighter>()
@@ -211,6 +207,8 @@ Module::Module(flecs::world ecs) {
   ecs.component<LightningDamageConsumable>()
       .member("damage", &LightningDamageConsumable::damage)
       .member("maximumRange", &LightningDamageConsumable::maximumRange)
+      .member("animation_ch", &LightningDamageConsumable::animation_ch)
+      .member("animation_color", &LightningDamageConsumable::animation_color)
       .is_a<Consumable>();
   ecs.component<ConfusionConsumable>()
       .member("number_of_turns", &ConfusionConsumable::number_of_turns)
@@ -218,6 +216,9 @@ Module::Module(flecs::world ecs) {
   ecs.component<FireballDamageConsumable>()
       .member("damage", &FireballDamageConsumable::damage)
       .member("radius", &FireballDamageConsumable::radius)
+      .member("animation_ch", &FireballDamageConsumable::animation_ch)
+      .member("edges", &FireballDamageConsumable::edges)
+      .member("center", &FireballDamageConsumable::center)
       .is_a<Consumable>();
   ecs.component<MagicMappingConsumable>().is_a<Consumable>();
   ecs.component<RopeConsumable>().is_a<Consumable>();
@@ -334,7 +335,7 @@ Module::Module(flecs::world ecs) {
 
   ecs.prefab("door")
       .set<Renderable>(
-          {'+', Colors::background, color::door, RenderOrder::Actor, false})
+          {'+', Colors::background, Colors::door, RenderOrder::Actor, false})
       .set<Named>({"door"})
       .add<Openable>();
 }
@@ -384,4 +385,6 @@ Colors::Colors(flecs::world ecs) {
   ecs.get_const_var("blood", blood);
   ecs.get_const_var("dung", dung);
   ecs.get_const_var("sensed", sensed);
+  ecs.get_const_var("door", door);
+  ecs.get_const_var("mappingPath", mappingPath);
 }

@@ -75,7 +75,7 @@ ActionResult LightningDamageConsumable::activate(flecs::entity item,
       .set<Position>(tp)
       .set<MoveAnimation>({(float)consumerPos.x, (float)consumerPos.y, 0.05f})
       .set<Renderable>(
-          {0x3df, color::lightning, std::nullopt, RenderOrder::Item})
+          {animation_ch, animation_color, std::nullopt, RenderOrder::Item})
       .add<DisappearOnHit>()
       .add(flecs::ChildOf, map);
 
@@ -149,7 +149,7 @@ ActionResult FireballDamageConsumable::activate(flecs::entity item,
       [item](auto xy) {
         return std::make_unique<TargetedItemAction>(item, xy);
       },
-      radius);
+      radius, edges);
 
   return {ActionResultType::Failure, "Select a target location.", 0.0f,
           Colors::needsTarget};
@@ -208,8 +208,7 @@ FireballDamageConsumable::selected(flecs::entity item,
         .set<FPosition>(center)
         .set<Velocity>({2 * dx, 2 * dy})
         .set<RadialLimit>({center, (float)radius})
-        .set<Renderable>({0x2022,
-                          color::lerp(color::fireball, color::lightning, r2),
+        .set<Renderable>({animation_ch, color::lerp(edges, this->center, r2),
                           std::nullopt, RenderOrder::Actor, scale})
         .set<Fade>({0.25f, 0.3f})
         .add(flecs::ChildOf, map);

@@ -1,5 +1,6 @@
 #include "engine.hpp"
 
+#include <cassert>
 #include <filesystem>
 #include <fstream>
 #include <sstream>
@@ -10,11 +11,9 @@
 #include "game_map.hpp"
 #include "input_handler.hpp"
 #include "inventory.hpp"
-#include "level.hpp"
 #include "message_log.hpp"
 #include "random.hpp"
 #include "room_accretion.hpp"
-#include "scent.hpp"
 
 void Engine::handle_enemy_turns(flecs::world ecs) {
   auto map = ecs.lookup("currentMap").target<CurrentMap>();
@@ -101,17 +100,9 @@ void Engine::new_game(flecs::world ecs, int map_width, int map_height) {
       0, (int)std::numeric_limits<int32_t>::max());
   ecs.entity("seed").set<Seed>({seed});
   ecs.entity("turn").set<Turn>({0});
-  auto player = ecs.entity("player")
-                    .set<Position>({0, 0})
-                    .set<Renderable>(
-                        {'@', color::player, std::nullopt, RenderOrder::Actor})
-                    .set<Named>({"Player"})
-                    .emplace<Fighter>(10, 1, 2)
-                    .set<Inventory>({26})
-                    .emplace<Level>()
-                    .set<Scent>({ScentType::player, 0})
-                    .set<ScentWarning>({false})
-                    .set<Smeller>({200});
+  auto prefab = ecs.lookup("PFs::player");
+  assert(prefab);
+  auto player = ecs.entity("player").is_a(prefab).set<Position>({0, 0});
   auto sword =
       ecs.entity().is_a(ecs.lookup("PFs::sword")).add<ContainedBy>(player);
   toggleEquip<false>(player, sword);

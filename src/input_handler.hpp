@@ -419,14 +419,15 @@ template <bool useF> struct TargetSelector : SelectInputHandler<useF> {
 
 struct AreaTargetSelector : TargetSelector<true> {
   template <typename F>
-  AreaTargetSelector(F f, int r, const InputHandler &handler)
-      : TargetSelector<true>(f, handler), radius(r) {}
+  AreaTargetSelector(F f, int r, color::RGBA color, const InputHandler &handler)
+      : TargetSelector<true>(f, handler), radius(r), areaTarget(color) {}
 
   virtual ~AreaTargetSelector() = default;
 
   virtual void on_render(flecs::world, Console &) override;
 
   int radius;
+  color::RGBA areaTarget;
 };
 
 struct AutoMove : MainAnimation {

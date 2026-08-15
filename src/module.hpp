@@ -47,4 +47,6 @@ struct Colors {
   static inline color::RGBA blood;
   static inline color::RGBA dung;
   static inline color::RGBA sensed;
+  static inline color::RGBA door;
+  static inline color::RGBA mappingPath;
 };

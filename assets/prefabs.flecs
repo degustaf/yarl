@@ -1,7 +1,37 @@
 module PFs
 
+const player_color : Colors.player
 const fountain_color : Colors.fountain
 const light_color : Colors.light
+const portal_color : Colors.portal
+
+prefab player {
+  Renderable: {
+    ch: '@'
+    fg: player_color
+    layer: Actor
+  }
+  Named: {
+    name: "Player"
+  }
+  Fighter: {
+    max_hp: 10
+    _hp: 10
+    defense: 1
+    power: 2
+  }
+  Inventory: {26}
+  Level: {
+    current: 1
+    xp: 0
+  }
+  Scent: {
+    type: player
+    power: 0
+  }
+  ScentWarning: {false}
+  Smeller: {200}
+}
 
 prefab fountain {
   Renderable: {
@@ -30,4 +60,13 @@ prefab light {
     outerRadius: 6
     decayFactor: 0.8
   }
+}
+
+prefab portal {
+  Renderable: {
+    ch: 'A'
+    fg: portal_color
+    layer: Corpse
+  }
+  BlocksFov
 }

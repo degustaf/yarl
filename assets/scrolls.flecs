@@ -20,6 +20,8 @@ prefab lightningScroll {
   LightningDamageConsumable: {
     damage: 20
     maximumRange: 5
+    animation_ch: 0x3df
+    animation_color: lightning
   }
   FloorWeights: {
     data: [
@@ -63,6 +65,9 @@ prefab fireballScroll {
   FireballDamageConsumable: {
     damage: 12
     radius: 3
+    animation_ch: 0x2022
+    edges: fireball
+    center: lightning
   }
   FloorWeights: {
     data: [

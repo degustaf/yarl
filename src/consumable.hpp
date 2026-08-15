@@ -39,6 +39,8 @@ struct LightningDamageConsumable : Consumable {
   virtual ~LightningDamageConsumable() = default;
   int damage;
   int maximumRange;
+  int32_t animation_ch;
+  color::RGBA animation_color;
 
   virtual ActionResult activate(flecs::entity item,
                                 flecs::entity consumer) const override;
@@ -64,6 +66,9 @@ struct FireballDamageConsumable : Consumable {
   virtual ~FireballDamageConsumable() = default;
   int damage;
   int radius;
+  int32_t animation_ch;
+  color::RGBA edges;
+  color::RGBA center;
 
   virtual ActionResult activate(flecs::entity item,
                                 flecs::entity consumer) const override;

@@ -25,7 +25,7 @@ extern const std::vector<RenderOrder> allRenderOrders;
 struct Renderable {
   int32_t ch;
   color::RGBA fg;
-  std::optional<color::RGB> bg;
+  std::optional<color::RGBA> bg;
   RenderOrder layer;
   float scale = 1.0f;
   bool fovOnly = true;
