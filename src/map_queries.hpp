@@ -24,6 +24,8 @@ enum class positionQuery {
   NamedFighter,
 };
 
+template <auto q> static inline constexpr auto alwaysFalse() { return false; }
+
 template <auto q> static inline constexpr auto queryName() {
   if constexpr (q == positionQuery::Position) {
     return "position";
@@ -52,7 +54,7 @@ template <auto q> static inline constexpr auto queryName() {
   } else if constexpr (q == positionQuery::NamedFighter) {
     return "positionNamedFighter";
   } else {
-    static_assert(false);
+    static_assert(alwaysFalse<q>());
   }
 }
 
@@ -112,7 +114,7 @@ static inline flecs::query<const Position> mapQuery(flecs::world ecs,
           .with(flecs::ChildOf, map)
           .build();
     } else {
-      assert(false);
+      assert(alwaysFalse<qName>());
     }
   }
 }
@@ -150,7 +152,7 @@ mapQuery(flecs::world ecs, flecs::entity map) {
           .with(flecs::ChildOf, map)
           .build();
     } else {
-      static_assert(false);
+      static_assert(alwaysFalse<qName>());
     }
   }
 }
@@ -172,7 +174,7 @@ static inline flecs::query<const Position, T, U> mapQuery(flecs::world ecs,
           .with(flecs::ChildOf, map)
           .build();
     } else {
-      static_assert(false);
+      static_assert(alwaysFalse<qName>());
     }
   }
 }
