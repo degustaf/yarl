@@ -261,7 +261,7 @@ void TrackerConsumable<T>::render(Console &console, flecs::entity map) const {
   auto &gMap = map.get<GameMap>();
   auto q =
       ecs.query_builder<const Position, const Renderable, const Invisible *>(
-             std::string("PFs::Tracker ") + typeid(T).name())
+             std::string("Queries::Tracker ") + typeid(T).name())
           .with(flecs::ChildOf, map)
           .with<T>()
           .build();

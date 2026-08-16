@@ -302,6 +302,7 @@ Module::Module(flecs::world ecs) {
       .member<int>("defense_bonus");
   ecs.component<Armor>().add(flecs::Exclusive);
   ecs.component<Weapon>().add(flecs::Exclusive);
+  ecs.component<Digger>();
   ecs.component<Ranged>().member<int>("range");
   ecs.component<Taser>().member<int>("turns");
 

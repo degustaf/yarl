@@ -25,6 +25,29 @@ prefab dagger {
   }
 }
 
+prefab pickaxe {
+  Renderable: {
+    ch: '/'
+    fg: $weapon_color
+    layer: Item
+  }
+  Named: {
+    name: "Pickaxe"
+  }
+  Item
+  Equippable: {
+    type: Weapon
+    power_bonus: 1
+    defense_bonus: 0
+  }
+  FloorWeights: {
+    data: [
+      {2, 35}
+    ]
+  }
+  Digger
+}
+
 prefab sword {
   Renderable: {
     ch: '/'

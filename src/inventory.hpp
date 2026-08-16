@@ -31,6 +31,7 @@ struct Equippable {
 
 struct Armor {};
 struct Weapon {};
+struct Digger {};
 
 struct Ranged {
   int range;

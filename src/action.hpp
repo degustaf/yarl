@@ -122,6 +122,15 @@ struct BumpAction : ActionWithDirection {
   virtual ActionResult perform(flecs::entity e) const override;
 };
 
+struct DigAction : ActionWithDirection {
+  DigAction(std::array<int, 2> dxy, int speed)
+      : ActionWithDirection(dxy), speed(speed) {};
+  int speed;
+  virtual ~DigAction() override = default;
+
+  virtual ActionResult perform(flecs::entity e) const override;
+};
+
 struct WaitAction : Action {
   virtual ~WaitAction() = default;
   virtual ActionResult perform(flecs::entity) const override {

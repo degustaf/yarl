@@ -18,8 +18,9 @@
 void Engine::handle_enemy_turns(flecs::world ecs) {
   auto map = ecs.lookup("currentMap").target<CurrentMap>();
 
-  auto q =
-      ecs.query_builder<Ai>("PFs::monsterAi").with(flecs::ChildOf, map).build();
+  auto q = ecs.query_builder<Ai>("Queries::monsterAi")
+               .with(flecs::ChildOf, map)
+               .build();
 
   ecs.defer_begin();
   q.run([](flecs::iter &it) {

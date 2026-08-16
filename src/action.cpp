@@ -216,7 +216,7 @@ ActionResult BumpAction::perform(flecs::entity e) const {
   }
 
   auto exertion = 0.0f;
-  auto &pos = e.get_mut<Position>();
+  auto &pos = e.get<Position>();
   auto mapEntity = e.world().lookup("currentMap").target<CurrentMap>();
   for (auto i = 0; i < speed; i++) {
     auto target = GameMap::get_blocking_entity(mapEntity, pos + dxy);
@@ -232,6 +232,13 @@ ActionResult BumpAction::perform(flecs::entity e) const {
           return BatheAction(target).perform(e);
         }
       }
+      const auto &map = mapEntity.get<GameMap>();
+      if (!map.isWalkable(pos + dxy) && !map.isTransparent(pos + dxy)) {
+        auto wpn = e.target<Weapon>();
+        if (wpn && wpn.has<Digger>()) {
+          return DigAction(dxy, speed).perform(e);
+        }
+      }
       return MoveAction(dxy[0], dxy[1]).perform(e);
     }();
     exertion += result.exertion * (float)speed;
@@ -241,6 +248,21 @@ ActionResult BumpAction::perform(flecs::entity e) const {
     }
   }
   return {ActionResultType::Success, "", exertion};
+}
+
+ActionResult DigAction::perform(flecs::entity e) const {
+  assert(e.target<Weapon>());
+  assert(e.target<Weapon>().has<Digger>());
+
+  const auto &pos = e.get<Position>();
+  auto mapEntity = e.world().lookup("currentMap").target<CurrentMap>();
+  auto &map = mapEntity.get_mut<GameMap>();
+  auto dst = pos + dxy;
+  if (map.inBounds(dst)) {
+    map.carveOut(dst.x, dst.y);
+    return {ActionResultType::Success, "", 1.0f};
+  }
+  return {ActionResultType::Failure, "", 0.0f};
 }
 
 ActionResult ItemAction::perform(flecs::entity e) const {
