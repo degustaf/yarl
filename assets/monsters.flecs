@@ -52,6 +52,9 @@ prefab troll {
     defense: 1
     power: 4
   }
+  Regenerator: {
+    healTurns: 2
+  }
   XP: {
     given: 100
   }
