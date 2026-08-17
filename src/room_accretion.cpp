@@ -4,9 +4,7 @@
 #include <optional>
 #include <queue>
 
-#include "actor.hpp"
 #include "ai.hpp"
-#include "color.hpp"
 #include "defines.hpp"
 #include "engine.hpp"
 #include "game_map.hpp"
@@ -389,7 +387,7 @@ static std::array<int, 2> generateStairs(std::vector<RectangularRoom> &rooms,
     if (map.isWalkable(x, y)) {
       // This prevents us from placing stairs in a lake.
       if (map.level < MAX_DUNGEON_LEVEL) {
-        map.makeStairs(x, y);
+        map.makeStairs(x, y, true);
       }
       return {x, y};
     }
@@ -578,11 +576,15 @@ void roomAccretion::generateDungeon(const Config &cfg, flecs::entity map,
     populateRoom(cfg, map, player, rng, firstRoom, dungeon, rm, q);
   }
 
+  auto pos = player.get<Position>();
+  dungeon.makeStairs(pos, false);
+
   for (auto i = rooms.size() - 1; i > 0; i--) {
     // i > 0 is intentional. We don't want a fountain in the first roomwith the
     // player.
     auto center = rooms[i].center();
-    if (dungeon.isWalkable(center) && !dungeon.isStairs(center) &&
+    if (dungeon.isWalkable(center) && !dungeon.isStairsDown(center) &&
+        !dungeon.isStairsUp(center) &&
         rng.getDouble(0.0, 0.1) < cfg.FOUNTAIN_PERCENT) {
       ecs.entity()
           .set<Position>(center)
@@ -605,7 +607,6 @@ void roomAccretion::generateDungeon(const Config &cfg, flecs::entity map,
     }
   }
 
-  auto pos = player.get<Position>();
   auto dij = pathfinding::Dijkstra(
       {dungeon.getWidth(), dungeon.getHeight()},
       [=](auto xy) { return pos == xy || stairs == xy; },

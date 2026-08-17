@@ -89,8 +89,11 @@ void renderNamesAtMouseLocation(Console &console, const std::array<int, 2> &xy,
   if (gameMap.isKnownBloody(mouse_loc)) {
     msg = msg + (msg.size() > 0 ? ", " : "") + "a bloody trail";
   }
-  if (gameMap.isStairs(mouse_loc)) {
-    msg = msg + (msg.size() > 0 ? ", " : "") + "an elevator";
+  if (gameMap.isStairsDown(mouse_loc)) {
+    msg = msg + (msg.size() > 0 ? ", " : "") + "stairs down";
+  }
+  if (gameMap.isStairsUp(mouse_loc)) {
+    msg = msg + (msg.size() > 0 ? ", " : "") + "stairs up";
   }
   console.print(xy, msg, std::nullopt, std::nullopt);
 }

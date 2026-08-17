@@ -11,7 +11,20 @@
 #include "scent.hpp"
 #include "string.hpp"
 
-static inline void deleteMapEntity(flecs::world ecs, flecs::entity map) {
+void deleteMapQueries(flecs::world ecs) {
+  auto module = ecs.lookup("Queries");
+  if (module) {
+    auto q2 = ecs.query_builder()
+                  .with(flecs::Query)
+                  .with(flecs::ChildOf, module)
+                  .build();
+    ecs.defer_begin();
+    q2.each([](auto e) { e.destruct(); });
+    ecs.defer_end();
+  }
+}
+
+inline void deleteMapEntity(flecs::world ecs, flecs::entity map) {
   auto q = ecs.query_builder("Queries::mapEntities")
                .with(flecs::ChildOf, map)
                .build();
@@ -24,15 +37,7 @@ static inline void deleteMapEntity(flecs::world ecs, flecs::entity map) {
   });
   ecs.defer_end();
 
-  auto module = ecs.lookup("Queries");
-  assert(module);
-  auto q2 = ecs.query_builder()
-                .with(flecs::Query)
-                .with(flecs::ChildOf, module)
-                .build();
-  ecs.defer_begin();
-  q2.each([](auto e) { e.destruct(); });
-  ecs.defer_end();
+  deleteMapQueries(ecs);
   map.destruct();
 }
 
@@ -57,7 +62,9 @@ void GameMap::nextFloor(flecs::entity player, bool lit) const {
                                                      level + 1, player));
   auto oldMap = ecs.lookup("currentMap").target<CurrentMap>();
   ecs.lookup("currentMap").add<CurrentMap>(newMap);
-  deleteMapEntity(oldMap);
+  newMap.add<PrevMap>(oldMap);
+  oldMap.add<NextMap>(newMap);
+  deleteMapQueries(ecs);
 }
 
 void GameMap::render(Console &console, uint64_t time) {
@@ -69,8 +76,10 @@ void GameMap::render(Console &console, uint64_t time) {
       if (isVisible(x, y)) {
         auto t = tiles[y * width + x].luminosity;
         console.at({x, y}) =
-            isStairs({x, y})
-                ? lerp(TileModule::stairs_light, TileModule::stairs_dark, t)
+            isStairsDown({x, y})    ? lerp(TileModule::stairs_down_light,
+                                           TileModule::stairs_down_dark, t)
+            : isStairsUp({x, y})    ? lerp(TileModule::stairs_up_light,
+                                           TileModule::stairs_up_dark, t)
             : isKnownBloody({x, y}) ? lerp(TileModule::bloody_floor_light,
                                            TileModule::bloody_floor_dark, t)
             : isWalkable(x, y)
@@ -85,7 +94,8 @@ void GameMap::render(Console &console, uint64_t time) {
           console.at({x, y}).bg += (int8_t)(scale * noise.get(vec));
         }
       } else if (isExplored(x, y)) {
-        console.at({x, y}) = isStairs({x, y}) ? TileModule::stairs_dark
+        console.at({x, y}) = isStairsDown({x, y}) ? TileModule::stairs_down_dark
+                             : isStairsUp({x, y}) ? TileModule::stairs_up_dark
                              : isKnownBloody({x, y})
                                  ? TileModule::bloody_floor_dark
                              : isWalkable(x, y)    ? TileModule::floor_dark
@@ -96,9 +106,11 @@ void GameMap::render(Console &console, uint64_t time) {
           console.at({x, y}).bg += (int8_t)(31.0f * noise.get(vec));
         }
       } else if (isSensed(x, y)) {
-        console.at({x, y}) = isStairs({x, y})      ? TileModule::stairs_sensed
-                             : isWalkable(x, y)    ? TileModule::floor_sensed
-                             : isWater(x, y)       ? TileModule::water_dark
+        console.at({x, y}) = isStairsDown({x, y})
+                                 ? TileModule::stairs_down_sensed
+                             : isStairsUp({x, y}) ? TileModule::stairs_up_sensed
+                             : isWalkable(x, y)   ? TileModule::floor_sensed
+                             : isWater(x, y)      ? TileModule::water_dark
                              : isTransparent(x, y) ? TileModule::chasm_dark
                                                    : TileModule::wall_dark;
         if (isWater(x, y)) {

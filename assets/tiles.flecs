@@ -68,20 +68,38 @@ export const wall_dark = Tile: {
   bg: darkWallbg
 }
 
-export const stairs_light = Tile: {
+export const stairs_down_light = Tile: {
   ch: '>'
   fg: stairs
   bg: lightFloor
 }
 
-export const stairs_dark = Tile: {
+export const stairs_up_light = Tile: {
+  ch: '<'
+  fg: stairs
+  bg: lightFloor
+}
+
+export const stairs_down_dark = Tile: {
   ch: '>'
   fg: stairs
   bg: darkFloor
 }
 
-export const stairs_sensed = Tile: {
+export const stairs_up_dark = Tile: {
+  ch: '<'
+  fg: stairs
+  bg: darkFloor
+}
+
+export const stairs_down_sensed = Tile: {
   ch: '>'
+  fg: stairs
+  bg: sensedFloor
+}
+
+export const stairs_up_sensed = Tile: {
+  ch: '<'
   fg: stairs
   bg: sensedFloor
 }

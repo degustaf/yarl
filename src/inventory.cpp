@@ -1,8 +1,10 @@
 #include "inventory.hpp"
 
 bool Inventory::hasRoom(flecs::entity e) const {
-  auto q =
-      e.world().query_builder("PFs::inventory").with<ContainedBy>(e).build();
+  auto q = e.world()
+               .query_builder("Queries::inventory")
+               .with<ContainedBy>(e)
+               .build();
   return q.count() < capacity;
 }
 

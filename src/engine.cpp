@@ -3,6 +3,7 @@
 #include <cassert>
 #include <filesystem>
 #include <fstream>
+#include <iostream>
 #include <sstream>
 
 #include "actor.hpp"
@@ -110,7 +111,6 @@ void Engine::new_game(flecs::world ecs, int map_width, int map_height) {
 
   auto map = ecs.entity();
   auto cfg = roomAccretion::Config{};
-  cfg.lit = false;
   cfg.ROOM_MIN_SIZE = 3;
   cfg.MAX_ROOMS = 300;
   cfg.MAX_ITER = 1000;
@@ -130,7 +130,30 @@ void Engine::new_game(flecs::world ecs, int map_width, int map_height) {
 }
 
 void Engine::clear_game_data(flecs::world ecs) {
-  deleteMapEntity(ecs);
+  auto map = ecs.lookup("currentMap");
+  if (map) {
+    auto currentMap = map.target<CurrentMap>();
+    if (currentMap) {
+      std::cout << "In currentMap block.\n";
+      auto map = currentMap.target<NextMap>();
+      while (map != currentMap.null()) {
+        auto nextMap = map.target<NextMap>();
+        deleteMapEntity(ecs, map);
+        map = nextMap;
+      }
+
+      map = currentMap.target<PrevMap>();
+      while (map != currentMap.null()) {
+        auto nextMap = map.target<PrevMap>();
+        deleteMapEntity(ecs, map);
+        map = nextMap;
+      }
+      deleteMapEntity(ecs, currentMap);
+    }
+  }
+
+  deleteMapQueries(ecs);
+
   auto seed = ecs.lookup("seed");
   if (seed)
     seed.destruct();
@@ -138,8 +161,13 @@ void Engine::clear_game_data(flecs::world ecs) {
   if (turn)
     turn.destruct();
   auto player = ecs.lookup("player");
-  if (player)
+  if (player) {
+    // auto q2 = ecs.query_builder().with(flecs::Query).build();
+    // ecs.defer_begin();
+    // q2.each([](flecs::entity e) { std::cout << e.name() << "\n"; });
+    // ecs.defer_end();
     player.destruct();
+  }
   auto log = ecs.lookup("messageLog");
   if (log)
     log.destruct();

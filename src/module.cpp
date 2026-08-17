@@ -272,7 +272,9 @@ Module::Module(flecs::world ecs) {
       .member<int>("innerRadius")
       .member<int>("outerRadius")
       .member<float>("decayFactor");
+  ecs.component<PrevMap>();
   ecs.component<CurrentMap>().add(flecs::Exclusive);
+  ecs.component<NextMap>();
   ecs.component<Tile>()
       .member<uint16_t>("flags")
       .member<Scent>("scent")

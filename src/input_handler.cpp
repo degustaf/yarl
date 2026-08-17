@@ -268,6 +268,7 @@ std::unique_ptr<Action> MainMenuInputHandler::processChoice(int idx,
     make<VolumeControls>(ecs);
     return nullptr;
   case 4:
+    Engine::clear_game_data(ecs);
     return std::make_unique<ExitAction>();
   default:
     assert(false);

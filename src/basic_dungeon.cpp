@@ -132,7 +132,7 @@ void basicDungeon::generateDungeon(flecs::entity map, GameMap &dungeon,
   }
 
   auto downStairs = rooms[roomCount - 1].center();
-  dungeon.makeStairs(downStairs);
+  dungeon.makeStairs(downStairs, true);
 
   if (generateEntities) {
     for (size_t i = 1; i < roomCount; i++) {

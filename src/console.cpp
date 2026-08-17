@@ -461,9 +461,12 @@ TileModule::TileModule(flecs::world ecs) {
   ecs.get_const_var("bloody_floor_dark", bloody_floor_dark);
   ecs.get_const_var("wall_light", wall_light);
   ecs.get_const_var("wall_dark", wall_dark);
-  ecs.get_const_var("stairs_light", stairs_light);
-  ecs.get_const_var("stairs_dark", stairs_dark);
-  ecs.get_const_var("stairs_sensed", stairs_sensed);
+  ecs.get_const_var("stairs_down_light", stairs_down_light);
+  ecs.get_const_var("stairs_down_dark", stairs_down_dark);
+  ecs.get_const_var("stairs_down_sensed", stairs_down_sensed);
+  ecs.get_const_var("stairs_up_light", stairs_up_light);
+  ecs.get_const_var("stairs_up_dark", stairs_up_dark);
+  ecs.get_const_var("stairs_up_sensed", stairs_up_sensed);
   ecs.get_const_var("water_light", water_light);
   ecs.get_const_var("water_dark", water_dark);
   ecs.get_const_var("chasm_light", chasm_light);

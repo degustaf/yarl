@@ -322,11 +322,14 @@ ActionResult TakeStairsAction::perform(flecs::entity e) const {
 
   auto currentMap = ecs.lookup("currentMap").target<CurrentMap>();
   auto &gameMap = currentMap.get<GameMap>();
-  if (gameMap.isStairs(pos)) {
+  if (gameMap.isStairsDown(pos)) {
     gameMap.nextFloor(e, false);
 
     return {ActionResultType::Success, "You descend the staircase.", 0.0f,
             Colors::descend, true};
+  } else if (gameMap.isStairsUp(pos)) {
+    // TODO
+    assert(false);
   }
   return {ActionResultType::Failure, "There is no staircase here.", 0.0f,
           Colors::impossible};

@@ -162,9 +162,12 @@ struct TileModule {
   static inline Console::Tile bloody_floor_dark;
   static inline Console::Tile wall_light;
   static inline Console::Tile wall_dark;
-  static inline Console::Tile stairs_light;
-  static inline Console::Tile stairs_dark;
-  static inline Console::Tile stairs_sensed;
+  static inline Console::Tile stairs_down_light;
+  static inline Console::Tile stairs_down_dark;
+  static inline Console::Tile stairs_down_sensed;
+  static inline Console::Tile stairs_up_light;
+  static inline Console::Tile stairs_up_dark;
+  static inline Console::Tile stairs_up_sensed;
   static inline Console::Tile water_light;
   static inline Console::Tile water_dark;
   static inline Console::Tile chasm_light;

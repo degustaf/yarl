@@ -21,7 +21,9 @@ struct Light {
   float decayFactor;
 };
 
+struct PrevMap {};
 struct CurrentMap {};
+struct NextMap {};
 
 struct Tile {
   using type = uint16_t;
@@ -35,13 +37,16 @@ struct Tile {
   static constexpr auto Transparent = type(0x02);
   static constexpr auto inFov = type(0x04);
   static constexpr auto Explored = type(0x8);
-  static constexpr auto Stairs = type(0x10);
-  static constexpr auto Bloody = type(0x20);
-  static constexpr auto KnownBloody = type(0x40);
-  static constexpr auto Sensed = type(0x80);
-  static constexpr auto Water = type(0x100);
+  static constexpr auto StairsDown = type(0x10);
+  static constexpr auto StairsUp = type(0x20);
+  static constexpr auto Bloody = type(0x40);
+  static constexpr auto KnownBloody = type(0x80);
+  static constexpr auto Sensed = type(0x100);
+  static constexpr auto Water = type(0x200);
 };
 
+void deleteMapQueries(flecs::world ecs);
+void deleteMapEntity(flecs::world ecs, flecs::entity map);
 void deleteMapEntity(flecs::entity map);
 void deleteMapEntity(flecs::world ecs);
 
@@ -103,14 +108,21 @@ struct GameMap {
   inline bool isFlyable(int x, int y) const {
     return inBounds(x, y) && isTransparent(x, y);
   }
-  inline void makeStairs(std::array<int, 2> xy) {
-    return makeStairs(xy[0], xy[1]);
+  inline void makeStairs(std::array<int, 2> xy, bool down) {
+    return makeStairs(xy[0], xy[1], down);
   }
-  inline void makeStairs(int x, int y) {
-    tiles[(size_t)(y * width + x)].flags |= Tile::Stairs;
+  inline void makeStairs(int x, int y, bool down) {
+    if (down) {
+      tiles[(size_t)(y * width + x)].flags |= Tile::StairsDown;
+    } else {
+      tiles[(size_t)(y * width + x)].flags |= Tile::StairsUp;
+    }
   }
-  inline bool isStairs(std::array<int, 2> xy) const {
-    return tiles[(size_t)(xy[1] * width + xy[0])].flags & Tile::Stairs;
+  inline bool isStairsDown(std::array<int, 2> xy) const {
+    return tiles[(size_t)(xy[1] * width + xy[0])].flags & Tile::StairsDown;
+  };
+  inline bool isStairsUp(std::array<int, 2> xy) const {
+    return tiles[(size_t)(xy[1] * width + xy[0])].flags & Tile::StairsUp;
   };
   inline void makeBloody(std::array<int, 2> xy) {
     tiles[(size_t)(xy[1] * width + xy[0])].flags |= Tile::Bloody;
