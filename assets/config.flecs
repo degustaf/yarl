@@ -1,0 +1,8 @@
+module Config
+
+export const title : "Yet Another RogueLike"
+export const font : "assets/CodeNewRoman.ttf"
+export const cover_image : "assets/death_on_the_pale_horse.png"
+
+export const music : "assets/sound/Abstraction/Sketchbook-2024-03-06_02.ogg"
+export const drone : "assets/sound/HeltonYanSurrealDrones/DSGNDron_Dissonant-Space_Horror_HY_SD.ogg"

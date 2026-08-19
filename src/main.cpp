@@ -13,6 +13,7 @@
 
 #include "audio.hpp"
 #include "color.hpp"
+#include "config.hpp"
 #include "defines.hpp"
 #include "engine.hpp"
 #include "input_handler.hpp"
@@ -38,23 +39,21 @@ SDL_AppResult SDL_AppInit(void **data, [[maybe_unused]] int argc,
 
   auto *ecs = new flecs::world();
   *data = ecs;
+  ecs->import <Config>();
   ecs->import <Colors>();
   ecs->import <Module>();
   ecs->import <TileModule>();
   for (const auto &fl : std::filesystem::directory_iterator("assets")) {
     if ((fl.path().extension().string() == ".flecs") &&
         (fl.path().filename() != "colors.flecs") &&
+        (fl.path().filename() != "config.flecs") &&
         (fl.path().filename() != "tiles.flecs")) {
       ecs->script_run_file(fl.path().string().c_str());
     }
   }
-  ecs->emplace<SDLData>(width, height, 15.0f, "Yet Another Roguelike",
-                        "assets/CodeNewRoman.ttf",
-                        "assets/death_on_the_pale_horse.png");
-  ecs->emplace<SDLAudio>(
-      "assets/sound/Abstraction/Sketchbook-2024-03-06_02.ogg",
-      "assets/sound/HeltonYanSurrealDrones/"
-      "DSGNDron_Dissonant-Space_Horror_HY_SD.ogg");
+  ecs->emplace<SDLData>(width, height, 15.0f, Config::title, Config::font,
+                        Config::cover_image);
+  ecs->emplace<SDLAudio>(Config::music, Config::drone);
   ecs->set<Console>(ecs->get_mut<SDLData>().new_console(width, height));
   ecs->set<std::unique_ptr<InputHandler>>(
       std::make_unique<MainMenuInputHandler>(std::array{width, height}));
