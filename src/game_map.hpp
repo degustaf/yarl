@@ -124,6 +124,16 @@ struct GameMap {
   inline bool isStairsUp(std::array<int, 2> xy) const {
     return tiles[(size_t)(xy[1] * width + xy[0])].flags & Tile::StairsUp;
   };
+  inline Position stairs(bool down) const {
+    for (auto y = 0; y < height; y++) {
+      for (auto x = 0; x < width; x++) {
+        if ((down && isStairsDown({x, y})) || (!down && isStairsUp({x, y}))) {
+          return {x, y};
+        }
+      }
+    }
+    return {-1, -1};
+  };
   inline void makeBloody(std::array<int, 2> xy) {
     tiles[(size_t)(xy[1] * width + xy[0])].flags |= Tile::Bloody;
   };

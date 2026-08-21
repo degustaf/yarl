@@ -16,6 +16,7 @@
 #include "books.hpp"
 #include "color.hpp"
 #include "command.hpp"
+#include "config.hpp"
 #include "console.hpp"
 #include "consumable.hpp"
 #include "defines.hpp"
@@ -232,7 +233,7 @@ MainMenuInputHandler::click(SDL_MouseButtonEvent &button, flecs::world ecs) {
 
 void MainMenuInputHandler::on_render(flecs::world, Console &console) {
   const auto printY = (ImageWidth / 2 + console.get_width()) / 2;
-  console.print({printY, console.get_height() / 2 - 4}, "Yet Another Roguelike",
+  console.print({printY, console.get_height() / 2 - 4}, Config::title,
                 Colors::menu_title, std::nullopt, Console::Alignment::CENTER);
   console.print({printY, console.get_height() - 2}, "By degustaf",
                 Colors::menu_title, std::nullopt, Console::Alignment::CENTER);
@@ -268,7 +269,6 @@ std::unique_ptr<Action> MainMenuInputHandler::processChoice(int idx,
     make<VolumeControls>(ecs);
     return nullptr;
   case 4:
-    Engine::clear_game_data(ecs);
     return std::make_unique<ExitAction>();
   default:
     assert(false);

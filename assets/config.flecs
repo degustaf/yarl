@@ -1,6 +1,7 @@
 module Config
 
 export const title : "Yet Another RogueLike"
+export const intro : "This is some sample intro text."
 export const font : "assets/CodeNewRoman.ttf"
 export const cover_image : "assets/death_on_the_pale_horse.png"
 

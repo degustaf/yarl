@@ -65,7 +65,7 @@ static inline flecs::query<const Position> mapQuery(flecs::world ecs,
   static const auto n = std::string("Queries::") + qname;
   static const auto name = n.c_str();
   auto e = ecs.lookup(name);
-  if (e) {
+  if (e && e.has(flecs::Query)) {
     auto q = ecs.query(e);
     return flecs::query<const Position>(q);
   } else {

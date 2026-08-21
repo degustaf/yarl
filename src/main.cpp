@@ -135,7 +135,7 @@ void SDL_AppQuit(void *data, SDL_AppResult result) {
     // TODO handle game not started.
     Engine::save_as(*ecs, data_dir / saveFilename);
   }
-  // Engine::clear_game_data(*ecs);
+  Engine::clear_game_data(*ecs);
   ecs->release();
   delete ecs;
   TTF_Quit();

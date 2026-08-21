@@ -24,9 +24,9 @@ using TextPtr = std::unique_ptr<TTF_Text, decltype(&TTF_DestroyText)>;
 struct SDLData {
 public:
   SDLData() = delete;
-  SDLData(int columns, int rows, float fontSize, const char *title,
+  SDLData(int columns, int rows, float fontSize, const std::string &title,
           const std::filesystem::path &fontPath);
-  SDLData(int columns, int rows, float fontSize, const char *title,
+  SDLData(int columns, int rows, float fontSize, const std::string &title,
           const std::filesystem::path &fontPath,
           const std::filesystem::path &imgPath);
 

@@ -21,6 +21,8 @@ struct Config {
     ecs.script().filename(script.string().c_str()).run();
 
     get_const_var(ecs, "title", title);
+    get_const_var(ecs, "intro", intro);
+
     get_const_var(ecs, "font", font);
     get_const_var(ecs, "cover_image", cover_image);
 
@@ -36,6 +38,8 @@ struct Config {
   }
 
   static inline std::string title;
+  static inline std::string intro;
+
   static inline std::string font;
   static inline std::string cover_image;
 

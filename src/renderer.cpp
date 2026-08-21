@@ -212,7 +212,8 @@ static bool handle_event(void *userdata, SDL_Event *event) {
   return 0;
 }
 
-SDLData::SDLData(int columns, int rows, float fontSize, const char *title,
+SDLData::SDLData(int columns, int rows, float fontSize,
+                 const std::string &title,
                  const std::filesystem::path &fontPath)
     : dims({0, 0}), window(nullptr, nullptr), _renderer(nullptr, nullptr),
       font(nullptr, nullptr), engine(nullptr, nullptr), cache_console(nullptr),
@@ -237,7 +238,7 @@ SDLData::SDLData(int columns, int rows, float fontSize, const char *title,
 
   SDL_PropertiesID window_props = SDL_CreateProperties();
   SDL_SetStringProperty(window_props, SDL_PROP_WINDOW_CREATE_TITLE_STRING,
-                        title);
+                        title.c_str());
   SDL_SetNumberProperty(window_props, SDL_PROP_WINDOW_CREATE_X_NUMBER,
                         SDL_WINDOWPOS_UNDEFINED);
   SDL_SetNumberProperty(window_props, SDL_PROP_WINDOW_CREATE_Y_NUMBER,
@@ -288,7 +289,8 @@ SDLData::SDLData(int columns, int rows, float fontSize, const char *title,
   SDL_DestroyProperties(window_props);
 }
 
-SDLData::SDLData(int columns, int rows, float fontSize, const char *title,
+SDLData::SDLData(int columns, int rows, float fontSize,
+                 const std::string &title,
                  const std::filesystem::path &fontPath,
                  const std::filesystem::path &imgPath)
     : SDLData(columns, rows, fontSize, title, fontPath) {

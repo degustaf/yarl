@@ -3,12 +3,12 @@
 #include <cassert>
 #include <filesystem>
 #include <fstream>
-#include <iostream>
 #include <sstream>
 
 #include "actor.hpp"
 #include "ai.hpp"
 #include "color.hpp"
+#include "config.hpp"
 #include "game_map.hpp"
 #include "input_handler.hpp"
 #include "inventory.hpp"
@@ -52,6 +52,7 @@ void Engine::handle_enemy_turns(flecs::world ecs) {
 
 void Engine::save_as(flecs::world ecs, const std::filesystem::path &file_name) {
   auto output = std::ofstream(file_name);
+  deleteMapQueries(ecs);
   output << ecs.to_json();
 }
 
@@ -123,10 +124,7 @@ void Engine::new_game(flecs::world ecs, int map_width, int map_height) {
   ecs.entity("messageLog")
       .set<MessageLog>({})
       .get_mut<MessageLog>()
-      .addMessage("You are in Facility 14. You must plumb the depths, avoiding "
-                  "the Fiend until you find the Laser of Yendor, the only "
-                  "thing that is capable of defeating it.",
-                  Colors::welcomeText);
+      .addMessage(Config::intro, Colors::welcomeText);
 }
 
 void Engine::clear_game_data(flecs::world ecs) {
@@ -134,7 +132,6 @@ void Engine::clear_game_data(flecs::world ecs) {
   if (map) {
     auto currentMap = map.target<CurrentMap>();
     if (currentMap) {
-      std::cout << "In currentMap block.\n";
       auto map = currentMap.target<NextMap>();
       while (map != currentMap.null()) {
         auto nextMap = map.target<NextMap>();
@@ -161,13 +158,8 @@ void Engine::clear_game_data(flecs::world ecs) {
   if (turn)
     turn.destruct();
   auto player = ecs.lookup("player");
-  if (player) {
-    // auto q2 = ecs.query_builder().with(flecs::Query).build();
-    // ecs.defer_begin();
-    // q2.each([](flecs::entity e) { std::cout << e.name() << "\n"; });
-    // ecs.defer_end();
+  if (player)
     player.destruct();
-  }
   auto log = ecs.lookup("messageLog");
   if (log)
     log.destruct();
