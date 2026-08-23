@@ -5,6 +5,19 @@
 #include <SDL3_mixer/SDL_mixer.h>
 #include <cassert>
 #include <cstdio>
+#include <filesystem>
+#include <utility>
+
+void trackStoppedCallback(void *userdata, MIX_Track *track) {
+  auto data = (SDLAudio *)userdata;
+  if (data->music_idx == data->music.size()) {
+    data->music_idx = 0;
+  }
+  if (!MIX_SetTrackAudio(track, data->music[data->music_idx++].get())) {
+    SDL_Log("Couldn't set track audio: %s\n", SDL_GetError());
+    return;
+  }
+}
 
 SDLAudio::SDLAudio(const std::filesystem::path &music_path,
                    const std::filesystem::path &drone_path)
@@ -28,17 +41,27 @@ SDLAudio::SDLAudio(const std::filesystem::path &music_path,
     SDL_Log("Couldn't create track: %s\n", SDL_GetError());
     return;
   }
-  auto music = MIX_LoadAudio(mixer.get(), music_path.string().c_str(), true);
-  if (!music) {
-    SDL_Log("Couldn't load audio from %s: %s\n", music_path.string().c_str(),
-            SDL_GetError());
-    return;
+
+  for (auto &path : std::filesystem::recursive_directory_iterator(music_path)) {
+    if (path.path().extension() == "ogg") {
+      auto audio = AudioPtr(
+          MIX_LoadAudio(mixer.get(), music_path.string().c_str(), true),
+          MIX_DestroyAudio);
+      if (audio) {
+        music.push_back(std::move(audio));
+      } else {
+        SDL_Log("Couldn't load audio from %s: %s\n",
+                music_path.string().c_str(), SDL_GetError());
+        return;
+      }
+    }
   }
-  if (!MIX_SetTrackAudio(music_track.get(), music)) {
+
+  MIX_SetTrackStoppedCallback(music_track.get(), trackStoppedCallback, this);
+  if (!MIX_SetTrackAudio(music_track.get(), music[music_idx++].get())) {
     SDL_Log("Couldn't set track audio: %s\n", SDL_GetError());
     return;
   }
-  MIX_DestroyAudio(music);
 
   drone_track = TrackPtr(MIX_CreateTrack(mixer.get()), MIX_DestroyTrack);
   if (!drone_track) {

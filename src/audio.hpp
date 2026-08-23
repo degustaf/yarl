@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <filesystem>
 #include <memory>
+#include <vector>
 
 // #include "observer.hpp"
 
@@ -41,6 +42,10 @@ private:
   float mix = 0.0f;
   float music_gain = 1.0f;
   float sfx_gain = 1.0f;
+
+public:
+  std::vector<AudioPtr> music;
+  size_t music_idx = 0;
 };
 
 // struct AudioCorruptionObserver : Observer {
