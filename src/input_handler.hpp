@@ -162,13 +162,9 @@ struct MainHandler : InputHandler {
   MainHandler(const InputHandler &h) : InputHandler(h) {};
   virtual ~MainHandler() = default;
 
-  virtual void mouseMove(SDL_MouseMotionEvent &, flecs::world) override;
   virtual void on_render(flecs::world, Console &) override;
   virtual ActionResult handle_action(flecs::world,
                                      std::unique_ptr<Action>) override;
-
-  std::array<int, 2> lastMouseLoc = {-1, -1};
-  std::vector<std::array<int, 2>> path;
 };
 
 struct MainAnimation : MainHandler {
@@ -183,8 +179,13 @@ struct MainGameInputHandler : MainAnimation {
   virtual ~MainGameInputHandler() = default;
 
   virtual std::unique_ptr<Action> keyDown(Command, flecs::world) override;
+  virtual void mouseMove(SDL_MouseMotionEvent &, flecs::world) override;
   virtual std::unique_ptr<Action> click(SDL_MouseButtonEvent &,
                                         flecs::world) override;
+  virtual void on_render(flecs::world, Console &) override;
+
+  std::array<int, 2> lastMouseLoc = {-1, -1};
+  std::vector<std::array<int, 2>> path;
 };
 
 template <typename T, typename F,
@@ -381,8 +382,12 @@ template <bool useF> struct SelectInputHandler : AskUserInputHandler {
 
   virtual void on_render(flecs::world ecs, Console &console) override {
     AskUserInputHandler::on_render(ecs, console);
-    auto &tile = console.at(mouse_loc);
-    tile.bg = Colors::text;
+    auto currentMap = ecs.lookup("currentMap").target<CurrentMap>();
+    auto &map = currentMap.get<GameMap>();
+    if (map.inBounds(mouse_loc)) {
+      auto &tile = console.at(mouse_loc);
+      tile.bg = Colors::text;
+    }
   }
 
   virtual std::unique_ptr<Action> loc_selected(flecs::world ecs,

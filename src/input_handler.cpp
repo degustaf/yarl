@@ -641,65 +641,10 @@ void VolumeControls::on_render(flecs::world ecs, Console &console) {
                   "SFX Volume", idx == 2);
 }
 
-void MainHandler::mouseMove(SDL_MouseMotionEvent &motion, flecs::world ecs) {
-  InputHandler::mouseMove(motion, ecs);
-  auto map = ecs.lookup("currentMap").target<CurrentMap>();
-  auto &gameMap = map.get_mut<GameMap>();
-  if (gameMap.inBounds(mouse_loc)) {
-    if (mouse_loc != lastMouseLoc) {
-      if (gameMap.isExplored(mouse_loc)) {
-        auto player = ecs.lookup("player");
-        assert(player);
-        const auto &orig = player.get<Position>();
-        auto qOpen = mapQuery<positionQuery::Openable>(ecs, map);
-        auto qPortal = mapQuery<positionQuery::Portal>(ecs, map);
-        auto dij = pathfinding::Dijkstra(
-            {gameMap.getWidth(), gameMap.getHeight()},
-            [=](auto xy) { return orig == xy; },
-            [&](auto &xy) {
-              auto ret = std::vector<pathfinding::Index>();
-              ret.reserve(9); // 8 directions plus a portal
-              for (auto &dir : directions) {
-                auto next = pathfinding::Index{xy[0] + dir[0], xy[1] + dir[1]};
-                if (gameMap.inBounds(next) && gameMap.isExplored(next) &&
-                    (gameMap.isWalkable(next) ||
-                     (player.has<Flying>() && gameMap.isFlyable(next)))) {
-                  ret.push_back(next);
-                }
-              }
-              flecs::entity e = qPortal.find([xy](auto &p) { return p == xy; });
-              if (e) {
-                ret.push_back(e.target<Portal>().get<Position>());
-              }
-              return ret;
-            },
-            [&](auto xy) {
-              if (qOpen.find([xy](auto &p) { return p == xy; })) {
-                if (!gameMap.isWalkable(xy)) {
-                  return 2;
-                }
-              }
-              return 1;
-            });
-        dij.scan();
-        path = pathfinding::constructPath(orig, mouse_loc, dij.cameFrom);
-      }
-    }
-  } else {
-    lastMouseLoc = {-1, -1};
-    path.clear();
-  }
-}
-
 void MainHandler::on_render(flecs::world ecs, Console &console) {
   auto map = ecs.lookup("currentMap").target<CurrentMap>();
   auto &gMap = map.get_mut<GameMap>();
   gMap.render(console, time);
-
-  for (auto &tl : path) {
-    auto &color = console.at(tl).bg;
-    color = Colors::mappingPath * color;
-  }
 
   auto q =
       ecs.query_builder<const Position, const MoveAnimation *,
@@ -996,6 +941,57 @@ std::unique_ptr<Action> MainGameInputHandler::keyDown(Command cmd,
   return nullptr;
 }
 
+void MainGameInputHandler::mouseMove(SDL_MouseMotionEvent &motion,
+                                     flecs::world ecs) {
+  InputHandler::mouseMove(motion, ecs);
+  auto map = ecs.lookup("currentMap").target<CurrentMap>();
+  auto &gameMap = map.get_mut<GameMap>();
+  if (gameMap.inBounds(mouse_loc)) {
+    if (mouse_loc != lastMouseLoc) {
+      if (gameMap.isExplored(mouse_loc)) {
+        auto player = ecs.lookup("player");
+        assert(player);
+        const auto &orig = player.get<Position>();
+        auto qOpen = mapQuery<positionQuery::Openable>(ecs, map);
+        auto qPortal = mapQuery<positionQuery::Portal>(ecs, map);
+        auto dij = pathfinding::Dijkstra(
+            {gameMap.getWidth(), gameMap.getHeight()},
+            [=](auto xy) { return orig == xy; },
+            [&](auto &xy) {
+              auto ret = std::vector<pathfinding::Index>();
+              ret.reserve(9); // 8 directions plus a portal
+              for (auto &dir : directions) {
+                auto next = pathfinding::Index{xy[0] + dir[0], xy[1] + dir[1]};
+                if (gameMap.inBounds(next) && gameMap.isExplored(next) &&
+                    (gameMap.isWalkable(next) ||
+                     (player.has<Flying>() && gameMap.isFlyable(next)))) {
+                  ret.push_back(next);
+                }
+              }
+              flecs::entity e = qPortal.find([xy](auto &p) { return p == xy; });
+              if (e) {
+                ret.push_back(e.target<Portal>().get<Position>());
+              }
+              return ret;
+            },
+            [&](auto xy) {
+              if (qOpen.find([xy](auto &p) { return p == xy; })) {
+                if (!gameMap.isWalkable(xy)) {
+                  return 2;
+                }
+              }
+              return 1;
+            });
+        dij.scan();
+        path = pathfinding::constructPath(orig, mouse_loc, dij.cameFrom);
+      }
+    }
+  } else {
+    lastMouseLoc = {-1, -1};
+    path.clear();
+  }
+}
+
 std::unique_ptr<Action>
 MainGameInputHandler::click(SDL_MouseButtonEvent &button, flecs::world ecs) {
   auto currentMap = ecs.lookup("currentMap").target<CurrentMap>();
@@ -1020,6 +1016,15 @@ MainGameInputHandler::click(SDL_MouseButtonEvent &button, flecs::world ecs) {
     }
   }
   return nullptr;
+}
+
+void MainGameInputHandler::on_render(flecs::world ecs, Console &console) {
+  MainHandler::on_render(ecs, console);
+
+  for (auto &tl : path) {
+    auto &color = console.at(tl).bg;
+    color = Colors::mappingPath * color;
+  }
 }
 
 std::unique_ptr<Action> AskUserInputHandler::keyDown(Command cmd,

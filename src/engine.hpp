@@ -4,8 +4,6 @@
 
 #include <flecs.h>
 
-#include "input_handler.hpp"
-
 struct Seed {
   uint32_t seed;
 };
@@ -13,6 +11,8 @@ struct Seed {
 struct Turn {
   int64_t turn;
 };
+
+struct MainMenuInputHandler;
 
 namespace Engine {
 
