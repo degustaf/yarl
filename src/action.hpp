@@ -57,7 +57,7 @@ struct Action {
 struct ExitAction : Action {
   virtual ~ExitAction() override = default;
   virtual ActionResult perform(flecs::entity) const override {
-    return {ActionResultType::ExitGood, "", 0.0f, Colors::text, true};
+    return {ActionResultType::ExitGood, "", 0.0f};
   }
 };
 

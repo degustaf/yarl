@@ -921,6 +921,7 @@ std::unique_ptr<Action> MainGameInputHandler::keyDown(Command cmd,
     return nullptr;
 
   case CommandType::ESCAPE:
+    Engine::save_as(ecs, data_dir / saveFilename);
     make<MainMenuInputHandler>(ecs);
     return nullptr;
 
