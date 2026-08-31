@@ -522,6 +522,10 @@ struct GameOver : MainHandler {
   virtual ~GameOver() = default;
 
   virtual std::unique_ptr<Action> keyDown(Command cmd, flecs::world) override;
+  virtual std::unique_ptr<Action> click(SDL_MouseButtonEvent &,
+                                        flecs::world ecs) override {
+    return keyDown(Command{CommandType::ENTER, 0}, ecs);
+  };
 };
 
 struct WinScreen : GameOver {

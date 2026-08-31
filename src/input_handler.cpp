@@ -1469,6 +1469,7 @@ void PathFinder::on_render(flecs::world ecs, Console &console) {
 
 std::unique_ptr<Action> GameOver::keyDown(Command cmd, flecs::world ecs) {
   switch (cmd.type) {
+  case CommandType::ENTER:
   case CommandType::ESCAPE: {
     ecs.defer_begin();
     ecs.query_builder("Queries::TextBoxes")
