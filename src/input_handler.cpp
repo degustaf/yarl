@@ -1470,6 +1470,13 @@ void PathFinder::on_render(flecs::world ecs, Console &console) {
 std::unique_ptr<Action> GameOver::keyDown(Command cmd, flecs::world ecs) {
   switch (cmd.type) {
   case CommandType::ESCAPE: {
+    ecs.defer_begin();
+    ecs.query_builder("Queries::TextBoxes")
+        .with<CenterTextBox>()
+        .each([](auto e) { e.destruct(); });
+    ecs.query_builder().with<BloodDrop>().each([](auto e) { e.destruct(); });
+    ecs.defer_end();
+
     make<MainMenuInputHandler>(ecs);
     return nullptr;
   }
@@ -1479,23 +1486,26 @@ std::unique_ptr<Action> GameOver::keyDown(Command cmd, flecs::world ecs) {
   }
 }
 
+static inline void fade_in(flecs::world ecs, const char *name, color::RGBA c,
+                           const char *text, int offsetY) {
+  auto e = ecs.lookup(name);
+  if (e) {
+    e.get_mut<CenterTextBox>().fg = c;
+  } else {
+    e = ecs.entity(name).set<CenterTextBox>(
+        {{0, offsetY}, text, c, Console::Alignment::CENTER});
+  }
+}
+
 void WinScreen::animate(flecs::world ecs, uint64_t t) {
   auto time_ms = t - start_time;
   auto level = (uint8_t)((time_ms >> 2) & 0xff);
   auto ts = t - time;
+  auto c = color::RGBA{level, level, level, 0xff};
 
   switch (time_ms >> 10) {
   case 0: {
-    auto e = ecs.lookup("defeated");
-    if (e) {
-      e.get_mut<CenterTextBox>().fg = {level, level, level, 0xff};
-    } else {
-      e = ecs.entity("defeated");
-      e.set<CenterTextBox>({{0, -1},
-                            "The Fiend is defeated",
-                            {level, level, level, 0xff},
-                            Console::Alignment::CENTER});
-    }
+    fade_in(ecs, "defeated", c, "The Fiend is defeated", -1);
     break;
   }
   case 1: {
