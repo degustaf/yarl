@@ -108,23 +108,17 @@ ActionResult MoveAction::perform(flecs::entity e) const {
         }
         pos.move(dxy);
         e.world().defer_end();
+
         auto inventory = e.try_get<Inventory>();
         if (!inventory) {
           return {ActionResultType::Success, "", 1.0f};
         }
-        if (!inventory->hasRoom(e)) {
-          return {ActionResultType::Success, "Your inventory is full.", 1.0f,
-                  Colors::impossible};
+        auto result = PickupAction().perform(e);
+        if (result || result.msg.find("full") != result.msg.npos) {
+          result.exertion += 1.0f;
+          return result;
         }
 
-        auto item = itemAtLocation(e);
-        if (item) {
-          item.add<ContainedBy>(e).remove<Position>().remove(flecs::ChildOf,
-                                                             mapEntity);
-          auto msg =
-              stringf("You picked up the %s!", item.get<Named>().name.c_str());
-          return {ActionResultType::Success, msg, 1.0f};
-        }
         return {ActionResultType::Success, "", 1.0f};
       }
     } else if (map.isChasm(pos + dxy)) {
@@ -272,14 +266,14 @@ ActionResult ItemAction::perform(flecs::entity e) const {
 }
 
 ActionResult PickupAction::perform(flecs::entity e) const {
-  auto &inventory = e.get<Inventory>();
-  if (!inventory.hasRoom(e)) {
-    return {ActionResultType::Failure, "Your inventory is full.", 0.0f,
-            Colors::impossible};
-  }
-
   auto item = itemAtLocation(e);
   if (item) {
+    auto inventory = e.get<Inventory>();
+    if (!inventory.hasRoom(e)) {
+      return {ActionResultType::Failure, "Your inventory is full.", 0.0f,
+              Colors::impossible};
+    }
+
     auto map = e.world().lookup("currentMap").target<CurrentMap>();
     item.add<ContainedBy>(e).remove<Position>().remove(flecs::ChildOf, map);
     auto msg = stringf("You picked up the %s!", item.get<Named>().name.c_str());
