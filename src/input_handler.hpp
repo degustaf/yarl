@@ -465,6 +465,16 @@ struct PathFinder : AutoMove {
   std::vector<std::array<int, 2>> path;
 };
 
+struct ExitConfirm : AskUserInputHandler {
+  ExitConfirm(const InputHandler &handler) : AskUserInputHandler(handler) {};
+  virtual ~ExitConfirm() = default;
+
+  virtual std::unique_ptr<Action> keyDown(Command cmd,
+                                          flecs::world ecs) override;
+
+  virtual void on_render(flecs::world ecs, Console &console) override;
+};
+
 template <bool useRope> struct JumpConfirm : AskUserInputHandler {
   JumpConfirm(flecs::entity item, const InputHandler &handler)
       : AskUserInputHandler(handler), item(item) {};

@@ -921,8 +921,8 @@ std::unique_ptr<Action> MainGameInputHandler::keyDown(Command cmd,
     return nullptr;
 
   case CommandType::ESCAPE:
-    Engine::save_as(ecs, data_dir / saveFilename);
-    make<MainMenuInputHandler>(ecs);
+  case CommandType::QUIT:
+    make<ExitConfirm>(ecs);
     return nullptr;
 
     // Handling these cases individually, instead of a default gives us a
@@ -936,7 +936,6 @@ std::unique_ptr<Action> MainGameInputHandler::keyDown(Command cmd,
   case CommandType::SHIFT:
   case CommandType::CTRL:
   case CommandType::ALT:
-  case CommandType::QUIT:
     return nullptr;
   }
   return nullptr;
@@ -1465,6 +1464,34 @@ void PathFinder::on_render(flecs::world ecs, Console &console) {
       }
     }
   }
+}
+
+std::unique_ptr<Action> ExitConfirm::keyDown(Command cmd, flecs::world ecs) {
+  switch (cmd.ch) {
+  case 'Y':
+  case 'y':
+    Engine::save_as(ecs, data_dir / saveFilename);
+    make<MainMenuInputHandler>(ecs);
+    return nullptr;
+  default:
+    break;
+  }
+  return AskUserInputHandler::keyDown(cmd, ecs);
+}
+
+void ExitConfirm::on_render(flecs::world ecs, Console &console) {
+  AskUserInputHandler::on_render(ecs, console);
+  for (auto &tile : console) {
+    tile.fg /= 8;
+    tile.bg /= 8;
+  }
+
+  console.print({console.get_width() / 2, console.get_height() / 2},
+                "Are you sure you want to save and exit to the main menu?",
+                Colors::text, Colors::background, Console::Alignment::CENTER);
+  console.print({console.get_width() / 2, console.get_height() / 2 + 2},
+                "(Y)es     (N)o", Colors::menu_title, Colors::background,
+                Console::Alignment::CENTER);
 }
 
 std::unique_ptr<Action> GameOver::keyDown(Command cmd, flecs::world ecs) {
