@@ -68,5 +68,8 @@ prefab portal {
     fg: portal_color
     layer: Corpse
   }
+  Named: {
+    name: "Portal"
+  }
   BlocksFov
 }
