@@ -138,8 +138,10 @@ std::unique_ptr<Action> FleeAi::act(flecs::entity self) {
       [&](auto xy) {
         if (qOpen.find([xy](auto &p) { return p == xy; })) {
           if (!map.isWalkable(xy)) {
-            return 2;
+            return 10;
           }
+        } else if (qBlocks.find([xy](auto &p) { return p == xy; })) {
+          return 100;
         }
         return 1;
       });
@@ -220,7 +222,7 @@ std::unique_ptr<Action> WanderAi::act(flecs::entity self) {
       m--;
   }
   auto ecs = self.world();
-  auto mapEntity = ecs.lookup("currentMap").target<CurrentMap>();
+  auto mapEntity = self.parent();
   auto map = FovMap(mapEntity.get<GameMap>());
   computeFov(mapEntity, map, self.get<Position>(), 8);
   for (auto y = 0; y < map.getHeight(); y++) {
@@ -231,8 +233,9 @@ std::unique_ptr<Action> WanderAi::act(flecs::entity self) {
     }
   }
 
-  auto qOpen = mapQuery<positionQuery::Openable>(ecs, mapEntity);
   auto qPortal = mapQuery<positionQuery::Portal>(ecs, mapEntity);
+  auto qOpen = mapQuery<positionQuery::Openable>(ecs, mapEntity);
+  auto qBlocks = mapQuery<positionQuery::Blocks>(ecs, mapEntity);
   auto dij = pathfinding::WanderDijkstra(
       {map.getWidth(), map.getHeight()}, memory,
       [&](auto &xy) {
