@@ -1478,6 +1478,7 @@ std::unique_ptr<Action> GameOver::keyDown(Command cmd, flecs::world ecs) {
     ecs.query_builder().with<BloodDrop>().each([](auto e) { e.destruct(); });
     ecs.defer_end();
 
+    Engine::delete_file(data_dir / saveFilename);
     make<MainMenuInputHandler>(ecs);
     return nullptr;
   }

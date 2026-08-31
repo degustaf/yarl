@@ -123,14 +123,10 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
   return ret;
 }
 
-static void delete_file(std::filesystem::path file) {
-  std::remove(file.string().c_str());
-}
-
 void SDL_AppQuit(void *data, SDL_AppResult result) {
   auto ecs = static_cast<flecs::world *>(data);
   if (result == SDL_APP_FAILURE) {
-    delete_file(data_dir / saveFilename);
+    Engine::delete_file(data_dir / saveFilename);
   } else {
     // TODO handle game not started.
     Engine::save_as(*ecs, data_dir / saveFilename);

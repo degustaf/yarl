@@ -164,3 +164,7 @@ void Engine::clear_game_data(flecs::world ecs) {
   if (log)
     log.destruct();
 }
+
+void Engine::delete_file(std::filesystem::path file) {
+  std::remove(file.string().c_str());
+}

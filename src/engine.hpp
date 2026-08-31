@@ -22,4 +22,5 @@ bool load(flecs::world ecs, const std::filesystem::path &file_name,
           MainMenuInputHandler &handler);
 void new_game(flecs::world ecs, int map_width, int map_height);
 void clear_game_data(flecs::world ecs);
+void delete_file(std::filesystem::path file);
 }; // namespace Engine
