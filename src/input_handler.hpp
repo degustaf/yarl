@@ -245,7 +245,8 @@ struct InventoryInputHandler : AskUserInputHandler {
   InventoryInputHandler(const std::string &title, flecs::world ecs,
                         const InputHandler &handler)
       : AskUserInputHandler(handler), title(title),
-        q(ecs.query_builder<const Named>("Queries::playerItem")
+        q(ecs.query_builder<const Named, const Stackable *>(
+                 "Queries::playerItem")
               .with<ContainedBy>(ecs.lookup("player"))
               .with<Item>()
               .cached()
@@ -257,7 +258,7 @@ struct InventoryInputHandler : AskUserInputHandler {
   virtual std::unique_ptr<Action> item_selected(flecs::entity item) = 0;
 
   std::string title;
-  flecs::query<const Named> q;
+  flecs::query<const Named, const Stackable *> q;
 };
 
 struct DropItemInputHandler : InventoryInputHandler {

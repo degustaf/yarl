@@ -297,6 +297,8 @@ Module::Module(flecs::world ecs) {
   ecs.component<ContainedBy>().add(flecs::Exclusive);
   ecs.component<Item>();
   ecs.component<Flammable>();
+  ecs.component<Dropped>();
+  ecs.component<Stackable>().member<int>("count");
   ecs.component<EquipmentType>();
   ecs.component<Equippable>()
       .member<EquipmentType>("type")

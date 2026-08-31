@@ -269,14 +269,29 @@ ActionResult PickupAction::perform(flecs::entity e) const {
   auto item = itemAtLocation(e);
   if (item) {
     auto inventory = e.get<Inventory>();
+    auto map = e.world().lookup("currentMap").target<CurrentMap>();
+    auto msg = stringf("You picked up the %s!", item.get<Named>().name.c_str());
+    if (item.has<Stackable>()) {
+      auto &name = item.get<Named>().name;
+      auto inventoryItem =
+          e.world()
+              .query_builder<const Named>()
+              .with<ContainedBy>(e)
+              .with<Stackable>()
+              .build()
+              .find([&name](const Named &n) { return n.name == name; });
+      if (inventoryItem) {
+        inventoryItem.get_mut<Stackable>().count += item.get<Stackable>().count;
+        item.destruct();
+        return {ActionResultType::Success, msg, 0.0f};
+      }
+    }
     if (!inventory.hasRoom(e)) {
       return {ActionResultType::Failure, "Your inventory is full.", 0.0f,
               Colors::impossible};
     }
 
-    auto map = e.world().lookup("currentMap").target<CurrentMap>();
     item.add<ContainedBy>(e).remove<Position>().remove(flecs::ChildOf, map);
-    auto msg = stringf("You picked up the %s!", item.get<Named>().name.c_str());
     return {ActionResultType::Success, msg, 0.0f};
   }
   return {ActionResultType::Failure, "There is nothing here to pick up.", 0.0f,

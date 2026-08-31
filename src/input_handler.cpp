@@ -1084,9 +1084,12 @@ void InventoryInputHandler::on_render(flecs::world ecs, Console &console) {
   if (count > 0) {
     auto player = ecs.lookup("player");
     auto idx = 0;
-    q.each([&](flecs::entity e, const auto &name) {
-      auto msg = stringf("(%c) %s%s", 'a' + idx, name.name.c_str(),
-                         isEquipped(player, e) ? " (E)" : "");
+    q.each([&](flecs::entity e, const auto &name, const auto *stackable) {
+      auto msg = stackable ? stringf("(%c) %d %s%s", 'a' + idx,
+                                     stackable->count, name.name.c_str(),
+                                     isEquipped(player, e) ? " (E)" : "")
+                           : stringf("(%c) %s%s", 'a' + idx, name.name.c_str(),
+                                     isEquipped(player, e) ? " (E)" : "");
       console.print({x + 1, idx + 1}, msg, std::nullopt, std::nullopt);
       idx++;
     });

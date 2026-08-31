@@ -19,6 +19,10 @@ struct Item {};
 struct Flammable {};
 struct Dropped {};
 
+struct Stackable {
+  int count;
+};
+
 void drop(flecs::entity item, flecs::entity wearer);
 
 enum class EquipmentType { Weapon, Armor };

@@ -19,7 +19,7 @@ enum class positionQuery {
   Describable,
   Scent,
   Fighter,
-  Named,
+  NamedStackable,
   Flammable,
   NamedFighter,
 };
@@ -47,8 +47,8 @@ template <auto q> static inline constexpr auto queryName() {
     return "positionScent";
   } else if constexpr (q == positionQuery::Fighter) {
     return "positionFighter";
-  } else if constexpr (q == positionQuery::Named) {
-    return "positionNamed";
+  } else if constexpr (q == positionQuery::NamedStackable) {
+    return "positionNamedStackable";
   } else if constexpr (q == positionQuery::Flammable) {
     return "positionFlammable";
   } else if constexpr (q == positionQuery::NamedFighter) {
@@ -128,6 +128,9 @@ template <> inline constexpr const char *typeName<Scent>() { return "Scent"; }
 template <> inline constexpr const char *typeName<Fighter>() {
   return "Fighter";
 }
+template <> inline constexpr const char *typeName<const Stackable *>() {
+  return "ConstStackablePtr";
+}
 
 template <auto qName, typename T>
 static inline flecs::query<const Position, const T>
@@ -141,8 +144,11 @@ mapQuery(flecs::world ecs, flecs::entity map) {
     return flecs::query<const Position, const T>(q);
   } else {
     if constexpr ((qName == positionQuery::Scent) ||
-                  (qName == positionQuery::Fighter) ||
-                  (qName == positionQuery::Named)) {
+                  (qName == positionQuery::Fighter)) {
+      return ecs.query_builder<const Position, const T>(name)
+          .with(flecs::ChildOf, map)
+          .build();
+    } else if constexpr ((qName == positionQuery::NamedStackable)) {
       return ecs.query_builder<const Position, const T>(name)
           .with(flecs::ChildOf, map)
           .build();
@@ -171,6 +177,11 @@ static inline flecs::query<const Position, T, U> mapQuery(flecs::world ecs,
   } else {
     if constexpr (qName == positionQuery::NamedFighter) {
       return ecs.query_builder<const Position, Fighter, const Named>(name)
+          .with(flecs::ChildOf, map)
+          .build();
+    } else if constexpr (qName == positionQuery::NamedStackable) {
+      return ecs
+          .query_builder<const Position, const Named, const Stackable *>(name)
           .with(flecs::ChildOf, map)
           .build();
     } else {

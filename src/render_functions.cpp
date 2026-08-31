@@ -76,11 +76,17 @@ void renderNamesAtMouseLocation(Console &console, const std::array<int, 2> &xy,
   if (!gameMap.isExplored(mouse_loc))
     return;
 
-  auto q = mapQuery<positionQuery::Named, Named>(map.world(), map);
+  auto q =
+      mapQuery<positionQuery::NamedStackable, const Named, const Stackable *>(
+          map.world(), map);
   auto msg = std::string();
-  q.each([&](auto &pos, auto &name) {
+  q.each([&](auto &pos, auto &name, auto *s) {
     if (pos == mouse_loc) {
-      msg += name.name + ", ";
+      if (s && s->count > 1) {
+        msg += std::to_string(s->count) + " " + name.name + ", ";
+      } else {
+        msg += name.name + ", ";
+      }
     }
   });
   if (msg.size() > 0) {
