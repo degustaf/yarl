@@ -138,10 +138,8 @@ std::unique_ptr<Action> FleeAi::act(flecs::entity self) {
       [&](auto xy) {
         if (qOpen.find([xy](auto &p) { return p == xy; })) {
           if (!map.isWalkable(xy)) {
-            return 10;
+            return 2;
           }
-        } else if (qBlocks.find([xy](auto &p) { return p == xy; })) {
-          return 100;
         }
         return 1;
       });
@@ -260,8 +258,10 @@ std::unique_ptr<Action> WanderAi::act(flecs::entity self) {
       [&](auto xy) {
         if (qOpen.find([xy](auto &p) { return p == xy; })) {
           if (!map.isWalkable(xy)) {
-            return 2;
+            return 10;
           }
+        } else if (qBlocks.find([xy](auto &p) { return p == xy; })) {
+          return 100;
         }
         return 1;
       });
