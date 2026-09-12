@@ -68,7 +68,10 @@ static double slope(std::array<int, 2> tile) {
 
 template <typename F, typename Mappable>
 static void scan(Mappable &map, flecs::query<const Position> &q, Row row,
-                 F callback) {
+                 int radius, F callback) {
+  if (radius < 0)
+    return;
+
   auto prev_tile = std::optional<std::array<int, 2>>(std::nullopt);
   for (auto col = (int)std::floor(row.depth * row.startSlope + 0.5);
        col <= (int)std::ceil(row.depth * row.endSlope - 0.5); col++) {
@@ -85,7 +88,7 @@ static void scan(Mappable &map, flecs::query<const Position> &q, Row row,
     if (prev_tile && isFloor(map, row, *prev_tile) && isWall(map, row, tile)) {
       auto nextRow = row.next();
       nextRow.endSlope = slope(tile);
-      scan(map, q, nextRow, callback);
+      scan(map, q, nextRow, radius - 1, callback);
     }
     auto portals = std::vector<Position>{};
     q.each([&](flecs::iter &it, size_t, const Position &p) {
@@ -100,18 +103,18 @@ static void scan(Mappable &map, flecs::query<const Position> &q, Row row,
       scan(map, q,
            {p, row.quad, 1, row.dx, row.dy + col, slope(tile),
             slope({tile[0], tile[1] + 1})},
-           callback);
+           radius - 1, callback);
     }
     prev_tile = tile;
   }
   if (prev_tile && isFloor(map, row, *prev_tile)) {
-    scan(map, q, row.next(), callback);
+    scan(map, q, row.next(), radius - 1, callback);
   }
 }
 
 template <typename F, typename Mappable>
 static void computeFov(flecs::entity mapEntity, Mappable &map,
-                       std::array<int, 2> origin, F callback) {
+                       std::array<int, 2> origin, int radius, F callback) {
 
   for (auto y = 0; y < map.getHeight(); y++) {
     for (auto x = 0; x < map.getWidth(); x++) {
@@ -125,7 +128,7 @@ static void computeFov(flecs::entity mapEntity, Mappable &map,
   callback(origin, 0);
 
   for (auto quad : quadrants) {
-    scan(map, q, {origin, quad, 1, 0, 0, -1.0, 1.0}, callback);
+    scan(map, q, {origin, quad, 1, 0, 0, -1.0, 1.0}, radius, callback);
   }
 }
 
@@ -133,10 +136,11 @@ template <typename Mappable>
 void computeFov(flecs::entity mapEntity, Mappable &map,
                 std::array<int, 2> origin, int maxRadius) {
   if (maxRadius == 0) {
-    computeFov(mapEntity, map, origin,
+    auto r = std::max(map.getWidth(), map.getHeight());
+    computeFov(mapEntity, map, origin, r,
                [&](auto xy, auto r2) { map.setFov(xy, r2 >= 0); });
   } else {
-    computeFov(mapEntity, map, origin, [&](auto xy, auto r2) {
+    computeFov(mapEntity, map, origin, maxRadius, [&](auto xy, auto r2) {
       map.setFov(xy, 0 <= r2 && r2 <= maxRadius * maxRadius);
     });
   }
@@ -146,7 +150,7 @@ static void addLumens(flecs::entity mapEntity, GameMap &map,
                       std::array<int, 2> origin, Light l) {
   auto minR2 = l.innerRadius * l.innerRadius;
   auto maxR2 = (float)(l.outerRadius * l.outerRadius);
-  computeFov(mapEntity, map, origin, [&](auto xy, auto r2) {
+  computeFov(mapEntity, map, origin, l.outerRadius, [&](auto xy, auto r2) {
     if (0 <= r2 && r2 < minR2) {
       map.addLuminosity(xy, 1.0f);
     } else if (0 <= r2 && (float)r2 < maxR2) {
