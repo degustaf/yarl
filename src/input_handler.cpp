@@ -371,6 +371,13 @@ std::unique_ptr<Action> KeybindMenu::click(SDL_MouseButtonEvent &button,
   auto frameX = getFrameX(dim[0]);
   auto frameY = (dim[1] - COMMAND_MENU_HEIGHT) / 2;
 
+  if ((int)button.x <= frameX || (int)button.x >= frameX + COMMAND_MENU_WIDTH ||
+      (int)button.y <= frameY ||
+      (int)button.y >= frameY + COMMAND_MENU_HEIGHT) {
+    make<MainMenuInputHandler>(ecs);
+    return nullptr;
+  }
+
   if ((int)button.y == frameY + 4) {
     if ((frameX + 2 <= (int)button.x) &&
         ((int)button.x <= frameX + 2 + (int)strlen(vi))) {
@@ -592,8 +599,18 @@ void VolumeControls::mouseMove(SDL_MouseMotionEvent &motion, flecs::world ecs) {
   // TODO
 }
 
-std::unique_ptr<Action> VolumeControls::click(SDL_MouseButtonEvent &,
-                                              flecs::world) {
+std::unique_ptr<Action> VolumeControls::click(SDL_MouseButtonEvent &button,
+                                              flecs::world ecs) {
+  auto frameX = getFrameX(dim[0]);
+  auto frameY = (dim[1] - COMMAND_MENU_HEIGHT) / 2;
+
+  if ((int)button.x <= frameX || (int)button.x >= frameX + COMMAND_MENU_WIDTH ||
+      (int)button.y <= frameY ||
+      (int)button.y >= frameY + COMMAND_MENU_HEIGHT) {
+    make<MainMenuInputHandler>(ecs);
+    return nullptr;
+  }
+
   // TODO
   return nullptr;
 }
