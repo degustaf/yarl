@@ -348,8 +348,9 @@ ActionResult TakeStairsAction::perform(flecs::entity e) const {
       ecs.lookup("currentMap").add<CurrentMap>(newMap);
       e.set<Position>(newMap.get<GameMap>().stairs(true));
     } else {
-      // TODO
-      assert(false);
+      assert(gameMap.level == 1);
+      return {ActionResultType::Failure, "You aren't ready to leave, yet.",
+              0.0f, Colors::impossible};
     }
     return {ActionResultType::Success, "You climb the staircase.", 0.0f,
             Colors::descend, true};
